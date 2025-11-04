@@ -38,10 +38,12 @@ interface SubShop {
   isVerified: boolean;
   createdAt: string;
   parentId?: number;
+  password?: string;
+  ignoreEmailVerification?: boolean;
 }
 
 interface SubShopResponse {
-  shops: SubShop[];
+  users: SubShop[];
   pagination: {
     page: number;
     pageSize: number;
@@ -76,6 +78,8 @@ const OtherShops = () => {
       return response.data;
     },
   });
+
+  console.log({ shopData });
 
   // Create Sub Shop Mutation
   const createShopMutation = useMutation({
@@ -141,6 +145,7 @@ const OtherShops = () => {
   const handleCreateShop = (formData: Partial<SubShop>) => {
     createShopMutation.mutate({
       ...formData,
+      ignoreEmailVerification: true,
       parentId: user?.id,
     });
   };
@@ -255,14 +260,14 @@ const OtherShops = () => {
                     </div>
                   </td>
                 </tr>
-              ) : shopData?.shops.length === 0 ? (
+              ) : shopData?.users?.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
                     No shops found
                   </td>
                 </tr>
               ) : (
-                shopData?.shops.map((shop) => (
+                shopData?.users?.map((shop) => (
                   <tr key={shop.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div>
