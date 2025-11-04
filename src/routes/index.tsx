@@ -33,6 +33,7 @@ import ChildUsers from "@/pages/users/ChildUsers";
 import SubscriptionLimits from "@/pages/subscription/SubscriptionLimits";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import ProfilePage from "@/pages/profile/ProfilePage";
+import OtherShops from "@/pages/OtherShops";
 
 const AppRoutes = () => {
   const { isLoadingProfile, user } = useAuth();
@@ -80,6 +81,7 @@ const AppRoutes = () => {
         {/* Shop Only Routes */}
         <Route element={<AuthorizedRoute allowedRoles={["shop"]} />}>
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="other-shops" element={<OtherShops />} />
           <Route path="sales">
             <Route path="pos" element={<POS />} />
             <Route path="orders" element={<Orders />} />

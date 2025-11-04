@@ -14,6 +14,7 @@ import {
   FaCrown,
   FaTicketAlt,
   FaUser,
+  FaStore,
 } from "react-icons/fa";
 import { MdSubscriptions } from "react-icons/md";
 import { RiProfileFill } from "react-icons/ri";
@@ -95,20 +96,12 @@ export const menuItems = [
       },
     ],
   },
-
-  // {
-  //   id: "customers",
-  //   title: "Customers",
-  //   path: "/customers",
-  //   icon: <FaUsers className="w-5 h-5" />,
-  // },
-
-  // {
-  //   id: "reports",
-  //   title: "Reports",
-  //   path: "/reports",
-  //   icon: <FaChartBar className="w-5 h-5" />,
-  // },
+  {
+    id: "Shops",
+    title: "Other Shops",
+    path: "/other-shops",
+    icon: <FaStore className="w-5 h-5" />,
+  },
   {
     id: "subscriptions",
     title: "Subscriptions",

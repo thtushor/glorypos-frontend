@@ -1,6 +1,5 @@
-// export const BASE_URL = "https://fashionglory-pos-server.onrender.com/api";
-export const BASE_URL = "https://glorypos.com/api/api";
-// export const BASE_URL = "http://localhost:3000/api";
+// export const BASE_URL = "https://glorypos.com/api/api";
+export const BASE_URL = "http://localhost:3000/api";
 
 export const REGISTER_URL = `${BASE_URL}/register`;
 export const LOGIN_URL = `${BASE_URL}/login`;
@@ -61,3 +60,6 @@ export const VALIDATE_COUPON_URL = `${COUPONS_URL}/validate`;
 // Add to existing endpoints
 export const CHILD_USERS_URL = `${BASE_URL}/user/child-users`;
 export const CREATE_CHILD_USER_URL = `${BASE_URL}/user/child-user`;
+
+// Sub Shops API
+export const SUB_SHOPS_URL = `${BASE_URL}/sub-shops`;
