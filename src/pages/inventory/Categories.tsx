@@ -12,12 +12,20 @@ import Spinner from "@/components/Spinner";
 import InputWithIcon from "@/components/InputWithIcon";
 import InventoryFilters from "@/components/shared/InventoryFilters";
 
+interface User {
+  id: number;
+  fullName: string;
+  email: string;
+  businessName: string;
+}
+
 interface Category {
   id: number;
   name: string;
   description: string;
   status: "active" | "inactive";
   UserId: number;
+  User?: User;
 }
 
 interface CategoryFormData {
@@ -180,6 +188,9 @@ const Categories = () => {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Shop
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -187,7 +198,7 @@ const Categories = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-4 text-center">
+                  <td colSpan={5} className="px-6 py-4 text-center">
                     <div className="flex justify-center items-center w-full">
                       <Spinner color="#32cd32" size="40px" />
                     </div>
@@ -196,7 +207,7 @@ const Categories = () => {
               ) : categories?.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="px-6 py-4 text-center text-gray-500"
                   >
                     No categories found
@@ -228,6 +239,16 @@ const Categories = () => {
                       >
                         {category.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm">
+                        <div className="font-medium text-gray-900">
+                          {category.User?.businessName || category.User?.fullName || "N/A"}
+                        </div>
+                        <div className="text-gray-500">
+                          ID: {category.User?.id || category.UserId || "N/A"}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-3">

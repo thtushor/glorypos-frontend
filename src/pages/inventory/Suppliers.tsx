@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  FaSearch,
   FaPhone,
   FaEnvelope,
   FaMapMarkerAlt,
@@ -9,14 +8,38 @@ import {
 } from "react-icons/fa";
 import InventoryFilters from "@/components/shared/InventoryFilters";
 
+interface User {
+  id: number;
+  fullName: string;
+  email: string;
+  businessName: string;
+}
+
+interface Supplier {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  status: string;
+  totalOrders: number;
+  totalSpent: number;
+  lastOrder: string;
+  rating: number;
+  categories: string[];
+  products: number;
+  image: string;
+  UserId?: number;
+  User?: User;
+}
+
 const Suppliers: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState("");
   // Filter states for API
   const [searchKey, setSearchKey] = useState("");
   const [shopId, setShopId] = useState("");
 
   // Sample supplier data
-  const suppliers = [
+  const suppliers: Supplier[] = [
     {
       id: 1,
       name: "Tech Solutions Inc.",
@@ -159,6 +182,13 @@ const Suppliers: React.FC = () => {
                       <FaMapMarkerAlt className="w-4 h-4 text-gray-400" />
                       <span>{supplier.address}</span>
                     </div>
+                    {supplier.User && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span className="font-medium">Shop:</span>
+                        <span>{supplier.User.businessName || supplier.User.fullName || "N/A"}</span>
+                        <span className="text-gray-400">(ID: {supplier.User.id || supplier.UserId || "N/A"})</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Stats */}

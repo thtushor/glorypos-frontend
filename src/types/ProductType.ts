@@ -2,6 +2,13 @@ import { Brand, Color, Size, Unit } from "./categoryType";
 
 import { Category } from "./categoryType";
 
+export interface User {
+  id: number;
+  fullName: string;
+  email: string;
+  businessName: string;
+}
+
 export interface ProductFormData {
   id: number | undefined;
   code: string | null;
@@ -64,6 +71,7 @@ export interface Product {
   stock: number;
   status: "active" | "inactive";
   UserId: number;
+  User?: User;
   Category: Category;
   Brand: Brand;
   Unit: Unit;

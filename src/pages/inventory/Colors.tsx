@@ -9,6 +9,13 @@ import InputWithIcon from "@/components/InputWithIcon";
 import Modal from "@/components/Modal";
 import InventoryFilters from "@/components/shared/InventoryFilters";
 
+interface User {
+  id: number;
+  fullName: string;
+  email: string;
+  businessName: string;
+}
+
 interface Color {
   id: number;
   name: string;
@@ -16,6 +23,7 @@ interface Color {
   description: string;
   status: "active" | "inactive";
   UserId: number;
+  User?: User;
 }
 
 interface ColorFormData {
@@ -181,6 +189,9 @@ const Colors = () => {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Shop
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -188,7 +199,7 @@ const Colors = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center">
+                  <td colSpan={6} className="px-6 py-4 text-center">
                     <div className="flex justify-center items-center w-full">
                       <Spinner color="#32cd32" size="40px" />
                     </div>
@@ -229,6 +240,16 @@ const Colors = () => {
                       >
                         {color.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm">
+                        <div className="font-medium text-gray-900">
+                          {color.User?.businessName || color.User?.fullName || "N/A"}
+                        </div>
+                        <div className="text-gray-500">
+                          ID: {color.User?.id || color.UserId || "N/A"}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-3">

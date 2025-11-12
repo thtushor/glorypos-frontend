@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import {
-  FaSearch,
   FaPlus,
   FaEdit,
   FaTrash,
@@ -375,6 +374,9 @@ const Products: React.FC = () => {
                   </p>
                   <p className="text-sm text-gray-600">
                     Brand: {product.Brand?.name}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Shop: {product.User?.businessName || product.User?.fullName || "N/A"} (ID: {product.User?.id || product.UserId || "N/A"})
                   </p>
                   <p className="text-sm font-medium text-brand-primary">
                     ${Number(product.price || 0).toFixed(2)}
