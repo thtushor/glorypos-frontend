@@ -7,6 +7,7 @@ import { COLORS_URL, DELETE_COLORS_URL, UPDATE_COLORS_URL } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import InputWithIcon from "@/components/InputWithIcon";
 import Modal from "@/components/Modal";
+import InventoryFilters from "@/components/shared/InventoryFilters";
 
 interface Color {
   id: number;
@@ -36,11 +37,18 @@ const Colors = () => {
     status: "active",
   });
 
+  // Filter states
+  const [searchKey, setSearchKey] = useState("");
+  const [shopId, setShopId] = useState("");
+
   // Fetch Colors
   const { data: colors, isLoading } = useQuery({
-    queryKey: ["colors"],
+    queryKey: ["colors", searchKey, shopId],
     queryFn: async () => {
-      const response = await AXIOS.get(COLORS_URL);
+      const params: { searchKey?: string; shopId?: string } = {};
+      if (searchKey) params.searchKey = searchKey;
+      if (shopId) params.shopId = shopId;
+      const response = await AXIOS.get(COLORS_URL, { params });
       return response.data;
     },
   });
@@ -144,6 +152,15 @@ const Colors = () => {
           <span>Add Color</span>
         </button>
       </div>
+
+      {/* Filters */}
+      <InventoryFilters
+        searchKey={searchKey}
+        shopId={shopId}
+        onSearchKeyChange={setSearchKey}
+        onShopIdChange={setShopId}
+        searchPlaceholder="Search colors..."
+      />
 
       {/* Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">

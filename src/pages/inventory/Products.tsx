@@ -24,6 +24,7 @@ import { Product, ProductFormData } from "@/types/ProductType";
 import { Brand } from "@/types/categoryType";
 import { Category } from "@/types/categoryType";
 import BarcodeModal from "@/components/BarcodeModal";
+import InventoryFilters from "@/components/shared/InventoryFilters";
 
 // Add this interface at the top
 
@@ -47,6 +48,10 @@ const Products: React.FC = () => {
     min: 0,
     max: 1000,
   });
+
+  // Filter states for API
+  const [searchKey, setSearchKey] = useState("");
+  const [shopId, setShopId] = useState("");
 
   // Form state
   const [formData, setFormData] = useState<ProductFormData>({
@@ -86,9 +91,12 @@ const Products: React.FC = () => {
   const { data: products = [], isLoading: isLoadingProducts } = useQuery<
     Product[]
   >({
-    queryKey: ["products"],
+    queryKey: ["products", searchKey, shopId],
     queryFn: async () => {
-      const response = await AXIOS.get(PRODUCT_URL);
+      const params: { searchKey?: string; shopId?: string } = {};
+      if (searchKey) params.searchKey = searchKey;
+      if (shopId) params.shopId = shopId;
+      const response = await AXIOS.get(PRODUCT_URL, { params });
       return response.data;
     },
   });
@@ -205,27 +213,28 @@ const Products: React.FC = () => {
   // Update the product card JSX
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      {/* Your existing filter UI */}
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <div className="flex-1 max-w-sm">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search products..."
-              className="w-full pl-10 pr-4 py-2 border rounded-lg"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <FaSearch className="absolute left-3 top-3 text-gray-400" />
-          </div>
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">Products</h1>
+          <p className="text-sm text-gray-600">Manage your products</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="ml-4 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover flex items-center gap-2"
+          className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover flex items-center gap-2"
         >
           <FaPlus /> Add Product
         </button>
       </div>
+
+      {/* API Filters */}
+      <InventoryFilters
+        searchKey={searchKey}
+        shopId={shopId}
+        onSearchKeyChange={setSearchKey}
+        onShopIdChange={setShopId}
+        searchPlaceholder="Search products..."
+      />
 
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

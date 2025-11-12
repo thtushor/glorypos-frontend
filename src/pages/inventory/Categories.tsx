@@ -10,6 +10,7 @@ import {
 } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import InputWithIcon from "@/components/InputWithIcon";
+import InventoryFilters from "@/components/shared/InventoryFilters";
 
 interface Category {
   id: number;
@@ -37,11 +38,18 @@ const Categories = () => {
     status: "active",
   });
 
+  // Filter states
+  const [searchKey, setSearchKey] = useState("");
+  const [shopId, setShopId] = useState("");
+
   // Fetch Categories
   const { data: categories, isLoading } = useQuery({
-    queryKey: ["categories"],
+    queryKey: ["categories", searchKey, shopId],
     queryFn: async () => {
-      const response = await AXIOS.get(CATEGORY_URL);
+      const params: { searchKey?: string; shopId?: string } = {};
+      if (searchKey) params.searchKey = searchKey;
+      if (shopId) params.shopId = shopId;
+      const response = await AXIOS.get(CATEGORY_URL, { params });
       return response.data;
     },
   });
@@ -146,6 +154,15 @@ const Categories = () => {
           <span>Add Category</span>
         </button>
       </div>
+
+      {/* Filters */}
+      <InventoryFilters
+        searchKey={searchKey}
+        shopId={shopId}
+        onSearchKeyChange={setSearchKey}
+        onShopIdChange={setShopId}
+        searchPlaceholder="Search categories..."
+      />
 
       {/* Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">

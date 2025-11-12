@@ -7,9 +7,13 @@ import {
   FaBox,
   FaFileInvoiceDollar,
 } from "react-icons/fa";
+import InventoryFilters from "@/components/shared/InventoryFilters";
 
 const Suppliers: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  // Filter states for API
+  const [searchKey, setSearchKey] = useState("");
+  const [shopId, setShopId] = useState("");
 
   // Sample supplier data
   const suppliers = [
@@ -49,23 +53,13 @@ const Suppliers: React.FC = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search suppliers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary"
-            />
-          </div>
-          <select className="px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary">
-            <option value="all">All Categories</option>
-            <option value="electronics">Electronics</option>
-            <option value="accessories">Accessories</option>
-          </select>
-        </div>
+        <InventoryFilters
+          searchKey={searchKey}
+          shopId={shopId}
+          onSearchKeyChange={setSearchKey}
+          onShopIdChange={setShopId}
+          searchPlaceholder="Search suppliers..."
+        />
       </div>
 
       {/* Stats Overview */}

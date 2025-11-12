@@ -7,6 +7,7 @@ import { SIZES_URL, DELETE_SIZES_URL, UPDATE_SIZES_URL } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import InputWithIcon from "@/components/InputWithIcon";
 import Modal from "@/components/Modal";
+import InventoryFilters from "@/components/shared/InventoryFilters";
 
 interface Size {
   id: number;
@@ -33,11 +34,18 @@ const Sizes = () => {
     status: "active",
   });
 
+  // Filter states
+  const [searchKey, setSearchKey] = useState("");
+  const [shopId, setShopId] = useState("");
+
   // Fetch Sizes
   const { data: sizes, isLoading } = useQuery({
-    queryKey: ["sizes"],
+    queryKey: ["sizes", searchKey, shopId],
     queryFn: async () => {
-      const response = await AXIOS.get(SIZES_URL);
+      const params: { searchKey?: string; shopId?: string } = {};
+      if (searchKey) params.searchKey = searchKey;
+      if (shopId) params.shopId = shopId;
+      const response = await AXIOS.get(SIZES_URL, { params });
       return response.data;
     },
   });
@@ -139,6 +147,15 @@ const Sizes = () => {
           <span>Add Size</span>
         </button>
       </div>
+
+      {/* Filters */}
+      <InventoryFilters
+        searchKey={searchKey}
+        shopId={shopId}
+        onSearchKeyChange={setSearchKey}
+        onShopIdChange={setShopId}
+        searchPlaceholder="Search sizes..."
+      />
 
       {/* Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
