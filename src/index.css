@@ -35,6 +35,46 @@ h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af transparent; /* thumb / track */
+}
+/* WebKit (Chrome, Safari, Edge) */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #9ca3af; /* gray-400 */
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280; /* gray-500 */
+}
+
+/* Mobile scrollbars only */
+@media (max-width: 639px) {
+  *::-webkit-scrollbar {
+    width: 6px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border-radius: 3px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+}
+
 /* 
 button {
   border-radius: 8px;
