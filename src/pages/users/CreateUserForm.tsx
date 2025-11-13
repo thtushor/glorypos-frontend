@@ -1,7 +1,15 @@
+// Updated pages/users/CreateUserForm.tsx - Added baseSalary and requiredDailyHours fields
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { FaUser, FaEnvelope, FaLock, FaUserShield } from "react-icons/fa";
+import {
+  FaUser,
+  FaEnvelope,
+  FaLock,
+  FaUserShield,
+  FaMoneyBill,
+  FaClock,
+} from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import { CREATE_CHILD_USER_URL } from "@/api/api";
 import InputWithIcon from "@/components/InputWithIcon";
@@ -20,6 +28,8 @@ interface UserFormData {
   role: string;
   status: "active" | "inactive";
   permissions: Permission;
+  baseSalary: number; // Added
+  requiredDailyHours: number; // Added
 }
 
 interface CreateUserFormProps {
@@ -30,6 +40,8 @@ interface CreateUserFormProps {
     role: string;
     status: "active" | "inactive";
     permissions: Permission;
+    baseSalary?: number | null; // Added
+    requiredDailyHours?: number | null; // Added
   } | null;
   onSuccess: () => void;
 }
@@ -46,6 +58,9 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
       canDelete: true,
       canViewReports: true,
     },
+    baseSalary: 0, // Added
+    // TODO:: 8 WILL DYNAMIC IN BACKEND LATER
+    requiredDailyHours: 8, // Added default
   });
 
   useEffect(() => {
@@ -57,6 +72,8 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
         role: user.role,
         status: user.status,
         permissions: user.permissions,
+        baseSalary: user.baseSalary ?? 0, // Added
+        requiredDailyHours: user.requiredDailyHours ?? 8, // Added
       });
     }
   }, [user]);
@@ -76,12 +93,12 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
     },
     onSuccess: () => {
       toast.success(
-        user ? "User updated successfully" : "User created successfully"
+        user ? "Employee updated successfully" : "Employee created successfully"
       );
       onSuccess();
     },
     onError: (error: any) => {
-      toast.error(error?.message || "Failed to save user");
+      toast.error(error?.message || "Failed to save Employee");
     },
   });
 
@@ -113,6 +130,7 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
             setFormData({ ...formData, fullName: e.target.value })
           }
           required
+          label="Full Name"
         />
 
         <InputWithIcon
@@ -123,6 +141,7 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           required
+          label="Email Address"
         />
 
         <InputWithIcon
@@ -135,6 +154,7 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
             setFormData({ ...formData, password: e.target.value })
           }
           required={user ? false : true}
+          label="Create Password"
         />
 
         <div>
@@ -176,6 +196,37 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
           </select>
         </div>
 
+        <InputWithIcon // Added
+          type="number"
+          icon={<FaMoneyBill />}
+          name="baseSalary"
+          placeholder="Base Salary"
+          value={formData.baseSalary}
+          onChange={(e) =>
+            setFormData({ ...formData, baseSalary: Number(e.target.value) })
+          }
+          required={!formData?.baseSalary}
+          label="Base Salary"
+          readOnly={Number(user?.baseSalary || 0) > 0 ? true : false}
+        />
+
+        <InputWithIcon // Added
+          type="number"
+          icon={<FaClock />}
+          name="requiredDailyHours"
+          placeholder="Required Daily Hours"
+          value={formData.requiredDailyHours}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              requiredDailyHours: Number(e.target.value),
+            })
+          }
+          required={!formData.requiredDailyHours}
+          min={1}
+          label="Required Daily Hours"
+        />
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Permissions
@@ -211,9 +262,9 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
           {mutation.isPending ? (
             <Spinner size="16px" color="#ffffff" />
           ) : user ? (
-            "Update User"
+            "Update Employee"
           ) : (
-            "Create User"
+            "Create Employee"
           )}
         </button>
       </div>

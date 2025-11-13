@@ -34,6 +34,7 @@ import SubscriptionLimits from "@/pages/subscription/SubscriptionLimits";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import ProfilePage from "@/pages/profile/ProfilePage";
 import OtherShops from "@/pages/OtherShops";
+import Payroll from "@/pages/payroll/Payroll";
 
 const AppRoutes = () => {
   const { isLoadingProfile, user } = useAuth();
@@ -76,6 +77,7 @@ const AppRoutes = () => {
               )
             }
           />
+          <Route path="payroll" element={<Payroll />} /> {/* Added */}
         </Route>
 
         {/* Shop Only Routes */}
