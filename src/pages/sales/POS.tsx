@@ -16,7 +16,7 @@ import {
   // FaEdit,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
-import { PRODUCT_URL, CATEGORY_URL, ORDERS_URL } from "@/api/api";
+import { CATEGORY_URL, ORDERS_URL, fetchAllProducts } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import ScrollButton from "@/components/ScrollButton";
 import Invoice from "@/components/Invoice";
@@ -311,10 +311,7 @@ const POS: React.FC = () => {
     Product[]
   >({
     queryKey: ["products"],
-    queryFn: async () => {
-      const response = await AXIOS.get(PRODUCT_URL);
-      return response.data;
-    },
+    queryFn: () => fetchAllProducts(),
   });
 
   // Fetch Categories

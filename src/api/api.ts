@@ -1,3 +1,7 @@
+// Product API Function with Filtering and Pagination
+import AXIOS from "./network/Axios";
+import { ProductsResponse, ProductQueryParams, Product } from "@/types/ProductType";
+
 // export const BASE_URL = "https://glorypos.com/api/api";
 export const BASE_URL = "http://localhost:3000/api";
 
@@ -9,6 +13,100 @@ export const PROFILE_URL = `${BASE_URL}/profile`;
 export const PRODUCT_URL = `${BASE_URL}/products`;
 export const DELETE_PRODUCT_URL = `${BASE_URL}/products/delete`;
 export const UPDATE_PRODUCT_URL = `${BASE_URL}/products/update`;
+
+/**
+ * Fetches products with comprehensive filtering and pagination support
+ * @param query - Query parameters object containing filters and pagination
+ * @returns Promise<ProductsResponse> - Paginated products response
+ */
+export const fetchProducts = async (
+  query: ProductQueryParams = {}
+): Promise<ProductsResponse> => {
+  const {
+    page = 1,
+    pageSize = 20,
+    shopId,
+    categoryId,
+    brandId,
+    unitId,
+    searchKey,
+    minPrice,
+    maxPrice,
+    ...otherFilters
+  } = query;
+
+  // Build query parameters
+  const params: Record<string, any> = {
+    page,
+    pageSize,
+  };
+
+  // Add shopId filter if provided
+  if (shopId) {
+    params.shopId = shopId;
+  }
+
+  // Add category filter if provided
+  if (categoryId) {
+    params.categoryId = categoryId;
+  }
+
+  // Add brand filter if provided
+  if (brandId) {
+    params.brandId = brandId;
+  }
+
+  // Add unit filter if provided
+  if (unitId) {
+    params.unitId = unitId;
+  }
+
+  // Add search key filter (searches in name, code, sku, description)
+  if (searchKey) {
+    params.searchKey = searchKey;
+  }
+
+  // Add minPrice filter if provided
+  if (minPrice !== undefined && minPrice !== null) {
+    params.minPrice = minPrice;
+  }
+
+  // Add maxPrice filter if provided
+  if (maxPrice !== undefined && maxPrice !== null) {
+    params.maxPrice = maxPrice;
+  }
+
+  // Add any other filters dynamically
+  Object.keys(otherFilters).forEach((key) => {
+    if (otherFilters[key] !== undefined && otherFilters[key] !== null && otherFilters[key] !== "") {
+      params[key] = otherFilters[key];
+    }
+  });
+
+  // Make API call
+  // AXIOS interceptor already extracts response.data, so response is the data object
+  const response = await AXIOS.get(PRODUCT_URL, { params });
+  
+  // Return the response with proper typing
+  return response.data as unknown as ProductsResponse;
+};
+
+/**
+ * Fetches all products without pagination (useful for POS, dropdowns, etc.)
+ * Uses a large pageSize to fetch all products in a single request
+ * @param filters - Optional filter parameters (shopId, categoryId, brandId, unitId, searchKey, etc.)
+ * @returns Promise<Product[]> - Array of all products matching the filters
+ */
+export const fetchAllProducts = async (
+  filters: Omit<ProductQueryParams, "page" | "pageSize"> = {}
+): Promise<Product[]> => {
+  const response = await fetchProducts({
+    ...filters,
+    page: 1,
+    pageSize: 10000, // Large page size to get all products
+  });
+  return response.products;
+};
 
 // Category API
 export const CATEGORY_URL = `${BASE_URL}/categories`;

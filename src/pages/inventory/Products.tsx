@@ -10,17 +10,18 @@ import {
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import {
-  PRODUCT_URL,
   DELETE_PRODUCT_URL,
   CATEGORY_URL,
   BRANDS_URL,
+  UNITS_URL,
+  fetchProducts,
 } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import Modal from "@/components/Modal";
-
+import Pagination from "@/components/Pagination";
 import AddProduct from "@/components/shared/AddProduct";
-import { Product, ProductFormData } from "@/types/ProductType";
-import { Brand } from "@/types/categoryType";
+import { Product, ProductFormData, ProductQueryParams } from "@/types/ProductType";
+import { Brand, Unit } from "@/types/categoryType";
 import { Category } from "@/types/categoryType";
 import BarcodeModal from "@/components/BarcodeModal";
 import InventoryFilters from "@/components/shared/InventoryFilters";
@@ -38,19 +39,23 @@ interface ViewModalProps {
 const Products: React.FC = () => {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<number | "all">(
-    "all"
-  );
-  const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
-  const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
-    min: 0,
-    max: 1000,
-  });
+  
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   // Filter states for API
   const [searchKey, setSearchKey] = useState("");
   const [shopId, setShopId] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<number | "all">("all");
+  const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
+  const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
+  
+  // Price range filter for API
+  const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
+    min: 0,
+    max: 1000,
+  });
 
   // Form state
   const [formData, setFormData] = useState<ProductFormData>({
@@ -86,19 +91,48 @@ const Products: React.FC = () => {
     Record<number, number>
   >({});
 
-  // Queries
-  const { data: products = [], isLoading: isLoadingProducts } = useQuery<
-    Product[]
-  >({
-    queryKey: ["products", searchKey, shopId],
-    queryFn: async () => {
-      const params: { searchKey?: string; shopId?: string } = {};
-      if (searchKey) params.searchKey = searchKey;
-      if (shopId) params.shopId = shopId;
-      const response = await AXIOS.get(PRODUCT_URL, { params });
-      return response.data;
-    },
+  // Build query parameters
+  const queryParams: ProductQueryParams = useMemo(() => {
+    const params: ProductQueryParams = {
+      page,
+      pageSize,
+    };
+
+    if (searchKey) params.searchKey = searchKey;
+    if (shopId) params.shopId = shopId;
+    if (selectedCategory !== "all") params.categoryId = selectedCategory;
+    if (selectedBrand !== "all") params.brandId = selectedBrand;
+    if (selectedUnit !== "all") params.unitId = selectedUnit;
+    
+    // Add price range filters
+    if (priceRange.min !== undefined && priceRange.min !== null && priceRange.min > 0) {
+      params.minPrice = priceRange.min;
+    }
+    if (priceRange.max !== undefined && priceRange.max !== null && priceRange.max > 0) {
+      params.maxPrice = priceRange.max;
+    }
+
+    return params;
+  }, [page, pageSize, searchKey, shopId, selectedCategory, selectedBrand, selectedUnit, priceRange]);
+
+  // Products query with pagination
+  const {
+    data: productsResponse,
+    isLoading: isLoadingProducts,
+  } = useQuery({
+    queryKey: ["products", queryParams],
+    queryFn: () => fetchProducts(queryParams),
   });
+
+  const products = productsResponse?.products || [];
+  const pagination = productsResponse?.pagination || {
+    page: 1,
+    pageSize: 20,
+    totalPages: 0,
+    totalItems: 0,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  };
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["categories"],
@@ -116,6 +150,14 @@ const Products: React.FC = () => {
     },
   });
 
+  const { data: units = [] } = useQuery<Unit[]>({
+    queryKey: ["units"],
+    queryFn: async () => {
+      const response = await AXIOS.get(UNITS_URL);
+      return response.data;
+    },
+  });
+
   const deleteMutation = useMutation<any, Error, number>({
     mutationFn: (id: number) => AXIOS.post(`${DELETE_PRODUCT_URL}/${id}`),
     onSuccess: () => {
@@ -127,22 +169,10 @@ const Products: React.FC = () => {
     },
   });
 
-  // Filter products
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const matchesSearch =
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.sku.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory =
-        selectedCategory === "all" || product.CategoryId === selectedCategory;
-      const matchesBrand =
-        selectedBrand === "all" || product.BrandId === selectedBrand;
-      const matchesPrice =
-        product.price >= priceRange.min && product.price <= priceRange.max;
-
-      return matchesSearch && matchesCategory && matchesBrand && matchesPrice;
-    });
-  }, [products, searchQuery, selectedCategory, selectedBrand, priceRange]);
+  // Reset to page 1 when filters change
+  const handleFilterChange = () => {
+    setPage(1);
+  };
 
   // Handlers
 
@@ -230,18 +260,25 @@ const Products: React.FC = () => {
       <InventoryFilters
         searchKey={searchKey}
         shopId={shopId}
-        onSearchKeyChange={setSearchKey}
-        onShopIdChange={setShopId}
+        onSearchKeyChange={(value) => {
+          setSearchKey(value);
+          handleFilterChange();
+        }}
+        onShopIdChange={(value) => {
+          setShopId(value);
+          handleFilterChange();
+        }}
         searchPlaceholder="Search products..."
       />
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <select
           value={selectedCategory}
           onChange={(e) => {
             const value = e.target.value;
             setSelectedCategory(value === "all" ? "all" : Number(value));
+            handleFilterChange();
           }}
           className="border rounded-lg px-3 py-2"
         >
@@ -258,6 +295,7 @@ const Products: React.FC = () => {
           onChange={(e) => {
             const value = e.target.value;
             setSelectedBrand(value === "all" ? "all" : Number(value));
+            handleFilterChange();
           }}
           className="border rounded-lg px-3 py-2"
         >
@@ -269,15 +307,33 @@ const Products: React.FC = () => {
           ))}
         </select>
 
+        <select
+          value={selectedUnit}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSelectedUnit(value === "all" ? "all" : Number(value));
+            handleFilterChange();
+          }}
+          className="border rounded-lg px-3 py-2"
+        >
+          <option value="all">All Units</option>
+          {units.map((unit) => (
+            <option key={unit.id} value={unit.id}>
+              {unit.name}
+            </option>
+          ))}
+        </select>
+
         {/* Price Range */}
         <div className="flex items-center gap-2">
           <input
             type="number"
             placeholder="Min"
             value={priceRange.min}
-            onChange={(e) =>
-              setPriceRange({ ...priceRange, min: Number(e.target.value) })
-            }
+            onChange={(e) => {
+              setPriceRange({ ...priceRange, min: Number(e.target.value) });
+              handleFilterChange();
+            }}
             className="border rounded-lg px-3 py-2 w-24"
           />
           <span>-</span>
@@ -285,9 +341,10 @@ const Products: React.FC = () => {
             type="number"
             placeholder="Max"
             value={priceRange.max}
-            onChange={(e) =>
-              setPriceRange({ ...priceRange, max: Number(e.target.value) })
-            }
+            onChange={(e) => {
+              setPriceRange({ ...priceRange, max: Number(e.target.value) });
+              handleFilterChange();
+            }}
             className="border rounded-lg px-3 py-2 w-24"
           />
         </div>
@@ -299,12 +356,12 @@ const Products: React.FC = () => {
           <div className="col-span-full flex justify-center py-8">
             <Spinner color="#32cd32" size="40px" />
           </div>
-        ) : filteredProducts.length === 0 ? (
+        ) : products.length === 0 ? (
           <div className="col-span-full text-center py-8 text-gray-500">
             No products found
           </div>
         ) : (
-          filteredProducts.map((product) => (
+          products.map((product) => (
             <div
               key={product.id}
               className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden group"
@@ -411,6 +468,21 @@ const Products: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {pagination.totalPages > 0 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            pageSize={pagination.pageSize}
+            hasNextPage={pagination.hasNextPage}
+            hasPreviousPage={pagination.hasPreviousPage}
+            onPageChange={(page) => setPage(page)}
+          />
+        </div>
+      )}
 
       {/* Product Form Modal */}
       <Modal

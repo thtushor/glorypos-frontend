@@ -77,3 +77,30 @@ export interface Product {
   Unit: Unit;
   ProductVariants: ProductVariant[];
 }
+
+export interface ProductPaginationData {
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalItems: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface ProductsResponse {
+  products: Product[];
+  pagination: ProductPaginationData;
+}
+
+export interface ProductQueryParams {
+  page?: number;
+  pageSize?: number;
+  shopId?: string | number;
+  categoryId?: string | number;
+  brandId?: string | number;
+  unitId?: string | number;
+  searchKey?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  [key: string]: any; // For otherFilters
+}
