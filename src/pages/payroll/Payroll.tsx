@@ -1,0 +1,792 @@
+// New file: pages/payroll/Payroll.tsx - Main payroll page with employee list and actions
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import ActionMenu from "@/components/ActionMenu";
+import {
+  FaPlus,
+  FaTrash,
+  FaUserCog,
+  FaBuilding,
+  FaEnvelope,
+  FaPhone,
+  FaEdit,
+  FaCalendarCheck,
+  FaCalendarAlt,
+  FaMoneyBillWave,
+  FaHistory,
+  FaStar,
+  FaUsers,
+} from "react-icons/fa";
+import { FcMoneyTransfer } from "react-icons/fc";
+import AXIOS from "@/api/network/Axios";
+import { CHILD_USERS_URL, PAYROLL_ATTENDANCE_MULTIPLE } from "@/api/api";
+import Spinner from "@/components/Spinner";
+import Modal from "@/components/Modal";
+import { format } from "date-fns";
+import CreateUserForm from "../users/CreateUserForm"; // Reuse for employee creation/updates
+import { useSearchParams } from "react-router-dom";
+import debounce from "lodash/debounce";
+import AttendanceForm from "./AttendanceForm"; // New
+import LeaveForm from "./LeaveForm"; // New
+import HolidayForm from "./HolidayForm"; // New
+import PromotionForm from "./PromotionForm"; // New
+import SalaryDetails from "./SalaryDetails"; // New
+import ReleaseForm from "./ReleaseForm"; // New
+import HistoryModal from "./HistoryModal"; // New
+
+interface Parent {
+  id: number;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  location: string;
+  businessName: string;
+  businessType: string;
+  accountStatus: string;
+  accountType: string;
+}
+
+interface ChildUser {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  status: "active" | "inactive";
+  isPresentToday?: boolean;
+  attendanceDate?: string | null;
+  permissions: {
+    canEdit: boolean;
+    canDelete: boolean;
+    canViewReports: boolean;
+  };
+  baseSalary: number | null; // Added
+  requiredDailyHours: number | null; // Added
+  createdAt: string;
+  updatedAt: string;
+  parentUserId: number;
+  userId: number | null;
+  parent: Parent;
+}
+
+interface ChildUsersResponse {
+  status: boolean;
+  message: string;
+  users: ChildUser[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+const Payroll = () => {
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedUser, setSelectedUser] = useState<ChildUser | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showHolidayModal, setShowHolidayModal] = useState(false);
+  const [showPromotionModal, setShowPromotionModal] = useState(false);
+  const [showSalaryModal, setShowSalaryModal] = useState(false);
+  const [showReleaseModal, setShowReleaseModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [filters, setFilters] = useState({
+    searchKey: searchParams.get("searchKey") || "",
+    role: searchParams.get("role") || "",
+    status: searchParams.get("status") || "",
+    withAttendance: "true",
+  });
+  const page = Number(searchParams.get("page")) || 1;
+  const pageSize = Number(searchParams.get("pageSize")) || 10;
+
+  const { data, isLoading } = useQuery<ChildUsersResponse>({
+    queryKey: [
+      "childUsers",
+      page,
+      pageSize,
+      { ...filters, withAttendance: true },
+    ],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+        ...(filters.searchKey && { searchKey: filters.searchKey }),
+        ...(filters.role && { role: filters.role }),
+        ...(filters.status && { status: filters.status }),
+        ...(filters.withAttendance && { withAttendance: "true" }),
+      });
+      const response = await AXIOS.get(`${CHILD_USERS_URL}?${params}`);
+      return response.data;
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      await AXIOS.post(`${CHILD_USERS_URL}/delete/${userId}`);
+    },
+    onSuccess: () => {
+      toast.success("Employee deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["childUsers"] });
+      setSelectedUser(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to delete employee");
+    },
+  });
+
+  const handleDelete = (user: ChildUser) => {
+    if (window.confirm("Are you sure you want to delete this employee?")) {
+      deleteUserMutation.mutate(user.id);
+    }
+  };
+
+  const updateFilters = debounce((newFilters: typeof filters) => {
+    setFilters(newFilters);
+    setSearchParams({
+      page: "1",
+      pageSize: String(pageSize),
+
+      ...newFilters,
+    });
+  }, 300);
+
+  const handlePageChange = (newPage: number) => {
+    setSearchParams({
+      ...Object.fromEntries(searchParams),
+      page: String(newPage),
+    });
+  };
+
+  // multiple present features
+  const [showBulkConfirmModal, setShowBulkConfirmModal] = useState(false);
+
+  // Inside Payroll.tsx — UPDATE MUTATION
+  const markMultipleMutation = useMutation({
+    mutationFn: () =>
+      AXIOS.post(PAYROLL_ATTENDANCE_MULTIPLE, {
+        userIds: selectedIds,
+      }),
+    onSuccess: (res) => {
+      console.log("myresponse", res);
+      queryClient.invalidateQueries({ queryKey: ["childUsers"] });
+      toast.success(res?.data?.message || "Attendance marked successfully!");
+      setSelectedIds([]);
+      setShowBulkConfirmModal(false);
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to mark attendance"
+      );
+      setShowBulkConfirmModal(false);
+    },
+  });
+
+  const handleMarkPresent = () => {
+    setShowBulkConfirmModal(true);
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold">Payroll Management</h1>
+        <div className="flex gap-2">
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleMarkPresent}
+              disabled={markMultipleMutation.isPending}
+              className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-70 flex items-center gap-2 transition-opacity"
+            >
+              <FaCalendarCheck />
+              {markMultipleMutation.isPending ? (
+                <>Marking...</>
+              ) : (
+                <>Mark Present ({selectedIds.length})</>
+              )}
+            </button>
+          )}
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover flex items-center gap-2"
+          >
+            <FaPlus /> Add Employee
+          </button>
+          <button
+            onClick={() => setShowHolidayModal(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 flex items-center gap-2"
+          >
+            <FaCalendarAlt /> Manage Holidays
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <input
+          type="text"
+          placeholder="Search by name, email or phone..."
+          className="border rounded-md px-3 py-2"
+          value={filters.searchKey}
+          onChange={(e) =>
+            updateFilters({ ...filters, searchKey: e.target.value })
+          }
+        />
+        <select
+          className="border rounded-md px-3 py-2"
+          value={filters.role}
+          onChange={(e) => updateFilters({ ...filters, role: e.target.value })}
+        >
+          <option value="">All Roles</option>
+          <option value="manager">Manager</option>
+          <option value="cashier">Cashier</option>
+          <option value="staff">Staff</option>
+        </select>
+        <select
+          className="border rounded-md px-3 py-2"
+          value={filters.status}
+          onChange={(e) =>
+            updateFilters({ ...filters, status: e.target.value })
+          }
+        >
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={data?.users?.every(
+                    (u) => u.isPresentToday || selectedIds.includes(u.id)
+                  )}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      // only select users who are NOT already present
+                      setSelectedIds(
+                        data?.users
+                          ?.filter((u) => !u.isPresentToday)
+                          .map((u) => u.id) || []
+                      );
+                    } else {
+                      setSelectedIds([]);
+                    }
+                  }}
+                  className={
+                    data?.users?.every((u) => u.isPresentToday)
+                      ? "cursor-not-allowed opacity-70"
+                      : ""
+                  }
+                />
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Present Now?
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Employee
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Parent Business
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Role
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Salary/Hours
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Created
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {isLoading ? (
+              <tr>
+                <td colSpan={7}>
+                  <div className="flex justify-center items-center h-64">
+                    <Spinner color="#32cd32" size="40px" />
+                  </div>
+                </td>
+              </tr>
+            ) : null}
+            {!isLoading &&
+              data?.users.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-4">
+                    <input
+                      type="checkbox"
+                      checked={
+                        user.isPresentToday || selectedIds.includes(user.id)
+                      }
+                      onChange={(e) => {
+                        if (user.isPresentToday) return; // prevent changing if already present
+                        if (e.target.checked) {
+                          setSelectedIds((prev) => [...prev, user.id]);
+                        } else {
+                          setSelectedIds((prev) =>
+                            prev.filter((id) => id !== user.id)
+                          );
+                        }
+                      }}
+                      className={
+                        user.isPresentToday
+                          ? "cursor-not-allowed opacity-70"
+                          : ""
+                      }
+                    />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col items-start gap-[2px]">
+                      <span
+                        className={`px-2 rounded-[4px] text-center text-xs font-medium ${
+                          user.isPresentToday
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {user.isPresentToday ? "Present" : "Absent"}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {format(
+                          new Date(user?.attendanceDate ?? ""),
+                          "MMM dd, yyyy"
+                        )}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="font-medium">{user.fullName}</span>
+                      <span className="text-sm text-gray-500">
+                        {user.email}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="font-medium">
+                        {user.parent.businessName}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {user.parent.businessType}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="capitalize">{user.role}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`px-2 py-1 rounded-md capitalize text-xs font-medium ${
+                        user.status === "active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="text-sm">
+                        ${user.baseSalary || "N/A"}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {user.requiredDailyHours || "N/A"} hrs/day
+                      </span>
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {format(new Date(user.createdAt), "MMM dd, yyyy")}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <ActionMenu
+                      actions={[
+                        {
+                          label: "Edit Employee",
+                          icon: <FaEdit className="w-4 h-4" />,
+                          onClick: () => {
+                            setSelectedUser(user);
+                            setShowEditModal(true);
+                          },
+                          color: "blue",
+                        },
+                        {
+                          label: "Mark Attendance",
+                          icon: <FaCalendarCheck className="w-4 h-4" />,
+                          onClick: () => {
+                            setSelectedUser(user);
+                            setShowAttendanceModal(true);
+                          },
+                          color: "green",
+                        },
+                        {
+                          label: "Manage Leaves",
+                          icon: <FaUsers className="w-4 h-4" />,
+                          onClick: () => {
+                            setSelectedUser(user);
+                            setShowLeaveModal(true);
+                          },
+                          color: "yellow",
+                        },
+                        {
+                          label: "Promotion / Demotion",
+                          icon: <FaStar className="w-4 h-4" />,
+                          onClick: () => {
+                            setSelectedUser(user);
+                            setShowPromotionModal(true);
+                          },
+                          color: "purple",
+                        },
+                        {
+                          label: "Salary Details",
+                          icon: <FaMoneyBillWave className="w-4 h-4" />,
+                          onClick: () => {
+                            setSelectedUser(user);
+                            setShowSalaryModal(true);
+                          },
+                          color: "orange",
+                        },
+                        {
+                          label: "Release Salary",
+                          icon: <FcMoneyTransfer className="w-4 h-4" />,
+                          onClick: () => {
+                            setSelectedUser(user);
+                            setShowReleaseModal(true);
+                          },
+                          color: "teal",
+                        },
+                        {
+                          label: "Salary History",
+                          icon: <FaHistory className="w-4 h-4" />,
+                          onClick: () => {
+                            setSelectedUser(user);
+                            setShowHistoryModal(true);
+                          },
+                          color: "indigo",
+                        },
+                        {
+                          label: "View Details",
+                          icon: <FaUserCog className="w-4 h-4" />,
+                          onClick: () => {
+                            setSelectedUser(user);
+                            setShowDetailsModal(true);
+                          },
+                          color: "cyan",
+                        },
+                        {
+                          label: "Delete Employee",
+                          icon: <FaTrash className="w-4 h-4" />,
+                          onClick: () => handleDelete(user),
+                          danger: true,
+                          color: "red",
+                        },
+                      ]}
+                    />
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {data?.pagination && (
+        <div className="mt-4 flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Showing {(page - 1) * data.pagination.pageSize + 1} to{" "}
+            {Math.min(
+              page * data.pagination.pageSize,
+              data.pagination.totalCount
+            )}{" "}
+            of {data.pagination.totalCount} results
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page === 1}
+              className="px-3 py-1 border rounded-md disabled:opacity-50"
+            >
+              Previous
+            </button>
+            {Array.from(
+              { length: data.pagination.totalPages },
+              (_, i) => i + 1
+            ).map((pageNum) => (
+              <button
+                key={pageNum}
+                onClick={() => handlePageChange(pageNum)}
+                className={`px-3 py-1 border rounded-md ${
+                  pageNum === page ? "bg-brand-primary text-white" : ""
+                }`}
+              >
+                {pageNum}
+              </button>
+            ))}
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              disabled={!data.pagination.hasMore}
+              className="px-3 py-1 border rounded-md disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modals */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create Employee"
+      >
+        <CreateUserForm
+          onSuccess={() => {
+            setShowCreateModal(false);
+            queryClient.invalidateQueries({ queryKey: ["childUsers"] });
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Employee"
+      >
+        <CreateUserForm
+          user={selectedUser}
+          onSuccess={() => {
+            setShowEditModal(false);
+            queryClient.invalidateQueries({ queryKey: ["childUsers"] });
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        title="Employee Details"
+      >
+        {selectedUser && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-lg font-medium mb-4">
+                  Employee Information
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <FaUserCog className="text-gray-400" />
+                    <div>
+                      <p className="font-medium">{selectedUser.fullName}</p>
+                      <p className="text-sm text-gray-500">
+                        {selectedUser.role}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FaEnvelope className="text-gray-400" />
+                    <span>{selectedUser.email}</span>
+                  </div>
+                  {selectedUser.phone && (
+                    <div className="flex items-center gap-2">
+                      <FaPhone className="text-gray-400" />
+                      <span>{selectedUser.phone}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <FaMoneyBillWave className="text-gray-400" />
+                    <span>
+                      Base Salary: ${selectedUser.baseSalary || "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FaCalendarCheck className="text-gray-400" />
+                    <span>
+                      Daily Hours: {selectedUser.requiredDailyHours || "N/A"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium mb-4">Parent Business</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <FaBuilding className="text-gray-400" />
+                    <div>
+                      <p className="font-medium">
+                        {selectedUser.parent.businessName}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {selectedUser.parent.businessType}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium mb-4">Permissions</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {Object.entries(selectedUser.permissions).map(
+                  ([key, value]) => (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                    >
+                      <span className="text-sm capitalize">
+                        {key.replace(/([A-Z])/g, " $1")}
+                      </span>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          value
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {value ? "Yes" : "No"}
+                      </span>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={showAttendanceModal}
+        onClose={() => setShowAttendanceModal(false)}
+        title="Manage Attendance"
+      >
+        <AttendanceForm
+          user={selectedUser}
+          onSuccess={() => setShowAttendanceModal(false)}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showLeaveModal}
+        onClose={() => setShowLeaveModal(false)}
+        title="Manage Leaves"
+      >
+        <LeaveForm
+          user={selectedUser}
+          onSuccess={() => setShowLeaveModal(false)}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showHolidayModal}
+        onClose={() => setShowHolidayModal(false)}
+        title="Manage Holidays"
+      >
+        <HolidayForm onSuccess={() => setShowHolidayModal(false)} />
+      </Modal>
+
+      <Modal
+        isOpen={showPromotionModal}
+        onClose={() => setShowPromotionModal(false)}
+        title="Promotion/Demotion"
+      >
+        <PromotionForm
+          user={selectedUser}
+          onSuccess={() => setShowPromotionModal(false)}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showSalaryModal}
+        onClose={() => setShowSalaryModal(false)}
+        title="Salary Details"
+      >
+        <SalaryDetails
+          user={selectedUser}
+          onSuccess={() => setShowSalaryModal(false)}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showReleaseModal}
+        onClose={() => setShowReleaseModal(false)}
+        title="Release Salary"
+      >
+        <ReleaseForm
+          user={selectedUser}
+          onSuccess={() => setShowReleaseModal(false)}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        title="Salary History"
+      >
+        <HistoryModal user={selectedUser} />
+      </Modal>
+
+      {/* Bulk Attendance Confirmation Modal */}
+      <Modal
+        isOpen={showBulkConfirmModal}
+        onClose={() =>
+          !markMultipleMutation.isPending && setShowBulkConfirmModal(false)
+        }
+        title="Confirm Bulk Attendance"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Mark <strong>{selectedIds.length}</strong> employee(s) as{" "}
+            <span className="text-green-600 font-medium">Present</span> for{" "}
+            <strong>{format(new Date(), "MMMM d, yyyy")}</strong>?
+          </p>
+          <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-md">
+            <p>Only users without today's attendance will be updated.</p>
+          </div>
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              onClick={() => setShowBulkConfirmModal(false)}
+              disabled={markMultipleMutation.isPending}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-70"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => markMultipleMutation.mutate()}
+              disabled={markMultipleMutation.isPending}
+              className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-70 flex items-center gap-2"
+            >
+              {markMultipleMutation.isPending ? (
+                <>
+                  <Spinner size="16px" color="white" /> Marking...
+                </>
+              ) : (
+                <>Confirm & Mark</>
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+};
+
+export default Payroll;

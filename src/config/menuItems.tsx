@@ -15,6 +15,7 @@ import {
   FaTicketAlt,
   FaUser,
   FaStore,
+  FaMoneyCheckAlt,
 } from "react-icons/fa";
 import { MdSubscriptions } from "react-icons/md";
 import { RiProfileFill } from "react-icons/ri";
@@ -102,6 +103,7 @@ export const menuItems = [
     path: "/other-shops",
     icon: <FaStore className="w-5 h-5" />,
   },
+
   {
     id: "subscriptions",
     title: "Subscriptions",
@@ -165,6 +167,12 @@ export const adminMenuItems = [
     title: "Coupons",
     path: "/coupons",
     icon: <FaTicketAlt className="w-5 h-5" />,
+  },
+  {
+    id: "payroll", // Added
+    title: "Payroll",
+    path: "/payroll",
+    icon: <FaMoneyCheckAlt className="w-5 h-5" />,
   },
 
   // {
