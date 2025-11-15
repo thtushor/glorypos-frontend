@@ -22,6 +22,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   const [availableCameras, setAvailableCameras] = useState<CameraDevice[]>([]);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerRef = useRef<HTMLDivElement>(null);
+  const isUnmountingRef = useRef<boolean>(false);
 
   // Physical barcode scanner detection
   const barcodeBufferRef = useRef<string>("");
@@ -30,12 +31,15 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   // Initialize cameras
   useEffect(() => {
     if (isOpen) {
+      isUnmountingRef.current = false;
       setError(null);
       setAvailableCameras([]);
       setCameraId(null);
       
       Html5Qrcode.getCameras()
         .then((cameras) => {
+          if (isUnmountingRef.current) return;
+          
           if (cameras && cameras.length > 0) {
             setAvailableCameras(cameras);
             setCameraId(cameras[0].id);
@@ -45,6 +49,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           }
         })
         .catch((err) => {
+          if (isUnmountingRef.current) return;
+          
           console.error("Camera access error:", err);
           const errorMessage =
             err.message?.includes("Permission") || err.message?.includes("permission")
@@ -57,17 +63,19 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     }
 
     return () => {
-      // Cleanup on unmount or when isOpen changes
+      // Mark as unmounting to prevent any async operations
+      isUnmountingRef.current = true;
+      
+      // Synchronously stop scanner without any DOM operations
       if (scannerRef.current) {
         const scanner = scannerRef.current;
-        scanner
-          .stop()
-          .catch(() => {
-            // Ignore errors
-          })
-          .finally(() => {
-            scannerRef.current = null;
-          });
+        // Use a flag to prevent clear() from being called
+        scannerRef.current = null;
+        
+        // Stop without clear - just stop the camera stream
+        scanner.stop().catch(() => {
+          // Ignore all errors during unmount
+        });
       }
     };
   }, [isOpen]);
@@ -130,6 +138,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   }, [isOpen, onScan]);
 
   const startScanning = async () => {
+    if (isUnmountingRef.current) return;
+    
     if (!cameraId) {
       setError("No camera selected");
       return;
@@ -137,7 +147,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
     // Ensure container exists
     const container = document.getElementById("barcode-scanner-container");
-    if (!container) {
+    if (!container || isUnmountingRef.current) {
       setError("Scanner container not found. Please try again.");
       return;
     }
@@ -145,12 +155,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     // Clean up any existing scanner instance first
     if (scannerRef.current) {
       try {
-        await stopScanning(true); // Skip clear to avoid DOM issues
+        await stopScanning(); // Stop without clearing DOM
       } catch (err) {
         // Ignore cleanup errors
         scannerRef.current = null;
       }
     }
+
+    if (isUnmountingRef.current) return;
 
     try {
       setIsScanning(true);
@@ -159,9 +171,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       // Wait a bit to ensure container is fully ready
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Double-check container still exists
+      if (isUnmountingRef.current) {
+        setIsScanning(false);
+        return;
+      }
+
+      // Double-check container still exists and is in DOM
       const containerCheck = document.getElementById("barcode-scanner-container");
-      if (!containerCheck) {
+      if (!containerCheck || !document.body.contains(containerCheck)) {
         throw new Error("Container disappeared during initialization");
       }
 
@@ -176,6 +193,13 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         );
       }
 
+      if (isUnmountingRef.current) {
+        await html5QrCode.stop().catch(() => {});
+        scannerRef.current = null;
+        setIsScanning(false);
+        return;
+      }
+
       // Start scanning with proper error handling
       await html5QrCode.start(
         cameraId,
@@ -186,14 +210,16 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         },
         (decodedText) => {
           // Successfully scanned
+          if (isUnmountingRef.current) return;
+          
           try {
             onScan(decodedText);
-            stopScanning(false).catch(() => {
-              // Ignore stop errors
-            });
+            // Don't auto-stop after scan - let user continue
           } catch (err) {
-            console.error("Error handling scan result:", err);
-            setError("Error processing scan result. Please try again.");
+            if (!isUnmountingRef.current) {
+              console.error("Error handling scan result:", err);
+              setError("Error processing scan result. Please try again.");
+            }
           }
         },
         () => {
@@ -201,6 +227,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         }
       );
     } catch (err: any) {
+      if (isUnmountingRef.current) return;
+      
       console.error("Scanner start error:", err);
       setError(
         err.message || "Failed to start camera. Please check permissions and try again."
@@ -219,44 +247,41 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     }
   };
 
-  const stopScanning = async (skipClear = false) => {
-    if (scannerRef.current) {
+  const stopScanning = async () => {
+    // Always skip clear() to prevent DOM conflicts with React
+    // React will handle DOM cleanup, we just need to stop the camera stream
+    
+    if (isUnmountingRef.current || !scannerRef.current) {
+      scannerRef.current = null;
+      setIsScanning(false);
+      return;
+    }
+
+    try {
+      const scanner = scannerRef.current;
+      scannerRef.current = null; // Clear ref immediately to prevent double calls
+      
+      // Only stop the camera stream, don't manipulate DOM
       try {
-        const scanner = scannerRef.current;
-        
-        // Stop the scanner
-        try {
-          await scanner.stop();
-        } catch (stopErr) {
-          // Ignore stop errors - scanner might already be stopped
-        }
-        
-        // Only clear if explicitly requested and container exists
-        // Don't clear when component is unmounting to avoid DOM errors
-        if (!skipClear) {
-          const container = document.getElementById("barcode-scanner-container");
-          if (container && container.parentNode && document.body.contains(container)) {
-            try {
-              await scanner.clear();
-            } catch (clearErr) {
-              // Ignore clear errors - container might already be cleaned up
-            }
-          }
-        }
-      } catch (err) {
-        // Ignore all cleanup errors
-      } finally {
-        scannerRef.current = null;
+        await scanner.stop();
+      } catch (stopErr) {
+        // Ignore stop errors - scanner might already be stopped
+      }
+      
+      // NEVER call clear() - it manipulates DOM and conflicts with React
+      // React's virtual DOM will handle the cleanup
+    } catch (err) {
+      // Ignore all cleanup errors
+    } finally {
+      if (!isUnmountingRef.current) {
         setIsScanning(false);
       }
-    } else {
-      setIsScanning(false);
     }
   };
 
   const handleCameraChange = async (newCameraId: string) => {
     try {
-      await stopScanning(true);
+      await stopScanning(); // Stop without clearing DOM
       setCameraId(newCameraId);
       // Reset scanning state after camera change
       setIsScanning(false);
@@ -290,13 +315,18 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   // Cleanup on close
   useEffect(() => {
     if (!isOpen) {
-      // Stop scanning when modal closes - skip clear to avoid DOM errors
+      // Mark as unmounting to prevent async operations
+      isUnmountingRef.current = true;
+      
+      // Stop scanning when modal closes - only stop, never clear
       if (scannerRef.current) {
         const scanner = scannerRef.current;
+        scannerRef.current = null; // Clear ref immediately
+        
+        // Only stop, never clear - React handles DOM
         scanner.stop().catch(() => {
-          // Ignore errors
+          // Ignore all errors during cleanup
         }).finally(() => {
-          scannerRef.current = null;
           setIsScanning(false);
         });
       } else {
@@ -304,6 +334,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       }
       setError(null);
       barcodeBufferRef.current = "";
+    } else {
+      // Reset unmounting flag when opening
+      isUnmountingRef.current = false;
     }
   }, [isOpen]);
 
@@ -341,7 +374,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             value={cameraId || ""}
             onChange={(e) => handleCameraChange(e.target.value)}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-            disabled={isScanning}
+            // disabled={isScanning}
           >
             {availableCameras.map((camera) => (
               <option key={camera.id} value={camera.id}>
@@ -446,7 +479,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         </button>
         {isScanning && (
           <button
-            onClick={() => stopScanning(false)}
+            onClick={() => stopScanning()}
             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             Stop Scanning

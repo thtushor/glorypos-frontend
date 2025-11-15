@@ -35,6 +35,7 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import ProfilePage from "@/pages/profile/ProfilePage";
 import OtherShops from "@/pages/OtherShops";
 import Payroll from "@/pages/payroll/Payroll";
+import BarcodeScannerTest from "@/pages/BarcodeScannerTest";
 
 const AppRoutes = () => {
   const { isLoadingProfile, user } = useAuth();
@@ -54,6 +55,7 @@ const AppRoutes = () => {
       <Route path="verify-email" element={<VerifyEmail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="reset-password" element={<ResetPassword />} />
+      <Route path="/barcode-scanner-test" element={<BarcodeScannerTest />} />
 
       <Route
         path="/"
