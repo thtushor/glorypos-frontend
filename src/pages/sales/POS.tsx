@@ -1,7 +1,6 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  FaSearch,
   FaShoppingCart,
   FaPlus,
   FaMinus,
@@ -11,48 +10,31 @@ import {
   FaMoneyBill,
   FaQrcode,
   FaTimes,
-  // FaPercent,
-  // FaDollarSign,
-  // FaEdit,
+  FaFilter,
+  FaChevronDown,
+  FaChevronUp,
+  FaSearch,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
-import { CATEGORY_URL, ORDERS_URL, fetchAllProducts } from "@/api/api";
+import { 
+  CATEGORY_URL, 
+  BRANDS_URL,
+  UNITS_URL,
+  ORDERS_URL,
+  SUB_SHOPS_URL,
+  fetchProducts 
+} from "@/api/api";
 import Spinner from "@/components/Spinner";
-import ScrollButton from "@/components/ScrollButton";
 import Invoice from "@/components/Invoice";
 import { successToast } from "@/utils/utils";
 import Modal from "@/components/Modal";
-import { ProductVariant } from "@/types/ProductType";
+import Pagination from "@/components/Pagination";
+import { ProductVariant, ProductQueryParams, Product } from "@/types/ProductType";
 import { toast } from "react-toastify";
-import { Size, Unit } from "@/types/categoryType";
-import { Color } from "@/types/categoryType";
+import { Unit, Brand } from "@/types/categoryType";
+import { Color, Category } from "@/types/categoryType";
 
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  productImage: string;
-  CategoryId: number;
-  stock: number;
-  Unit: Unit;
-  Category: {
-    id: number;
-    name: string;
-  };
-  ProductVariants: {
-    id: number;
-    sku: string;
-    quantity: number;
-    alertQuantity: number;
-    imageUrl: string;
-    status: string;
-    ProductId: number;
-    ColorId: number;
-    SizeId: number;
-    Size: Size;
-    Color: Color;
-  }[];
-}
+// Product interface is now imported from types
 
 interface CartItem extends Product {
   quantity: number;
@@ -275,8 +257,22 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
 };
 
 const POS: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+
+  // Filter states for API
+  const [searchKey, setSearchKey] = useState("");
+  const [shopId, setShopId] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<number | "all">("all");
+  const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
+  const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
+  const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
+    min: 0,
+    max: 1000,
+  });
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
+
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerInfo, setCustomerInfo] = useState({
     name: "",
@@ -300,22 +296,51 @@ const POS: React.FC = () => {
 
   const queryClient = useQueryClient();
 
-  const categoryScrollRef = useRef<HTMLDivElement>(null);
-  const [showScrollButtons, setShowScrollButtons] = useState({
-    left: false,
-    right: false,
+  // Build query parameters
+  const queryParams: ProductQueryParams = useMemo(() => {
+    const params: ProductQueryParams = {
+      page,
+      pageSize,
+    };
+
+    if (searchKey) params.searchKey = searchKey;
+    if (shopId) params.shopId = shopId;
+    if (selectedCategory !== "all") params.categoryId = selectedCategory;
+    if (selectedBrand !== "all") params.brandId = selectedBrand;
+    if (selectedUnit !== "all") params.unitId = selectedUnit;
+    
+    // Add price range filters
+    if (priceRange.min !== undefined && priceRange.min !== null && priceRange.min > 0) {
+      params.minPrice = priceRange.min;
+    }
+    if (priceRange.max !== undefined && priceRange.max !== null && priceRange.max > 0) {
+      params.maxPrice = priceRange.max;
+    }
+
+    return params;
+  }, [page, pageSize, searchKey, shopId, selectedCategory, selectedBrand, selectedUnit, priceRange]);
+
+  // Products query with pagination
+  const {
+    data: productsResponse,
+    isLoading: isLoadingProducts,
+  } = useQuery({
+    queryKey: ["products", "pos", queryParams],
+    queryFn: () => fetchProducts(queryParams),
   });
 
-  // Fetch Products
-  const { data: products = [], isLoading: isLoadingProducts } = useQuery<
-    Product[]
-  >({
-    queryKey: ["products"],
-    queryFn: () => fetchAllProducts(),
-  });
+  const products = productsResponse?.products || [];
+  const pagination = productsResponse?.pagination || {
+    page: 1,
+    pageSize: 20,
+    totalPages: 0,
+    totalItems: 0,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  };
 
   // Fetch Categories
-  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
+  const { data: categories = [], isLoading: isLoadingCategories } = useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: async () => {
       const response = await AXIOS.get(CATEGORY_URL);
@@ -323,19 +348,44 @@ const POS: React.FC = () => {
     },
   });
 
-  // Filter products
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const matchesSearch = product.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      const matchesCategory =
-        selectedCategory === "all" ||
-        product.CategoryId === Number(selectedCategory);
+  // Fetch Brands
+  const { data: brands = [] } = useQuery<Brand[]>({
+    queryKey: ["brands"],
+    queryFn: async () => {
+      const response = await AXIOS.get(BRANDS_URL);
+      return response.data;
+    },
+  });
 
-      return matchesSearch && matchesCategory;
-    });
-  }, [products, searchQuery, selectedCategory]);
+  // Fetch Units
+  const { data: units = [] } = useQuery<Unit[]>({
+    queryKey: ["units"],
+    queryFn: async () => {
+      const response = await AXIOS.get(UNITS_URL);
+      return response.data;
+    },
+  });
+
+  // Fetch Shops
+  const { data: shopData, isLoading: isLoadingShops } = useQuery({
+    queryKey: ["sub-shops-for-filter"],
+    queryFn: async () => {
+      const response = await AXIOS.get(SUB_SHOPS_URL, {
+        params: {
+          page: 1,
+          pageSize: 10000,
+        },
+      });
+      return response.data;
+    },
+  });
+
+  const shops = shopData?.users || [];
+
+  // Reset to page 1 when filters change
+  const handleFilterChange = () => {
+    setPage(1);
+  };
 
   // Cart operations
   const addToCart = (product: CartItem) => {
@@ -412,41 +462,6 @@ const POS: React.FC = () => {
   console.log(total);
   // Cart items count
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  // Add this function to check scroll buttons visibility
-  const checkScrollButtons = () => {
-    if (categoryScrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } =
-        categoryScrollRef.current;
-      setShowScrollButtons({
-        left: scrollLeft > 0,
-        right: scrollLeft < scrollWidth - clientWidth - 10, // 10px buffer
-      });
-    }
-  };
-
-  // Add scroll handlers
-  const handleScroll = (direction: "left" | "right") => {
-    if (categoryScrollRef.current) {
-      const scrollAmount = 200; // Adjust this value as needed
-      const newScrollLeft =
-        direction === "left"
-          ? categoryScrollRef.current.scrollLeft - scrollAmount
-          : categoryScrollRef.current.scrollLeft + scrollAmount;
-
-      categoryScrollRef.current.scrollTo({
-        left: newScrollLeft,
-        behavior: "smooth",
-      });
-    }
-  };
-
-  // Add useEffect to initialize and update scroll buttons
-  useEffect(() => {
-    checkScrollButtons();
-    window.addEventListener("resize", checkScrollButtons);
-    return () => window.removeEventListener("resize", checkScrollButtons);
-  }, []);
 
   // Add this mutation
   const createOrderMutation = useMutation({
@@ -593,13 +608,13 @@ const POS: React.FC = () => {
     updateItemPrice,
   });
 
-  if (isLoadingProducts || isLoadingCategories) {
-    return (
-      <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
-        <Spinner color="#32cd32" size="40px" />
-      </div>
-    );
-  }
+  // if (isLoadingProducts || isLoadingCategories) {
+  //   return (
+  //     <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
+  //       <Spinner color="#32cd32" size="40px" />
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className=" flex flex-col lg:flex-row gap-6 relative">
@@ -609,77 +624,208 @@ const POS: React.FC = () => {
           showMobileCart ? "hidden xl:flex" : "flex"
         }`}
       >
-        {/* Search and Categories */}
-        <div className="p-4 border-b space-y-4">
-          <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary"
-            />
+        {/* Search and Filters */}
+        <div className="border-b bg-white">
+          {/* Search Bar - Always Visible */}
+          <div className="p-3 md:p-4 border-b bg-gray-50">
+            <div className="relative">
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchKey}
+                onChange={(e) => {
+                  setSearchKey(e.target.value);
+                  handleFilterChange();
+                }}
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary bg-white"
+              />
+            </div>
           </div>
 
-          <div className="relative flex items-center">
-            {/* Left Scroll Button */}
-            {showScrollButtons.left && (
-              <ScrollButton
-                direction="left"
-                onClick={() => handleScroll("left")}
-              />
-            )}
-
-            {/* Categories Container */}
-            <div
-              ref={categoryScrollRef}
-              className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide scroll-smooth mx-8"
-              onScroll={checkScrollButtons}
+          {/* Expandable Filters Section */}
+          <div className="bg-white">
+            {/* Filter Toggle Button */}
+            <button
+              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors border-b"
             >
-              <button
-                key="all"
-                onClick={() => setSelectedCategory("all")}
-                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${
-                  selectedCategory === "all"
-                    ? "bg-brand-primary text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                All Products
-              </button>
-              {categories.map((category: any) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id.toString())}
-                  className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${
-                    selectedCategory === category.id.toString()
-                      ? "bg-brand-primary text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  {category.name}
-                </button>
-              ))}
-            </div>
+              <div className="flex items-center gap-2">
+                <FaFilter className="text-gray-600" />
+                <span className="font-medium text-gray-700">Filters</span>
+                {(selectedCategory !== "all" || 
+                  selectedBrand !== "all" || 
+                  selectedUnit !== "all" ||
+                  shopId !== "" ||
+                  priceRange.min > 0 || 
+                  priceRange.max > 0) && (
+                  <span className="px-2 py-0.5 bg-brand-primary text-white text-xs rounded-full">
+                    Active
+                  </span>
+                )}
+              </div>
+              {isFiltersExpanded ? (
+                <FaChevronUp className="text-gray-500" />
+              ) : (
+                <FaChevronDown className="text-gray-500" />
+              )}
+            </button>
 
-            {/* Right Scroll Button */}
-            {showScrollButtons.right && (
-              <ScrollButton
-                direction="right"
-                onClick={() => handleScroll("right")}
-              />
-            )}
+            {/* Expandable Filter Content */}
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                isFiltersExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+              }`}
+            >
+              <div className="p-4 space-y-4 bg-gray-50">
+                {/* Filters Grid - 2 Columns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Category Filter */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                      Category
+                    </label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSelectedCategory(value === "all" ? "all" : Number(value));
+                        handleFilterChange();
+                      }}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors"
+                    >
+                      <option value="all">All Categories</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Brand Filter */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                      Brand
+                    </label>
+                    <select
+                      value={selectedBrand}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSelectedBrand(value === "all" ? "all" : Number(value));
+                        handleFilterChange();
+                      }}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors"
+                    >
+                      <option value="all">All Brands</option>
+                      {brands.map((brand) => (
+                        <option key={brand.id} value={brand.id}>
+                          {brand.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Unit Filter */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                      Unit
+                    </label>
+                    <select
+                      value={selectedUnit}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSelectedUnit(value === "all" ? "all" : Number(value));
+                        handleFilterChange();
+                      }}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors"
+                    >
+                      <option value="all">All Units</option>
+                      {units.map((unit) => (
+                        <option key={unit.id} value={unit.id}>
+                          {unit.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Shop Filter */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                      Shop
+                    </label>
+                    <select
+                      value={shopId}
+                      onChange={(e) => {
+                        setShopId(e.target.value);
+                        handleFilterChange();
+                      }}
+                      disabled={isLoadingShops}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">All Shops</option>
+                      {isLoadingShops ? (
+                        <option value="" disabled>
+                          Loading shops...
+                        </option>
+                      ) : (
+                        shops.map((shop: any) => (
+                          <option key={shop.id} value={shop.id}>
+                            {shop.businessName || shop.fullName}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Price Range Filter - Separate Row */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                    Price Range
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      placeholder="Min Price"
+                      value={priceRange.min || ""}
+                      onChange={(e) => {
+                        setPriceRange({ ...priceRange, min: Number(e.target.value) || 0 });
+                        handleFilterChange();
+                      }}
+                      className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors"
+                    />
+                    <span className="text-gray-400 text-sm flex-shrink-0">-</span>
+                    <input
+                      type="number"
+                      placeholder="Max Price"
+                      value={priceRange.max || ""}
+                      onChange={(e) => {
+                        setPriceRange({ ...priceRange, max: Number(e.target.value) || 0 });
+                        handleFilterChange();
+                      }}
+                      className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Products Grid */}
-        <div className={`flex-1 p-4 overflow-y-auto `}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-            {filteredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="bg-white rounded-lg shadow hover:shadow-md transition-all"
+        <div className={`flex-1 p-4 overflow-y-auto ${isLoadingProducts || isLoadingCategories || isLoadingShops ? "flex items-center justify-center" : ""}`}>
+          {isLoadingProducts || isLoadingCategories || isLoadingShops ? (
+            <div className="flex justify-center items-center">
+              <Spinner color="#32cd32" size="40px" />
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+                {products.map((product) => (
+                  <div
+                    key={product.id}
+                    className="bg-white rounded-lg shadow hover:shadow-md transition-all"
               >
                 {/* Product Image */}
                 <div className="relative aspect-square">
@@ -798,6 +944,23 @@ const POS: React.FC = () => {
               </div>
             ))}
           </div>
+
+              {/* Pagination */}
+              {pagination.totalPages > 0 && (
+                <div className="mt-6">
+                  <Pagination
+                    currentPage={pagination.page}
+                    totalPages={pagination.totalPages}
+                    totalItems={pagination.totalItems}
+                    pageSize={pagination.pageSize}
+                    hasNextPage={pagination.hasNextPage}
+                    hasPreviousPage={pagination.hasPreviousPage}
+                    onPageChange={(page) => setPage(page)}
+                  />
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
