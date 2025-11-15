@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Html5Qrcode } from "html5-qrcode";
-import { FaQrcode, FaTimes, FaCamera } from "react-icons/fa";
+import { Html5Qrcode, CameraDevice } from "html5-qrcode";
+import { FaTimes, FaCamera } from "react-icons/fa";
 import Spinner from "./Spinner";
 
 interface BarcodeScannerProps {
@@ -19,7 +19,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cameraId, setCameraId] = useState<string | null>(null);
-  const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
+  const [availableCameras, setAvailableCameras] = useState<CameraDevice[]>([]);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerRef = useRef<HTMLDivElement>(null);
 
@@ -30,22 +30,45 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   // Initialize cameras
   useEffect(() => {
     if (isOpen) {
+      setError(null);
+      setAvailableCameras([]);
+      setCameraId(null);
+      
       Html5Qrcode.getCameras()
         .then((cameras) => {
           if (cameras && cameras.length > 0) {
             setAvailableCameras(cameras);
             setCameraId(cameras[0].id);
+            setError(null);
           } else {
-            setError("No cameras found");
+            setError("No cameras found. Please connect a camera or use manual input.");
           }
         })
         .catch((err) => {
-          setError("Failed to access cameras: " + err.message);
+          console.error("Camera access error:", err);
+          const errorMessage =
+            err.message?.includes("Permission") || err.message?.includes("permission")
+              ? "Camera permission denied. Please allow camera access in your browser settings."
+              : err.message?.includes("NotFoundError") || err.message?.includes("not found")
+              ? "No camera found. Please connect a camera or use manual input."
+              : `Failed to access cameras: ${err.message || "Unknown error"}`;
+          setError(errorMessage);
         });
     }
 
     return () => {
-      stopScanning();
+      // Cleanup on unmount or when isOpen changes
+      if (scannerRef.current) {
+        const scanner = scannerRef.current;
+        scanner
+          .stop()
+          .catch(() => {
+            // Ignore errors
+          })
+          .finally(() => {
+            scannerRef.current = null;
+          });
+      }
     };
   }, [isOpen]);
 
@@ -107,15 +130,53 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   }, [isOpen, onScan]);
 
   const startScanning = async () => {
-    if (!cameraId || !scannerContainerRef.current) return;
+    if (!cameraId) {
+      setError("No camera selected");
+      return;
+    }
+
+    // Ensure container exists
+    const container = document.getElementById("barcode-scanner-container");
+    if (!container) {
+      setError("Scanner container not found. Please try again.");
+      return;
+    }
+
+    // Clean up any existing scanner instance first
+    if (scannerRef.current) {
+      try {
+        await stopScanning(true); // Skip clear to avoid DOM issues
+      } catch (err) {
+        // Ignore cleanup errors
+        scannerRef.current = null;
+      }
+    }
 
     try {
       setIsScanning(true);
       setError(null);
 
-      const html5QrCode = new Html5Qrcode("barcode-scanner-container");
-      scannerRef.current = html5QrCode;
+      // Wait a bit to ensure container is fully ready
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
+      // Double-check container still exists
+      const containerCheck = document.getElementById("barcode-scanner-container");
+      if (!containerCheck) {
+        throw new Error("Container disappeared during initialization");
+      }
+
+      // Create new scanner instance with error handling
+      let html5QrCode: Html5Qrcode;
+      try {
+        html5QrCode = new Html5Qrcode("barcode-scanner-container");
+        scannerRef.current = html5QrCode;
+      } catch (initError: any) {
+        throw new Error(
+          `Failed to initialize scanner: ${initError.message || "Unknown error"}`
+        );
+      }
+
+      // Start scanning with proper error handling
       await html5QrCode.start(
         cameraId,
         {
@@ -125,53 +186,122 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         },
         (decodedText) => {
           // Successfully scanned
-          onScan(decodedText);
-          stopScanning();
-          // Optionally close modal after scan
-          // onClose();
+          try {
+            onScan(decodedText);
+            stopScanning(false).catch(() => {
+              // Ignore stop errors
+            });
+          } catch (err) {
+            console.error("Error handling scan result:", err);
+            setError("Error processing scan result. Please try again.");
+          }
         },
-        (errorMessage) => {
-          // Ignore scanning errors (they're frequent)
+        () => {
+          // Ignore scanning errors (they're frequent during scanning)
         }
       );
     } catch (err: any) {
-      setError("Failed to start camera: " + err.message);
+      console.error("Scanner start error:", err);
+      setError(
+        err.message || "Failed to start camera. Please check permissions and try again."
+      );
+      setIsScanning(false);
+      
+      // Clean up failed scanner instance
+      if (scannerRef.current) {
+        try {
+          await scannerRef.current.stop().catch(() => {});
+        } catch {
+          // Ignore
+        }
+        scannerRef.current = null;
+      }
+    }
+  };
+
+  const stopScanning = async (skipClear = false) => {
+    if (scannerRef.current) {
+      try {
+        const scanner = scannerRef.current;
+        
+        // Stop the scanner
+        try {
+          await scanner.stop();
+        } catch (stopErr) {
+          // Ignore stop errors - scanner might already be stopped
+        }
+        
+        // Only clear if explicitly requested and container exists
+        // Don't clear when component is unmounting to avoid DOM errors
+        if (!skipClear) {
+          const container = document.getElementById("barcode-scanner-container");
+          if (container && container.parentNode && document.body.contains(container)) {
+            try {
+              await scanner.clear();
+            } catch (clearErr) {
+              // Ignore clear errors - container might already be cleaned up
+            }
+          }
+        }
+      } catch (err) {
+        // Ignore all cleanup errors
+      } finally {
+        scannerRef.current = null;
+        setIsScanning(false);
+      }
+    } else {
       setIsScanning(false);
     }
   };
 
-  const stopScanning = async () => {
-    if (scannerRef.current) {
-      try {
-        await scannerRef.current.stop();
-        await scannerRef.current.clear();
-      } catch (err) {
-        // Ignore stop errors
-      }
-      scannerRef.current = null;
+  const handleCameraChange = async (newCameraId: string) => {
+    try {
+      await stopScanning(true);
+      setCameraId(newCameraId);
+      // Reset scanning state after camera change
+      setIsScanning(false);
+    } catch (err) {
+      console.error("Error changing camera:", err);
+      setError("Failed to change camera. Please try again.");
     }
-    setIsScanning(false);
-  };
-
-  const handleCameraChange = (newCameraId: string) => {
-    stopScanning();
-    setCameraId(newCameraId);
   };
 
   // Auto-start scanning when camera is selected and modal is open
   useEffect(() => {
     if (isOpen && cameraId && !isScanning && !scannerRef.current) {
-      // Small delay to ensure container is ready
-      setTimeout(() => {
-        startScanning();
-      }, 300);
+      // Longer delay to ensure container is fully mounted and ready
+      const timeoutId = setTimeout(() => {
+        // Double check container exists and modal is still open
+        const container = document.getElementById("barcode-scanner-container");
+        if (container && isOpen && container.offsetParent !== null) {
+          // Container is visible and ready
+          startScanning().catch((err) => {
+            console.error("Auto-start failed:", err);
+            setError("Failed to auto-start scanner. Click 'Start Camera Scanner' to try manually.");
+          });
+        }
+      }, 500);
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [isOpen, cameraId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, cameraId, isScanning]);
 
   // Cleanup on close
   useEffect(() => {
     if (!isOpen) {
-      stopScanning();
+      // Stop scanning when modal closes - skip clear to avoid DOM errors
+      if (scannerRef.current) {
+        const scanner = scannerRef.current;
+        scanner.stop().catch(() => {
+          // Ignore errors
+        }).finally(() => {
+          scannerRef.current = null;
+          setIsScanning(false);
+        });
+      } else {
+        setIsScanning(false);
+      }
       setError(null);
       barcodeBufferRef.current = "";
     }
@@ -316,7 +446,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         </button>
         {isScanning && (
           <button
-            onClick={stopScanning}
+            onClick={() => stopScanning(false)}
             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             Stop Scanning

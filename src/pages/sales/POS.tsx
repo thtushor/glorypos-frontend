@@ -30,6 +30,7 @@ import { successToast } from "@/utils/utils";
 import Modal from "@/components/Modal";
 import Pagination from "@/components/Pagination";
 import BarcodeScanner from "@/components/BarcodeScanner";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { ProductVariant, ProductQueryParams, Product } from "@/types/ProductType";
 import { toast } from "react-toastify";
 import { Unit, Brand } from "@/types/categoryType";
@@ -1335,12 +1336,36 @@ const POS: React.FC = () => {
         title=""
         className="max-w-2xl"
       >
-        <BarcodeScanner
-          isOpen={isBarcodeScannerOpen}
-          onClose={() => setIsBarcodeScannerOpen(false)}
-          onScan={handleBarcodeScan}
-          title="Scan Barcode"
-        />
+        <ErrorBoundary
+          onError={(error, errorInfo) => {
+            console.error("BarcodeScanner error:", error, errorInfo);
+          }}
+          fallback={
+            <div className="p-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-red-800 mb-2">
+                  Scanner Error
+                </h3>
+                <p className="text-sm text-red-700 mb-4">
+                  The barcode scanner encountered an error. Please try again or use the manual input option.
+                </p>
+                <button
+                  onClick={() => setIsBarcodeScannerOpen(false)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          }
+        >
+          <BarcodeScanner
+            isOpen={isBarcodeScannerOpen}
+            onClose={() => setIsBarcodeScannerOpen(false)}
+            onScan={handleBarcodeScan}
+            title="Scan Barcode"
+          />
+        </ErrorBoundary>
       </Modal>
 
       {/* Mobile Cart Toggle Button */}
