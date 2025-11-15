@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FaShoppingCart,
@@ -29,6 +29,7 @@ import Invoice from "@/components/Invoice";
 import { successToast } from "@/utils/utils";
 import Modal from "@/components/Modal";
 import Pagination from "@/components/Pagination";
+import BarcodeScanner from "@/components/BarcodeScanner";
 import { ProductVariant, ProductQueryParams, Product } from "@/types/ProductType";
 import { toast } from "react-toastify";
 import { Unit, Brand } from "@/types/categoryType";
@@ -272,6 +273,7 @@ const POS: React.FC = () => {
     max: 1000,
   });
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerInfo, setCustomerInfo] = useState({
@@ -386,6 +388,113 @@ const POS: React.FC = () => {
   const handleFilterChange = () => {
     setPage(1);
   };
+
+  // Handle barcode scan
+  const handleBarcodeScan = useCallback((barcode: string) => {
+    if (barcode && barcode.trim()) {
+      setSearchKey(barcode.trim());
+      setPage(1); // Reset to page 1
+      // Optionally close scanner after scan
+      setIsBarcodeScannerOpen(false);
+      toast.success(`Searching for: ${barcode.trim()}`);
+    }
+  }, []);
+
+  // Global physical barcode scanner detection (works even when modal is closed)
+  useEffect(() => {
+    let barcodeBuffer = "";
+    let barcodeTimeout: ReturnType<typeof setTimeout> | null = null;
+    let lastKeyTime = Date.now();
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input field
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        (target as HTMLElement).isContentEditable
+      ) {
+        // Check if Enter is pressed in input (could be scanner)
+        if (e.key === "Enter" && target.tagName === "INPUT") {
+          const input = target as HTMLInputElement;
+          if (input.value.trim().length > 0) {
+            // Might be a scanner, but let the input handle it normally
+            return;
+          }
+        }
+        return;
+      }
+
+      const currentTime = Date.now();
+      const timeSinceLastKey = currentTime - lastKeyTime;
+
+      // Clear buffer if too much time passed (user typing, not scanner)
+      if (timeSinceLastKey > 150) {
+        barcodeBuffer = "";
+      }
+
+      lastKeyTime = currentTime;
+
+      // Handle Enter key (physical scanners send Enter after barcode)
+      if (e.key === "Enter") {
+        if (barcodeBuffer.trim().length > 0) {
+          e.preventDefault();
+          e.stopPropagation();
+          const scannedBarcode = barcodeBuffer.trim();
+          barcodeBuffer = "";
+
+          if (scannedBarcode.length >= 3) {
+            // Valid barcode scanned
+            handleBarcodeScan(scannedBarcode);
+          }
+        }
+        if (barcodeTimeout) {
+          clearTimeout(barcodeTimeout);
+          barcodeTimeout = null;
+        }
+        return;
+      }
+
+      // Handle regular character input (not modifier keys)
+      if (
+        e.key.length === 1 &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.shiftKey &&
+        e.code !== "Space"
+      ) {
+        barcodeBuffer += e.key;
+
+        // Clear timeout
+        if (barcodeTimeout) {
+          clearTimeout(barcodeTimeout);
+        }
+
+        // Set timeout to detect slow typing (not a scanner)
+        barcodeTimeout = setTimeout(() => {
+          barcodeBuffer = "";
+        }, 200);
+      }
+
+      // Handle Escape to clear buffer
+      if (e.key === "Escape") {
+        barcodeBuffer = "";
+        if (barcodeTimeout) {
+          clearTimeout(barcodeTimeout);
+          barcodeTimeout = null;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress, true);
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress, true);
+      if (barcodeTimeout) {
+        clearTimeout(barcodeTimeout);
+      }
+    };
+  }, [handleBarcodeScan]);
 
   // Cart operations
   const addToCart = (product: CartItem) => {
@@ -1209,12 +1318,30 @@ const POS: React.FC = () => {
             </button>
           </div>
 
-          <button className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-800 text-white rounded-md hover:bg-gray-900">
+          <button 
+            onClick={() => setIsBarcodeScannerOpen(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors"
+          >
             <FaQrcode className="w-5 h-5" />
-            <span>Scan QR Code</span>
+            <span>Scan Barcode</span>
           </button>
         </div>
       </div>
+
+      {/* Barcode Scanner Modal */}
+      <Modal
+        isOpen={isBarcodeScannerOpen}
+        onClose={() => setIsBarcodeScannerOpen(false)}
+        title=""
+        className="max-w-2xl"
+      >
+        <BarcodeScanner
+          isOpen={isBarcodeScannerOpen}
+          onClose={() => setIsBarcodeScannerOpen(false)}
+          onScan={handleBarcodeScan}
+          title="Scan Barcode"
+        />
+      </Modal>
 
       {/* Mobile Cart Toggle Button */}
       <button
