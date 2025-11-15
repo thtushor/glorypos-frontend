@@ -94,8 +94,11 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       isUnmountingRef.current = true;
       isSwitchingCameraRef.current = false;
 
-      // Stop scanner if active
-      stopScannerInternal();
+      // Stop scanner if active - don't await in cleanup (React doesn't support it)
+      // stopScannerInternal always resolves, so it's safe to fire-and-forget
+      stopScannerInternal().catch(() => {
+        // Ignore errors in cleanup
+      });
     };
   }, [isOpen]);
 
@@ -156,84 +159,66 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
   // Internal stop function - doesn't update state, just stops the scanner
   // As per documentation: stop() returns a Promise
-  const stopScannerInternal = async (): Promise<void> => {
+  // Note: the class is stateful and stop() should be called to properly tear down
+  const stopScannerInternal = (): Promise<void> => {
+    console.log({current:scannerRef.current})
     if (!scannerRef.current) {
-      return;
+      return Promise.resolve();
     }
 
+    // Save reference before clearing
     const scanner = scannerRef.current;
-    scannerRef.current = null; // Clear ref immediately
+    scannerRef.current = null; // Clear ref immediately to prevent double calls
 
-    try {
-      // Try to check state first, but don't fail if getState throws
-      let shouldStop = false;
-      try {
-        const state = scanner.getState();
-        // State 2 = SCANNING
-        shouldStop = state === 2;
-      } catch (stateErr) {
-        // If getState() fails, assume we should try to stop anyway
-        // This can happen if scanner is in an invalid state
-        shouldStop = true;
-        console.warn("Could not check scanner state, attempting to stop anyway:", stateErr);
-      }
-
-      // Try to stop if needed - as per documentation, stop() returns Promise
-      if (shouldStop) {
-        try {
-          // As per documentation: stop() returns Promise for stopping the video feed
-          await scanner.stop().then((_ignore) => {
-            // QR Code scanning is stopped.
-          }).catch((stopErr: any) => {
-            // Stop failed, handle it.
-            // Ignore stop errors - scanner might already be stopped
-            // Common errors: "Scanner is not running", "Already stopped", etc.
-            const errorMessage = stopErr?.message || stopErr?.toString() || String(stopErr || "");
-            const isExpectedError = 
-              errorMessage.includes("not running") ||
-              errorMessage.includes("stopped") ||
-              errorMessage.includes("No QR code scanning in progress") ||
-              errorMessage.includes("already stopped");
-            
-            if (!isExpectedError && errorMessage) {
-              console.warn("Error stopping scanner:", stopErr);
-            }
-            // Otherwise, silently ignore expected errors
-          });
-        } catch (err) {
-          // Catch any other unexpected errors
-          console.warn("Unexpected error calling stop():", err);
+    // As per documentation: stop() returns Promise for stopping the video feed
+    return scanner.stop()
+      .then((_ignore) => {
+        // QR Code scanning is stopped.
+        // Promise resolved successfully
+        onClose();
+      })
+      .catch((err: any) => {
+        // Stop failed, handle it.
+        // Ignore expected errors - scanner might already be stopped
+        const errorMessage = err?.message || err?.toString() || String(err || "");
+        const isExpectedError = 
+          !errorMessage ||
+          errorMessage.includes("not running") ||
+          errorMessage.includes("stopped") ||
+          errorMessage.includes("No QR code scanning in progress") ||
+          errorMessage.includes("already stopped") ||
+          errorMessage.includes("Scanner is not running");
+        
+        // Only log unexpected errors
+        if (!isExpectedError) {
+          console.warn("Error stopping scanner:", err);
         }
-      }
-    } catch (err) {
-      // Catch any other unexpected errors
-      console.warn("Unexpected error in stopScannerInternal:", err);
-    }
+        // Always resolve - don't throw, even on error
+        // The scanner ref is cleared, so state is consistent
+      });
   };
 
   const stopScanning = async (): Promise<void> => {
-    if (isUnmountingRef.current) {
-      await stopScannerInternal();
-      setIsScanning(false);
-      setError(null); // Clear any errors when stopping
-      return;
-    }
-
+    // If no scanner instance, just update state
     if (!scannerRef.current) {
       setIsScanning(false);
-      setError(null); // Clear any errors when stopping
+      setError(null);
       return;
     }
 
     try {
+      // Stop scanner as per documentation
+      // stop() returns Promise and should be called to tear down properly
+      // Note: stopScannerInternal always resolves (never rejects)
       await stopScannerInternal();
       // Clear error on successful stop
       setError(null);
     } catch (err) {
-      console.error("Error stopping scanner:", err);
-      // Still update state even if there was an error
-      // Don't show error to user unless it's critical
+      // stopScannerInternal never rejects, but catch just in case
+      console.warn("Unexpected error in stopScanning:", err);
     } finally {
+      // Always update state after stopping attempt
+      // Only update if not unmounting (unmounting has its own cleanup)
       if (!isUnmountingRef.current) {
         setIsScanning(false);
       }
