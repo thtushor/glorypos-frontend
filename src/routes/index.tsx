@@ -35,6 +35,10 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import ProfilePage from "@/pages/profile/ProfilePage";
 import OtherShops from "@/pages/OtherShops";
 import Payroll from "@/pages/payroll/Payroll";
+import LeaveHistory from "@/pages/payroll/LeaveHistory";
+import PromotionHistory from "@/pages/payroll/PromotionHistory";
+import PayrollMain from "@/pages/payroll/PayrollMain";
+import ReleaseHistory from "@/pages/payroll/ReleaseHistory";
 
 const AppRoutes = () => {
   const { isLoadingProfile, user } = useAuth();
@@ -77,7 +81,12 @@ const AppRoutes = () => {
               )
             }
           />
-          <Route path="payroll" element={<Payroll />} /> {/* Added */}
+          <Route path="payroll" element={<Payroll />}>
+            <Route index element={<PayrollMain />} />
+            <Route path="leave-history" element={<LeaveHistory />} />
+            <Route path="promotion-history" element={<PromotionHistory />} />
+            <Route path="salary-history" element={<ReleaseHistory />} />
+          </Route>
         </Route>
 
         {/* Shop Only Routes */}

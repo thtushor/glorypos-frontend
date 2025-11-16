@@ -12,6 +12,7 @@ interface Action {
 }
 
 interface ActionMenuProps {
+  isLargeData: boolean;
   actions: Action[];
 }
 
@@ -97,7 +98,7 @@ const colorMap: Record<
   },
 };
 
-const ActionMenu: React.FC<ActionMenuProps> = ({ actions }) => {
+const ActionMenu: React.FC<ActionMenuProps> = ({ isLargeData, actions }) => {
   return (
     <Menu as="div" className="relative inline-block">
       {/* 3-dot button */}
@@ -122,10 +123,12 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ actions }) => {
           className={` 
             fixed inset-x-4 bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)]
             max-w-md mx-auto mb-4 rounded-t-lg shadow-xl 
-           z-50 min-h-[140px] max-h-96 overflow-y-auto p-[6px] 
+           z-50 ${
+             isLargeData ? "min-h-[200px]" : "min-h-[140px]"
+           }  overflow-y-auto p-[6px] 
             sm:absolute sm:left-[-95px] sm:top-[-20px]  sm:w-[200px]
             sm:rounded-[10px] sm:shadow-xl bg-white 
-            sm:min-h-[140px] sm:max-h-none !border-2 !outline-none !border-gray-300
+             !border-2 !outline-none !border-gray-300
           `}
         >
           <div className="absolute top-[-10px] z-[50] right-[10px] w-[18px] h-[18px] bg-gray-600 rotate-45   sm:block hidden" />
