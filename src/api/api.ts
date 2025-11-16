@@ -66,12 +66,20 @@ export const SUB_SHOPS_URL = `${BASE_URL}/sub-shops`;
 
 // Payroll APIs (Added)
 export const PAYROLL_ATTENDANCE_MULTIPLE = `${BASE_URL}/payroll/attendance/multiple`;
-export const PAYROLL_ATTENDANCE_SINGLE = `${BASE_URL}/payroll/attendance`; // Use with /:userId
+export const PAYROLL_ATTENDANCE_SINGLE = `${BASE_URL}/payroll/attendance`; // POST /:userId
 export const PAYROLL_LEAVE = `${BASE_URL}/payroll/leave`;
 export const PAYROLL_LEAVE_UPDATE = `${BASE_URL}/payroll/leave`; // Use with /:id
+export const PAYROLL_LEAVE_HISTORY = `${BASE_URL}/payroll/leave/history`; // Use with /:id
 export const PAYROLL_HOLIDAY = `${BASE_URL}/payroll/holiday`;
 export const PAYROLL_HOLIDAYS = `${BASE_URL}/payroll/holidays`;
 export const PAYROLL_PROMOTION = `${BASE_URL}/payroll/promotion`;
 export const PAYROLL_SALARY_DETAILS = `${BASE_URL}/payroll/salary`; // Use with /:userId/:month
 export const PAYROLL_RELEASE = `${BASE_URL}/payroll/release`;
 export const PAYROLL_HISTORY = `${BASE_URL}/payroll/history`; // Use with /:userId
+export const PAYROLL_ATTENDANCE_PRESENT_MULTIPLE = `${BASE_URL}/payroll/attendance/present/multiple`;
+export const PAYROLL_ATTENDANCE_ABSENT_MULTIPLE = `${BASE_URL}/payroll/attendance/absent/multiple`;
+export const PAYROLL_ATTENDANCE_DELETE = `${BASE_URL}/payroll/attendance`; // DELETE /:userId?date=...
+// === PROMOTION HISTORY (NEW) ===
+export const PAYROLL_PROMOTION_HISTORY = `${BASE_URL}/payroll/promotion/history`; // GET ?page=1&pageSize=20&status=promotion&userId=...
+export const PAYROLL_PROMOTION_HISTORY_SINGLE = `${BASE_URL}/payroll/promotion/history`; // GET /:userId
+export const PAYROLL_RELEASE_HISTORY = `${BASE_URL}/payroll/release/history`;
