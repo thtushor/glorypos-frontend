@@ -48,19 +48,19 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
           if (cameras && cameras.length > 0) {
             setAvailableCameras(cameras);
-            
+
             // Try to detect if mobile device (has front and back camera)
-            const hasFrontCamera = cameras.some(cam => 
-              cam.label?.toLowerCase().includes('front') || 
+            const hasFrontCamera = cameras.some(cam =>
+              cam.label?.toLowerCase().includes('front') ||
               cam.label?.toLowerCase().includes('user') ||
               cam.id.includes('front')
             );
-            const hasBackCamera = cameras.some(cam => 
-              cam.label?.toLowerCase().includes('back') || 
+            const hasBackCamera = cameras.some(cam =>
+              cam.label?.toLowerCase().includes('back') ||
               cam.label?.toLowerCase().includes('environment') ||
               cam.id.includes('back')
             );
-            
+
             // If mobile-like device, prefer facingMode; otherwise use device ID
             if (hasFrontCamera && hasBackCamera) {
               setCameraMode("facingMode");
@@ -69,7 +69,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
               setCameraMode("deviceId");
               setCameraId(cameras[0].id);
             }
-            
+
             setError(null);
           } else {
             setError("No cameras found. Please connect a camera or use manual input.");
@@ -83,8 +83,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             err.message?.includes("Permission") || err.message?.includes("permission")
               ? "Camera permission denied. Please allow camera access in your browser settings."
               : err.message?.includes("NotFoundError") || err.message?.includes("not found")
-              ? "No camera found. Please connect a camera or use manual input."
-              : `Failed to access cameras: ${err.message || "Unknown error"}`;
+                ? "No camera found. Please connect a camera or use manual input."
+                : `Failed to access cameras: ${err.message || "Unknown error"}`;
           setError(errorMessage);
         });
     }
@@ -161,7 +161,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   // As per documentation: stop() returns a Promise
   // Note: the class is stateful and stop() should be called to properly tear down
   const stopScannerInternal = (): Promise<void> => {
-    console.log({current:scannerRef.current})
+    console.log({ current: scannerRef.current })
     if (!scannerRef.current) {
       return Promise.resolve();
     }
@@ -175,20 +175,21 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       .then((_ignore) => {
         // QR Code scanning is stopped.
         // Promise resolved successfully
-        onClose();
+        // alert("stopped");
+        // console.log("stopped");
       })
       .catch((err: any) => {
         // Stop failed, handle it.
         // Ignore expected errors - scanner might already be stopped
         const errorMessage = err?.message || err?.toString() || String(err || "");
-        const isExpectedError = 
+        const isExpectedError =
           !errorMessage ||
           errorMessage.includes("not running") ||
           errorMessage.includes("stopped") ||
           errorMessage.includes("No QR code scanning in progress") ||
           errorMessage.includes("already stopped") ||
           errorMessage.includes("Scanner is not running");
-        
+
         // Only log unexpected errors
         if (!isExpectedError) {
           console.warn("Error stopping scanner:", err);
@@ -296,7 +297,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       scannerRef.current = html5QrCode;
 
       if (isUnmountingRef.current || isSwitchingCameraRef.current) {
-        html5QrCode.stop().catch(() => {});
+        html5QrCode.stop().catch(() => { });
         scannerRef.current = null;
         setIsScanning(false);
         return;
@@ -310,7 +311,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
       // Determine camera constraint based on mode
       let cameraConstraint: string | { facingMode: string } | { deviceId: { exact: string } };
-      
+
       if (useMode === "facingMode") {
         // Use facingMode for mobile devices as per documentation
         cameraConstraint = { facingMode: activeFacingMode };
@@ -357,7 +358,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       // Clean up failed scanner instance
       if (scannerRef.current) {
         try {
-          await scannerRef.current.stop().catch(() => {});
+          await scannerRef.current.stop().catch(() => { });
         } catch {
           // Ignore
         }
@@ -433,6 +434,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       // Stop current scanner completely using Promise as per documentation
       await stopScanning().then(() => {
         // QR Code scanning is stopped.
+        alert("stopped");
+        console.log("stopped");
       }).catch((err) => {
         console.warn("Stop error during facing mode change:", err);
       });
@@ -602,7 +605,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
               value={facingMode}
               onChange={(e) => handleFacingModeChange(e.target.value as "user" | "environment")}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-              disabled={isScanning || isSwitchingCameraRef.current}
+            disabled={isScanning || isSwitchingCameraRef.current}
             >
               <option value="environment">Back Camera</option>
               <option value="user">Front Camera</option>
@@ -617,12 +620,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             >
               {availableCameras.map((camera) => (
                 <option key={camera.id} value={camera.id}>
-                  {camera.label || 
+                  {camera.label ||
                     (camera.label?.toLowerCase().includes('front') || camera.id.includes('front')
                       ? 'Front Camera'
                       : camera.label?.toLowerCase().includes('back') || camera.id.includes('back')
-                      ? 'Back Camera'
-                      : `Camera ${camera.id.slice(0, 8)}`)}
+                        ? 'Back Camera'
+                        : `Camera ${camera.id.slice(0, 8)}`)}
                 </option>
               ))}
             </select>
@@ -645,11 +648,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         <div
           id="barcode-scanner-container"
           ref={scannerContainerRef}
-          className={`w-full bg-black rounded-lg overflow-hidden ${
-            isScanning || isSwitchingCameraRef.current
+          className={`w-full bg-black rounded-lg overflow-hidden ${isScanning || isSwitchingCameraRef.current
               ? "min-h-[300px]"
               : "min-h-[200px] flex items-center justify-center"
-          }`}
+            }`}
         >
           {!isScanning && !error && !isSwitchingCameraRef.current && (
             <div className="text-center text-white p-8">
@@ -739,7 +741,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         </button>
         {isScanning && !isSwitchingCameraRef.current && (
           <button
-            onClick={() => stopScanning()}
+            onClick={() => stopScanning().then(() => {
+              // onClose();
+            })}
             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             Stop Scanning
