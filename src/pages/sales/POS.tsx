@@ -16,13 +16,13 @@ import {
   FaSearch,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
-import { 
-  CATEGORY_URL, 
+import {
+  CATEGORY_URL,
   BRANDS_URL,
   UNITS_URL,
   ORDERS_URL,
   SUB_SHOPS_URL,
-  fetchProducts 
+  fetchProducts
 } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import Invoice from "@/components/Invoice";
@@ -35,6 +35,7 @@ import { ProductVariant, ProductQueryParams, Product } from "@/types/ProductType
 import { toast } from "react-toastify";
 import { Unit, Brand } from "@/types/categoryType";
 import { Color, Category } from "@/types/categoryType";
+import { useAuth } from "@/context/AuthContext";
 
 // Product interface is now imported from types
 
@@ -190,35 +191,31 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
                   key={variant.id}
                   onClick={() => setSelectedVariant(variant)}
                   disabled={variant.quantity === 0}
-                  className={`relative group rounded-lg overflow-hidden transition-all ${
-                    variant.quantity === 0
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                  }`}
+                  className={`relative group rounded-lg overflow-hidden transition-all ${variant.quantity === 0
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                    }`}
                 >
                   <div className="aspect-square">
                     <img
                       src={variant.imageUrl}
                       alt={`${variant.Color?.name} / ${variant.Size?.name}`}
-                      className={`w-full h-full object-cover transition-transform duration-300 ${
-                        selectedVariant?.id === variant.id
-                          ? "scale-110"
-                          : "group-hover:scale-105"
-                      }`}
+                      className={`w-full h-full object-cover transition-transform duration-300 ${selectedVariant?.id === variant.id
+                        ? "scale-110"
+                        : "group-hover:scale-105"
+                        }`}
                     />
                     <div
-                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
-                        selectedVariant?.id === variant.id
-                          ? "bg-black/40"
-                          : "bg-black/0 group-hover:bg-black/20"
-                      }`}
+                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${selectedVariant?.id === variant.id
+                        ? "bg-black/40"
+                        : "bg-black/0 group-hover:bg-black/20"
+                        }`}
                     >
                       <div
-                        className={`px-3 py-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg transform transition-all duration-300 ${
-                          selectedVariant?.id === variant.id
-                            ? "scale-100 opacity-100"
-                            : "scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100"
-                        }`}
+                        className={`px-3 py-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg transform transition-all duration-300 ${selectedVariant?.id === variant.id
+                          ? "scale-100 opacity-100"
+                          : "scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100"
+                          }`}
                       >
                         <span className="text-sm font-medium">
                           {variant.Size?.name}
@@ -264,7 +261,9 @@ const POS: React.FC = () => {
   const pageSize = 20;
 
   // Filter states for API
+  const { user } = useAuth();
   const [searchKey, setSearchKey] = useState("");
+  const [sku, setSku] = useState("");
   const [shopId, setShopId] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | "all">("all");
   const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
@@ -304,6 +303,7 @@ const POS: React.FC = () => {
     const params: ProductQueryParams = {
       page,
       pageSize,
+      status: "active"
     };
 
     if (searchKey) params.searchKey = searchKey;
@@ -311,7 +311,8 @@ const POS: React.FC = () => {
     if (selectedCategory !== "all") params.categoryId = selectedCategory;
     if (selectedBrand !== "all") params.brandId = selectedBrand;
     if (selectedUnit !== "all") params.unitId = selectedUnit;
-    
+
+
     // Add price range filters
     if (priceRange.min !== undefined && priceRange.min !== null && priceRange.min > 0) {
       params.minPrice = priceRange.min;
@@ -320,8 +321,12 @@ const POS: React.FC = () => {
       params.maxPrice = priceRange.max;
     }
 
+    if (sku) {
+      params.sku = sku;
+    }
+
     return params;
-  }, [page, pageSize, searchKey, shopId, selectedCategory, selectedBrand, selectedUnit, priceRange]);
+  }, [page, pageSize, searchKey, sku, shopId, selectedCategory, selectedBrand, selectedUnit, priceRange]);
 
   // Products query with pagination
   const {
@@ -393,7 +398,8 @@ const POS: React.FC = () => {
   // Handle barcode scan
   const handleBarcodeScan = useCallback((barcode: string) => {
     if (barcode && barcode.trim()) {
-      setSearchKey(barcode.trim());
+      // setSearchKey(barcode.trim());
+      setSku(barcode.trim())
       setPage(1); // Reset to page 1
       // Optionally close scanner after scan
       setIsBarcodeScannerOpen(false);
@@ -568,8 +574,6 @@ const POS: React.FC = () => {
   const taxAmount = calculateTax();
   const discountAmount = calculateDiscount();
   const total = subtotal - discountAmount + taxAmount;
-
-  console.log(total);
   // Cart items count
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -730,27 +734,47 @@ const POS: React.FC = () => {
     <div className=" flex flex-col lg:flex-row gap-6 relative">
       {/* Products Section */}
       <div
-        className={`flex-1 flex flex-col  bg-white rounded-lg shadow overflow-hidden ${
-          showMobileCart ? "hidden xl:flex" : "flex"
-        }`}
+        className={`flex-1 flex flex-col  bg-white rounded-lg shadow overflow-hidden ${showMobileCart ? "hidden xl:flex" : "flex"
+          }`}
       >
         {/* Search and Filters */}
         <div className="border-b bg-white">
           {/* Search Bar - Always Visible */}
-          <div className="p-3 md:p-4 border-b bg-gray-50">
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchKey}
-                onChange={(e) => {
-                  setSearchKey(e.target.value);
-                  handleFilterChange();
-                }}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary bg-white"
-              />
+          <div>
+            <div className="p-3 md:p-4 border-b bg-gray-50">
+              <div className="relative">
+                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchKey}
+                  onChange={(e) => {
+                    setSearchKey(e.target.value);
+                    handleFilterChange();
+                  }}
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary bg-white"
+                />
+              </div>
+
+              {sku && (
+                <div className="inline-flex mt-4 items-center gap-2 bg-gray-100 text-gray-700 px-3 py-1 rounded-full border border-gray-300">
+                  <span><strong>Scanned:</strong> {sku}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSku("")
+                    }}
+                    className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-full transition"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
             </div>
+
+
+
+
           </div>
 
           {/* Expandable Filters Section */}
@@ -763,16 +787,16 @@ const POS: React.FC = () => {
               <div className="flex items-center gap-2">
                 <FaFilter className="text-gray-600" />
                 <span className="font-medium text-gray-700">Filters</span>
-                {(selectedCategory !== "all" || 
-                  selectedBrand !== "all" || 
+                {(selectedCategory !== "all" ||
+                  selectedBrand !== "all" ||
                   selectedUnit !== "all" ||
                   shopId !== "" ||
-                  priceRange.min > 0 || 
+                  priceRange.min > 0 ||
                   priceRange.max > 0) && (
-                  <span className="px-2 py-0.5 bg-brand-primary text-white text-xs rounded-full">
-                    Active
-                  </span>
-                )}
+                    <span className="px-2 py-0.5 bg-brand-primary text-white text-xs rounded-full">
+                      Active
+                    </span>
+                  )}
               </div>
               {isFiltersExpanded ? (
                 <FaChevronUp className="text-gray-500" />
@@ -783,9 +807,8 @@ const POS: React.FC = () => {
 
             {/* Expandable Filter Content */}
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                isFiltersExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-              }`}
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${isFiltersExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                }`}
             >
               <div className="p-4 space-y-4 bg-gray-50">
                 {/* Filters Grid - 2 Columns */}
@@ -879,7 +902,7 @@ const POS: React.FC = () => {
                           Loading shops...
                         </option>
                       ) : (
-                        shops.map((shop: any) => (
+                        [{ id: user?.id, ...user }, ...shops].map((shop: any) => (
                           <option key={shop.id} value={shop.id}>
                             {shop.businessName || shop.fullName}
                           </option>
@@ -936,124 +959,122 @@ const POS: React.FC = () => {
                   <div
                     key={product.id}
                     className="bg-white rounded-lg shadow hover:shadow-md transition-all"
-              >
-                {/* Product Image */}
-                <div className="relative aspect-square">
-                  <img
-                    src={
-                      selectedVariants[product.id]
-                        ? product.ProductVariants.find(
-                            (v) => v.id === selectedVariants[product.id]
-                          )?.imageUrl
-                        : product.ProductVariants?.length > 0
-                        ? product.ProductVariants[0]?.imageUrl
-                        : product.productImage
-                    }
-                    alt={product.name}
-                    className="w-full h-full object-cover rounded-t-lg"
-                  />
-                </div>
-
-                {/* Product Card Content */}
-                <div className="p-4">
-                  <h3
-                    className="font-medium text-gray-900 line-clamp-1 text-ellipsis cursor-pointer"
-                    title={product.name}
                   >
-                    {product.name}
-                  </h3>
-
-                  {/* Price */}
-                  <div className="mt-1 text-brand-primary font-medium">
-                    ${Number(product.price).toFixed(2)}
-                  </div>
-
-                  {/* Improved Variant Preview */}
-                  {product.ProductVariants?.length > 0 && (
-                    <div className="mt-3">
-                      <div className="flex flex-col items-start gap-1.5">
-                        <span className="text-xs text-gray-500">
-                          Available variants:
-                        </span>
-                        <div className="flex items-center">
-                          {product.ProductVariants.slice(0, 4).map(
-                            (variant, index) => (
-                              <div
-                                key={index}
-                                className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${
-                                  selectedVariants[product.id] === variant.id
-                                    ? "z-10 ring-2 rounded-full ring-brand-primary"
-                                    : ""
-                                }`}
-                              >
-                                <img
-                                  src={variant.imageUrl}
-                                  alt={`${variant.Color?.name} ${variant.Size?.name}`}
-                                  onClick={() =>
-                                    setSelectedVariants({
-                                      [product.id]: variant.id,
-                                    })
-                                  }
-                                  className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm"
-                                />
-                                {/* Tooltip */}
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap">
-                                  {variant.Color?.name} - {variant.Size?.name}
-                                </div>
-                                {/* Stock Badge */}
-                                {variant.quantity < 5 && (
-                                  <span
-                                    className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border border-white rounded-full"
-                                    title={`Only ${variant.quantity} left`}
-                                  />
-                                )}
-                              </div>
-                            )
-                          )}
-                          {product.ProductVariants.length > 4 && (
-                            <div className="relative -ml-1 group cursor-pointer">
-                              <div className="w-7 h-7 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-xs font-medium text-gray-600 shadow-sm hover:bg-gray-100">
-                                +{product.ProductVariants.length - 4}
-                              </div>
-                              {/* Tooltip */}
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                                {product.ProductVariants.length - 4} more
-                                variants
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                    {/* Product Image */}
+                    <div className="relative aspect-square">
+                      <img
+                        src={
+                          selectedVariants[product.id]
+                            ? product.ProductVariants.find(
+                              (v) => v.id === selectedVariants[product.id]
+                            )?.imageUrl
+                            : product.ProductVariants?.length > 0
+                              ? product.ProductVariants[0]?.imageUrl
+                              : product.productImage
+                        }
+                        alt={product.name}
+                        className="w-full h-full object-cover rounded-t-lg"
+                      />
                     </div>
-                  )}
 
-                  <div className="mt-2 flex items-center gap-2">
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        getTotalStock(product) > 10
-                          ? "bg-green-500"
-                          : getTotalStock(product) > 5
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
-                      }`}
-                    />
-                    <span className="text-xs text-gray-500">
-                      {getTotalStock(product)} in stock
-                    </span>
+                    {/* Product Card Content */}
+                    <div className="p-4">
+                      <h3
+                        className="font-medium text-gray-900 line-clamp-1 text-ellipsis cursor-pointer"
+                        title={product.name}
+                      >
+                        {product.name}
+                      </h3>
+
+                      {/* Price */}
+                      <div className="mt-1 text-brand-primary font-medium">
+                        ${Number(product.price).toFixed(2)}
+                      </div>
+
+                      {/* Improved Variant Preview */}
+                      {product.ProductVariants?.length > 0 && (
+                        <div className="mt-3">
+                          <div className="flex flex-col items-start gap-1.5">
+                            <span className="text-xs text-gray-500">
+                              Available variants:
+                            </span>
+                            <div className="flex items-center">
+                              {product.ProductVariants.slice(0, 4).map(
+                                (variant, index) => (
+                                  <div
+                                    key={index}
+                                    className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${selectedVariants[product.id] === variant.id
+                                      ? "z-10 ring-2 rounded-full ring-brand-primary"
+                                      : ""
+                                      }`}
+                                  >
+                                    <img
+                                      src={variant.imageUrl}
+                                      alt={`${variant.Color?.name} ${variant.Size?.name}`}
+                                      onClick={() =>
+                                        setSelectedVariants({
+                                          [product.id]: variant.id,
+                                        })
+                                      }
+                                      className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm"
+                                    />
+                                    {/* Tooltip */}
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap">
+                                      {variant.Color?.name} - {variant.Size?.name}
+                                    </div>
+                                    {/* Stock Badge */}
+                                    {variant.quantity < 5 && (
+                                      <span
+                                        className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border border-white rounded-full"
+                                        title={`Only ${variant.quantity} left`}
+                                      />
+                                    )}
+                                  </div>
+                                )
+                              )}
+                              {product.ProductVariants.length > 4 && (
+                                <div className="relative -ml-1 group cursor-pointer">
+                                  <div className="w-7 h-7 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-xs font-medium text-gray-600 shadow-sm hover:bg-gray-100">
+                                    +{product.ProductVariants.length - 4}
+                                  </div>
+                                  {/* Tooltip */}
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                                    {product.ProductVariants.length - 4} more
+                                    variants
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="mt-2 flex items-center gap-2">
+                        <span
+                          className={`w-2 h-2 rounded-full ${getTotalStock(product) > 10
+                            ? "bg-green-500"
+                            : getTotalStock(product) > 5
+                              ? "bg-yellow-500"
+                              : "bg-red-500"
+                            }`}
+                        />
+                        <span className="text-xs text-gray-500">
+                          {getTotalStock(product)} in stock
+                        </span>
+                      </div>
+
+                      {/* Add to Cart Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleAddToCart(product)}
+                        className="mt-4 w-full md:font-medium text-[14px] px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
+                      >
+                        Add to Cart
+                      </button>
+                    </div>
                   </div>
-
-                  {/* Add to Cart Button */}
-                  <button
-                    type="button"
-                    onClick={() => handleAddToCart(product)}
-                    className="mt-4 w-full md:font-medium text-[14px] px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
-                  >
-                    Add to Cart
-                  </button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
 
               {/* Pagination */}
               {pagination.totalPages > 0 && (
@@ -1076,9 +1097,8 @@ const POS: React.FC = () => {
 
       {/* Cart Section - Desktop */}
       <div
-        className={` bg-white rounded-lg shadow flex flex-col xl:flex ${
-          showMobileCart ? "flex" : "hidden"
-        }`}
+        className={` bg-white rounded-lg shadow flex flex-col xl:flex ${showMobileCart ? "flex" : "hidden"
+          }`}
       >
         {/* Mobile Cart Header */}
         <div className="xl:hidden flex items-center justify-between p-4 border-b">
@@ -1319,7 +1339,7 @@ const POS: React.FC = () => {
             </button>
           </div>
 
-          <button 
+          <button
             onClick={() => setIsBarcodeScannerOpen(true)}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors"
           >
@@ -1333,7 +1353,7 @@ const POS: React.FC = () => {
       <Modal
         isOpen={isBarcodeScannerOpen}
         onClose={() => setIsBarcodeScannerOpen(false)}
-        title=""
+        title="Barcode Scanner"
         className="max-w-2xl"
       >
         <ErrorBoundary
@@ -1371,9 +1391,8 @@ const POS: React.FC = () => {
       {/* Mobile Cart Toggle Button */}
       <button
         onClick={() => setShowMobileCart(true)}
-        className={`xl:hidden fixed bottom-4 right-4 bg-brand-primary text-white p-4 rounded-full shadow-lg ${
-          showMobileCart ? "hidden" : "flex"
-        } items-center justify-center`}
+        className={`xl:hidden fixed bottom-4 right-4 bg-brand-primary text-white p-4 rounded-full shadow-lg ${showMobileCart ? "hidden" : "flex"
+          } items-center justify-center`}
       >
         <div className="relative">
           <FaShoppingCart className="w-6 h-6" />

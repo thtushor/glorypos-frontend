@@ -3,12 +3,14 @@ import { FaSearch } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import { SUB_SHOPS_URL } from "@/api/api";
 import Spinner from "@/components/Spinner";
+import { useAuth } from "@/context/AuthContext";
 
 interface SubShop {
   id: number;
   fullName: string;
   email: string;
   businessName: string;
+  accountType: string;
 }
 
 interface SubShopResponse {
@@ -36,6 +38,8 @@ const InventoryFilters = ({
   onShopIdChange,
   searchPlaceholder = "Search...",
 }: InventoryFiltersProps) => {
+
+  const { user } = useAuth();
   // Fetch all shops with pageSize 1000000
   const { data: shopData, isLoading: isLoadingShops } = useQuery<SubShopResponse>({
     queryKey: ["sub-shops-for-filter"],
@@ -78,9 +82,9 @@ const InventoryFilters = ({
               Loading shops...
             </option>
           ) : (
-            shopData?.users?.map((shop) => (
-              <option key={shop.id} value={shop.id}>
-                {shop.businessName || shop.fullName}
+            ([{ ...(user as unknown as SubShop) }, ...(shopData?.users || [])])?.map((shop: SubShop) => (
+              <option key={shop?.id} value={shop?.id}>
+                {shop?.businessName || shop?.fullName}
               </option>
             ))
           )}

@@ -84,8 +84,6 @@ const Products: React.FC = () => {
   // Additional state
   const [imagePreview, setImagePreview] = useState<string>("");
 
-  console.log(imagePreview);
-
   // Add state for selected variant
   const [selectedVariants, setSelectedVariants] = useState<
     Record<number, number>
