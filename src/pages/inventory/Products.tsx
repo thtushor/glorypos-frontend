@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import {
@@ -25,6 +25,7 @@ import { Brand, Unit } from "@/types/categoryType";
 import { Category } from "@/types/categoryType";
 import BarcodeModal from "@/components/BarcodeModal";
 import InventoryFilters from "@/components/shared/InventoryFilters";
+import { useAuth } from "@/context/AuthContext";
 
 // Add this interface at the top
 
@@ -39,6 +40,9 @@ interface ViewModalProps {
 const Products: React.FC = () => {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { user } = useAuth();
+  const currentShopId = user?.child?.id ?? user?.id;
+  const hasAppliedDefaultShop = useRef(false);
   
   // Pagination state
   const [page, setPage] = useState(1);
@@ -50,6 +54,13 @@ const Products: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<number | "all">("all");
   const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
   const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
+
+  useEffect(() => {
+    if (!hasAppliedDefaultShop.current && currentShopId) {
+      setShopId(String(currentShopId));
+      hasAppliedDefaultShop.current = true;
+    }
+  }, [currentShopId]);
   
   // Price range filter for API
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
@@ -80,9 +91,6 @@ const Products: React.FC = () => {
     stock: 0,
     status: "active",
   });
-
-  // Additional state
-  const [imagePreview, setImagePreview] = useState<string>("");
 
   // Add state for selected variant
   const [selectedVariants, setSelectedVariants] = useState<
@@ -197,7 +205,6 @@ const Products: React.FC = () => {
       stock: product.stock,
       status: product.status,
     });
-    setImagePreview("");
     setIsModalOpen(true);
   };
 

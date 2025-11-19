@@ -31,6 +31,7 @@ import Spinner from "../Spinner";
 import { ProductFormData } from "@/types/ProductType";
 import ProductVariantForm from "./ProductVariantForm";
 import ToggleSwitch from "./ToggleSwitch";
+import { useAuth } from "@/context/AuthContext";
 
 function AddProduct({
   productData,
@@ -40,8 +41,14 @@ function AddProduct({
   onClose: () => void;
 }) {
   const queryClient = useQueryClient();
-
+  const { user } = useAuth();
+  const currentShopId = user?.child?.id ?? user?.id;
   const [enableVariants, setEnableVariants] = useState(false);
+
+  // Helper function to build API params with shopId
+  const getApiParams = () => {
+    return currentShopId ? { shopId: currentShopId } : {};
+  };
 
   const [productId, setProductId] = useState<number | undefined>(
     productData.id
@@ -79,17 +86,21 @@ function AddProduct({
 
   // Fetch colors and sizes
   const { data: colors = [] } = useQuery({
-    queryKey: ["colors"],
+    queryKey: ["colors", currentShopId],
     queryFn: async () => {
-      const response = await AXIOS.get(COLORS_URL);
+      const response = await AXIOS.get(COLORS_URL, {
+        params: getApiParams(),
+      });
       return response.data;
     },
   });
 
   const { data: sizes = [] } = useQuery({
-    queryKey: ["sizes"],
+    queryKey: ["sizes", currentShopId],
     queryFn: async () => {
-      const response = await AXIOS.get(SIZES_URL);
+      const response = await AXIOS.get(SIZES_URL, {
+        params: getApiParams(),
+      });
       return response.data;
     },
   });
@@ -189,11 +200,9 @@ function AddProduct({
     }
   };
 
+  // Handler for input and textarea elements
   const handleInputChange = (
-    e:
-      | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<HTMLTextAreaElement>
-      | React.ChangeEvent<HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
 
@@ -231,26 +240,70 @@ function AddProduct({
     });
   };
 
+  // Handler for select elements
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+
+    setFormData((prevFormData) => {
+      const updatedData = { ...prevFormData, [name]: value };
+
+      // Recalculate prices when related fields change
+      if (
+        name === "salesPrice" ||
+        name === "discountType" ||
+        name === "discountAmount" ||
+        name === "vat"
+      ) {
+        const salesPrice = Number(updatedData.salesPrice || 0);
+        const discountType = updatedData.discountType;
+        const discountAmount = Number(updatedData.discountAmount || 0);
+        const vat = Number(updatedData.vat || 0);
+
+        let discountedPrice = salesPrice;
+
+        // Apply discount
+        if (discountType === "percentage") {
+          discountedPrice -= (salesPrice * discountAmount) / 100;
+        } else if (discountType === "amount") {
+          discountedPrice -= discountAmount;
+        }
+
+        // Apply VAT
+        const finalPrice = discountedPrice + (discountedPrice * vat) / 100;
+
+        updatedData.price = Math.max(Number((finalPrice).toFixed(2)), 0); // Ensure price is not negative
+      }
+
+      return updatedData;
+    });
+  };
+
   const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ["categories"],
+    queryKey: ["categories", currentShopId],
     queryFn: async () => {
-      const response = await AXIOS.get(CATEGORY_URL);
+      const response = await AXIOS.get(CATEGORY_URL, {
+        params: getApiParams(),
+      });
       return response.data;
     },
   });
 
   const { data: brands = [] } = useQuery<Brand[]>({
-    queryKey: ["brands"],
+    queryKey: ["brands", currentShopId],
     queryFn: async () => {
-      const response = await AXIOS.get(BRANDS_URL);
+      const response = await AXIOS.get(BRANDS_URL, {
+        params: getApiParams(),
+      });
       return response.data;
     },
   });
 
   const { data: units = [] } = useQuery<Unit[]>({
-    queryKey: ["units"],
+    queryKey: ["units", currentShopId],
     queryFn: async () => {
-      const response = await AXIOS.get(UNITS_URL);
+      const response = await AXIOS.get(UNITS_URL, {
+        params: getApiParams(),
+      });
       return response.data;
     },
   });
@@ -497,7 +550,7 @@ function AddProduct({
           </label>
           <select
             value={formData.discountType || ""}
-            onChange={handleInputChange}
+            onChange={handleSelectChange}
             name="discountType"
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
           >
@@ -621,7 +674,7 @@ function AddProduct({
           </label>
           <select
             value={formData.status}
-            onChange={handleInputChange}
+            onChange={handleSelectChange}
             name="status"
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
             required

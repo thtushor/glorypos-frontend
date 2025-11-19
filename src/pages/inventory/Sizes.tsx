@@ -58,6 +58,9 @@ const Sizes = () => {
     },
   });
 
+
+  console.log({sizes})
+  
   // Create Size Mutation
   const createMutation = useMutation({
     mutationFn: (data: SizeFormData) => AXIOS.post(SIZES_URL, data),

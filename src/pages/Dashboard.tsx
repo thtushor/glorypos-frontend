@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -21,6 +21,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ORDERS_URL } from "@/api/api";
 import AXIOS from "@/api/network/Axios";
 import Spinner from "@/components/Spinner";
+import InventoryFilters from "@/components/shared/InventoryFilters";
+import { useAuth } from "@/context/AuthContext";
 
 interface DashboardStats {
   totalSales: number;
@@ -54,6 +56,8 @@ interface TopProduct {
 }
 
 const Dashboard: React.FC = () => {
+  const { user } = useAuth();
+  const defaultShopId = user?.child?.id ?? user?.id;
   // Sample data for charts
   // const salesData = [
   //   { name: "Jan", sales: 4000 },
@@ -80,36 +84,76 @@ const Dashboard: React.FC = () => {
       .toISOString()
       .split("T")[0],
   });
+  const [searchKey, setSearchKey] = useState("");
+  const [shopId, setShopId] = useState("");
+  const hasAppliedDefaultShop = useRef(false);
+
+  useEffect(() => {
+    if (!hasAppliedDefaultShop.current && defaultShopId) {
+      setShopId(String(defaultShopId));
+      hasAppliedDefaultShop.current = true;
+    }
+  }, [defaultShopId]);
 
   // Fetch dashboard stats
   const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ["dashboard-stats", dateRange],
+    queryKey: ["dashboard-stats", dateRange, shopId],
     queryFn: async () => {
-      const response = await AXIOS.get(
-        `${ORDERS_URL}/dashboard?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`
-      );
+      const response = await AXIOS.get(`${ORDERS_URL}/dashboard`, {
+        params: {
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate,
+          ...(shopId ? { shopId } : {}),
+        },
+      });
       return response.data;
     },
   });
 
   const { data: chartsData, isLoading: chartsIsLoading } =
     useQuery<ChartDataArray>({
-      queryKey: ["chart-stats", dateRange],
+      queryKey: ["chart-stats", dateRange, shopId],
       queryFn: async () => {
         const response = await AXIOS.get(
-          `${ORDERS_URL}/report/chart/sales?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`
+          `${ORDERS_URL}/report/chart/sales`,
+          {
+            params: {
+              startDate: dateRange.startDate,
+              endDate: dateRange.endDate,
+              ...(shopId ? { shopId } : {}),
+            },
+          }
         );
         return response.data?.chartData;
       },
     });
 
   const { data: topProducts } = useQuery<TopProduct[]>({
-    queryKey: ["top-products"],
+    queryKey: ["top-products", shopId],
     queryFn: async () => {
-      const response = await AXIOS.get(`${ORDERS_URL}/report/top-items`);
+      const response = await AXIOS.get(`${ORDERS_URL}/report/top-items`, {
+        params: {
+          ...(shopId ? { shopId } : {}),
+        },
+      });
       return response.data;
     },
   });
+
+  const filteredTopProducts = useMemo(() => {
+    if (!topProducts) {
+      return [];
+    }
+    const trimmedSearch = searchKey.trim().toLowerCase();
+    if (!trimmedSearch) {
+      return topProducts;
+    }
+    return topProducts.filter((product) => {
+      const name = (product.name || "").toLowerCase();
+      const sku = (product.sku || "").toLowerCase();
+      return name.includes(trimmedSearch) || sku.includes(trimmedSearch);
+    });
+  }, [topProducts, searchKey]);
 
   if (isLoading || chartsIsLoading) {
     return (
@@ -121,6 +165,13 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <InventoryFilters
+        searchKey={searchKey}
+        shopId={shopId}
+        onSearchKeyChange={setSearchKey}
+        onShopIdChange={(value) => setShopId(value)}
+        searchPlaceholder="Search products or SKU..."
+      />
       {/* Date Filter */}
       <div className="mb-6 flex items-center gap-4">
         <div className="flex items-center gap-2">
@@ -313,7 +364,7 @@ const Dashboard: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {topProducts?.map((product, index) => (
+              {filteredTopProducts.map((product, index) => (
                 <tr
                   key={product.sku}
                   className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}

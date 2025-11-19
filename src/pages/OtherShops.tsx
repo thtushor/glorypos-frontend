@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FaSearch, FaEdit, FaFilter, FaPlus } from "react-icons/fa";
+import { FaSearch, FaEdit, FaFilter, FaPlus, FaPercent } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import { toast } from "react-toastify";
 import Pagination from "@/components/Pagination";
@@ -40,6 +40,7 @@ interface SubShop {
   parentId?: number;
   password?: string;
   ignoreEmailVerification?: boolean;
+  stuffCommission?: number;
 }
 
 interface SubShopResponse {
@@ -358,6 +359,9 @@ const OtherShops = () => {
               businessName: formData.get("businessName") as string,
               businessType: formData.get("businessType") as string,
               password: formData.get("password") as string,
+              stuffCommission: formData.get("stuffCommission")
+                ? Number(formData.get("stuffCommission"))
+                : undefined,
             });
           }}
           className="space-y-4"
@@ -453,6 +457,19 @@ const OtherShops = () => {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Stuff Sell Commission (%)
+              </label>
+              <InputWithIcon
+                type="number"
+                name="stuffCommission"
+                icon={FaPercent}
+                step="0.01"
+                placeholder="Enter commission percentage"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-2">
@@ -500,6 +517,9 @@ const OtherShops = () => {
                   | "super admin"
                   | "admin"
                   | "shop",
+                stuffCommission: formData.get("stuffCommission")
+                  ? Number(formData.get("stuffCommission"))
+                  : undefined,
               });
             }}
             className="space-y-4"
@@ -619,6 +639,20 @@ const OtherShops = () => {
                   <option value="super admin">Super Admin</option>
                   <option value="shop">Shop</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Stuff Sell Commission (%)
+                </label>
+                <InputWithIcon
+                  type="number"
+                  name="stuffCommission"
+                  icon={FaPercent}
+                  step="0.01"
+                  defaultValue={selectedShop.stuffCommission?.toString() || ""}
+                  placeholder="Enter commission percentage"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                />
               </div>
             </div>
 
