@@ -22,6 +22,7 @@ import {
   UNITS_URL,
   ORDERS_URL,
   SUB_SHOPS_URL,
+  CHILD_USERS_URL,
   fetchProducts
 } from "@/api/api";
 import Spinner from "@/components/Spinner";
@@ -290,6 +291,8 @@ const POS: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     "cash" | "card"
   >("cash");
+  const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null);
+  const [showStaffModal, setShowStaffModal] = useState(false);
   const [adjustments, setAdjustments] = useState<CartAdjustments>({
     tax: { type: "percentage", value: 0 },
     discount: { type: "percentage", value: 0 },
@@ -389,6 +392,25 @@ const POS: React.FC = () => {
   });
 
   const shops = shopData?.users || [];
+
+  // Fetch Active Staff/Child Users
+  const { data: staffData, isLoading: isLoadingStaff } = useQuery({
+    queryKey: ["active-staff"],
+    queryFn: async () => {
+      const response = await AXIOS.get(CHILD_USERS_URL, {
+        params: {
+          page: 1,
+          pageSize: 10000,
+          status: "active",
+        },
+      });
+      return response.data;
+    },
+  });
+
+  const activeStaffs = staffData?.users?.filter(
+    (staff: any) => staff.status === "active"
+  ) || [];
 
   // Reset to page 1 when filters change
   const handleFilterChange = () => {
@@ -598,6 +620,7 @@ const POS: React.FC = () => {
         discount: calculateDiscount(),
         subtotal: subtotal,
         total: subtotal - calculateDiscount() + calculateTax(),
+        ...(selectedStaffId && { stuffId: selectedStaffId }),
       };
 
       const response = await AXIOS.post(ORDERS_URL, orderData);
@@ -607,6 +630,7 @@ const POS: React.FC = () => {
       setCurrentOrder(data);
       setShowInvoice(true);
       setCart([]);
+      setSelectedStaffId(null); // Reset staff selection after order
       setAdjustments({
         tax: { type: "percentage", value: 0 },
         discount: { type: "percentage", value: 0 },
@@ -627,7 +651,21 @@ const POS: React.FC = () => {
       toast.error("Cart is empty");
       return;
     }
+    // Show staff selection modal if no staff is selected
+    if (!selectedStaffId) {
+      setShowStaffModal(true);
+      return;
+    }
     createOrderMutation.mutate(cart);
+  };
+
+  const handleStaffSelect = (staffId: number) => {
+    setSelectedStaffId(staffId);
+    setShowStaffModal(false);
+    // Proceed with order creation after staff selection
+    if (cart.length > 0) {
+      createOrderMutation.mutate(cart);
+    }
   };
 
   const handlePrintInvoice = () => {
@@ -902,11 +940,16 @@ const POS: React.FC = () => {
                           Loading shops...
                         </option>
                       ) : (
-                        [{ id: user?.id, ...user }, ...shops].map((shop: any) => (
-                          <option key={shop.id} value={shop.id}>
-                            {shop.businessName || shop.fullName}
-                          </option>
-                        ))
+                        [
+                          ...(user?.id ? [{ id: user.id, ...user }] : []),
+                          ...shops,
+                        ]
+                          .filter((shop: any) => shop?.id != null)
+                          .map((shop: any) => (
+                            <option key={shop.id} value={shop.id}>
+                              {shop.businessName || shop.fullName}
+                            </option>
+                          ))
                       )}
                     </select>
                   </div>
@@ -1308,12 +1351,59 @@ const POS: React.FC = () => {
             </div>
           </div>
 
+          {/* Staff Selection */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Staff <span className="text-red-500">*</span>
+            </label>
+            <div
+              onClick={() => setShowStaffModal(true)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white cursor-pointer hover:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary transition-colors"
+            >
+              {selectedStaffId ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="font-medium text-gray-900">
+                      {
+                        activeStaffs.find(
+                          (staff: any) => staff.id === selectedStaffId
+                        )?.fullName
+                      }
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {
+                        activeStaffs.find(
+                          (staff: any) => staff.id === selectedStaffId
+                        )?.parent?.businessName
+                      }{" "}
+                      (ID: {selectedStaffId})
+                    </span>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedStaffId(null);
+                    }}
+                    className="text-gray-400 hover:text-red-500"
+                  >
+                    <FaTimes className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between text-gray-500">
+                  <span>Click to select staff</span>
+                  <FaChevronDown className="w-4 h-4" />
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Payment Methods */}
           <div className="grid grid-cols-2 gap-2 mb-4">
             <button
               onClick={() => handlePayment("card")}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover"
-              disabled={createOrderMutation.isPending}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={createOrderMutation.isPending || !selectedStaffId}
             >
               {createOrderMutation?.isPending ? (
                 <Spinner size="16px" />
@@ -1325,8 +1415,8 @@ const POS: React.FC = () => {
             </button>
             <button
               onClick={() => handlePayment("cash")}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-              disabled={createOrderMutation.isPending}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={createOrderMutation.isPending || !selectedStaffId}
             >
               {createOrderMutation?.isPending ? (
                 <Spinner size="16px" />
@@ -1435,6 +1525,70 @@ const POS: React.FC = () => {
             onClose={() => setVariantProduct(null)}
           />
         )}
+      </Modal>
+
+      {/* Staff Selection Modal */}
+      <Modal
+        isOpen={showStaffModal}
+        onClose={() => setShowStaffModal(false)}
+        title="Select Staff"
+        className="max-w-2xl"
+      >
+        <div className="space-y-4">
+          {isLoadingStaff ? (
+            <div className="flex justify-center items-center py-8">
+              <Spinner color="#32cd32" size="40px" />
+            </div>
+          ) : activeStaffs.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No active staff available
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
+              {activeStaffs.map((staff: any) => (
+                <button
+                  key={staff.id}
+                  onClick={() => handleStaffSelect(staff.id)}
+                  className={`w-full text-left p-4 border-2 rounded-lg transition-all hover:shadow-md ${
+                    selectedStaffId === staff.id
+                      ? "border-brand-primary bg-brand-primary/5"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-gray-900">
+                          {staff.fullName}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          (ID: {staff.id})
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {staff.parent?.businessName || "N/A"}
+                      </div>
+                      {staff.role && (
+                        <div className="mt-1">
+                          <span className="inline-block px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-full capitalize">
+                            {staff.role}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {selectedStaffId === staff.id && (
+                      <div className="ml-4">
+                        <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center">
+                          <span className="text-white text-xs">✓</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );
