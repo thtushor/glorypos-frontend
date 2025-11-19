@@ -29,6 +29,11 @@ const Payroll = () => {
       icon: FaCalendarTimes,
     },
     {
+      name: "Holiday History",
+      path: "/payroll/holiday-history",
+      icon: FaCalendarTimes,
+    },
+    {
       name: "Promotion History",
       path: "/payroll/promotion-history",
       icon: FaStar,
