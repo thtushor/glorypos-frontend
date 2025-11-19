@@ -293,6 +293,8 @@ const POS: React.FC = () => {
   >("cash");
   const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null);
   const [showStaffModal, setShowStaffModal] = useState(false);
+  const [staffSearchKey, setStaffSearchKey] = useState("");
+  const [staffRoleFilter, setStaffRoleFilter] = useState("");
   const [adjustments, setAdjustments] = useState<CartAdjustments>({
     tax: { type: "percentage", value: 0 },
     discount: { type: "percentage", value: 0 },
@@ -411,6 +413,42 @@ const POS: React.FC = () => {
   const activeStaffs = staffData?.users?.filter(
     (staff: any) => staff.status === "active"
   ) || [];
+
+  // Filter staffs based on search and role
+  const filteredStaffs = useMemo(() => {
+    let filtered = activeStaffs;
+
+    // Filter by search key (name, email, phone, business name, ID)
+    if (staffSearchKey.trim()) {
+      const searchLower = staffSearchKey.trim().toLowerCase();
+      filtered = filtered.filter((staff: any) => {
+        const name = (staff.fullName || "").toLowerCase();
+        const email = (staff.email || "").toLowerCase();
+        const phone = (staff.phone || "").toLowerCase();
+        const businessName = (staff.parent?.businessName || "").toLowerCase();
+        const id = String(staff.id || "").toLowerCase();
+        const role = (staff.role || "").toLowerCase();
+
+        return (
+          name.includes(searchLower) ||
+          email.includes(searchLower) ||
+          phone.includes(searchLower) ||
+          businessName.includes(searchLower) ||
+          id.includes(searchLower) ||
+          role.includes(searchLower)
+        );
+      });
+    }
+
+    // Filter by role
+    if (staffRoleFilter) {
+      filtered = filtered.filter(
+        (staff: any) => staff.role?.toLowerCase() === staffRoleFilter.toLowerCase()
+      );
+    }
+
+    return filtered;
+  }, [activeStaffs, staffSearchKey, staffRoleFilter]);
 
   // Reset to page 1 when filters change
   const handleFilterChange = () => {
@@ -663,9 +701,9 @@ const POS: React.FC = () => {
     setSelectedStaffId(staffId);
     setShowStaffModal(false);
     // Proceed with order creation after staff selection
-    if (cart.length > 0) {
-      createOrderMutation.mutate(cart);
-    }
+    // if (cart.length > 0) {
+    //   createOrderMutation.mutate(cart);
+    // }
   };
 
   const handlePrintInvoice = () => {
@@ -1530,56 +1568,144 @@ const POS: React.FC = () => {
       {/* Staff Selection Modal */}
       <Modal
         isOpen={showStaffModal}
-        onClose={() => setShowStaffModal(false)}
+        onClose={() => {
+          setShowStaffModal(false);
+          setStaffSearchKey("");
+          setStaffRoleFilter("");
+        }}
         title="Select Staff"
-        className="max-w-2xl"
+        className="max-w-3xl"
       >
         <div className="space-y-4">
+          {/* Search and Filter Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Search Input */}
+            <div className="relative">
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by name, email, phone, business, ID..."
+                value={staffSearchKey}
+                onChange={(e) => setStaffSearchKey(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                autoFocus
+              />
+              {staffSearchKey && (
+                <button
+                  onClick={() => setStaffSearchKey("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <FaTimes className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Role Filter */}
+            <select
+              value={staffRoleFilter}
+              onChange={(e) => setStaffRoleFilter(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white"
+            >
+              <option value="">All Roles</option>
+              <option value="manager">Manager</option>
+              <option value="cashier">Cashier</option>
+              <option value="staff">Staff</option>
+            </select>
+          </div>
+
+          {/* Results Count */}
+          {!isLoadingStaff && activeStaffs.length > 0 && (
+            <div className="text-sm text-gray-500">
+              Showing {filteredStaffs.length} of {activeStaffs.length} staff
+              {(staffSearchKey || staffRoleFilter) && " (filtered)"}
+            </div>
+          )}
+
+          {/* Staff List */}
           {isLoadingStaff ? (
-            <div className="flex justify-center items-center py-8">
+            <div className="flex justify-center items-center py-12">
               <Spinner color="#32cd32" size="40px" />
             </div>
           ) : activeStaffs.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No active staff available
+            <div className="text-center py-12">
+              <div className="text-gray-400 mb-2">
+                <FaUser className="w-12 h-12 mx-auto" />
+              </div>
+              <p className="text-gray-500 font-medium">No active staff available</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Please add staff members to continue
+              </p>
+            </div>
+          ) : filteredStaffs.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-gray-400 mb-2">
+                <FaSearch className="w-12 h-12 mx-auto" />
+              </div>
+              <p className="text-gray-500 font-medium">No staff found</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Try adjusting your search or filter criteria
+              </p>
+              {(staffSearchKey || staffRoleFilter) && (
+                <button
+                  onClick={() => {
+                    setStaffSearchKey("");
+                    setStaffRoleFilter("");
+                  }}
+                  className="mt-4 text-sm text-brand-primary hover:text-brand-hover underline"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
-              {activeStaffs.map((staff: any) => (
+            <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+              {filteredStaffs.map((staff: any) => (
                 <button
                   key={staff.id}
                   onClick={() => handleStaffSelect(staff.id)}
                   className={`w-full text-left p-4 border-2 rounded-lg transition-all hover:shadow-md ${
                     selectedStaffId === staff.id
-                      ? "border-brand-primary bg-brand-primary/5"
-                      : "border-gray-200 hover:border-gray-300"
+                      ? "border-brand-primary bg-brand-primary/5 shadow-sm"
+                      : "border-gray-200 hover:border-gray-300 bg-white"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-gray-900">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="font-semibold text-gray-900 truncate">
                           {staff.fullName}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 whitespace-nowrap">
                           (ID: {staff.id})
                         </span>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {staff.parent?.businessName || "N/A"}
+                      <div className="flex items-center gap-3 text-sm">
+                        <div className="text-gray-500 truncate">
+                          {staff.parent?.businessName || "N/A"}
+                        </div>
+                        {staff.email && (
+                          <div className="text-gray-400 truncate hidden md:block">
+                            • {staff.email}
+                          </div>
+                        )}
                       </div>
-                      {staff.role && (
-                        <div className="mt-1">
-                          <span className="inline-block px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-full capitalize">
+                      <div className="flex items-center gap-2 mt-2">
+                        {staff.role && (
+                          <span className="inline-block px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full capitalize">
                             {staff.role}
                           </span>
-                        </div>
-                      )}
+                        )}
+                        {staff.phone && (
+                          <span className="text-xs text-gray-500">
+                            {staff.phone}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {selectedStaffId === staff.id && (
-                      <div className="ml-4">
-                        <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center">
-                          <span className="text-white text-xs">✓</span>
+                      <div className="flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center shadow-sm">
+                          <span className="text-white text-sm font-bold">✓</span>
                         </div>
                       </div>
                     )}
