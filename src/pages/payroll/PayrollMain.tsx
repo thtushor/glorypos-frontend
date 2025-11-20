@@ -421,7 +421,7 @@ const PayrollMain = () => {
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className="text-sm">
-                        ${user.baseSalary || "N/A"}
+                        ฿{user.baseSalary || "N/A"}
                       </span>
                       <span className="text-xs text-gray-500">
                         {user.requiredDailyHours || "N/A"} hrs/day
@@ -605,7 +605,7 @@ const PayrollMain = () => {
                   )}
                   <div className="flex items-center gap-2">
                     <FaMoneyBillWave />{" "}
-                    <span>Base: ${selectedUser.baseSalary || "N/A"}</span>
+                    <span>Base: ฿{selectedUser.baseSalary || "N/A"}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <FaCalendarCheck />{" "}

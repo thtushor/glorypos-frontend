@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import AXIOS from "@/api/network/Axios";
 import { PAYROLL_PROMOTION_HISTORY } from "@/api/api";
 import Spinner from "@/components/Spinner";
-import { FaUser, FaCalendarAlt, FaDollarSign } from "react-icons/fa";
+import { FaUser, FaCalendarAlt } from "react-icons/fa";
 
 interface SalaryHistory {
   id: number;
@@ -71,7 +71,6 @@ const PromotionHistory = () => {
           styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800"
         }`}
       >
-        <FaDollarSign size={12} />
         {status}
       </span>
     );
