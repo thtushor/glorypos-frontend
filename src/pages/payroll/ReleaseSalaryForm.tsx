@@ -1,9 +1,13 @@
 // components/ReleaseSalaryForm.tsx
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { FiUser, FiCalendar, FiCheckCircle } from "react-icons/fi";
-import { CHILD_USERS_URL, PAYROLL_SALARY_DETAILS } from "@/api/api";
+import {
+  CHILD_USERS_URL,
+  PAYROLL_RELEASE,
+  PAYROLL_SALARY_DETAILS,
+} from "@/api/api";
 import AXIOS from "@/api/network/Axios";
 import { toast } from "react-toastify";
 
@@ -102,6 +106,19 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   const [isCalculating, setIsCalculating] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
 
+  // Add these
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll when salaryDetails appears
+  useEffect(() => {
+    if (salaryDetails && previewRef.current) {
+      previewRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [salaryDetails]);
+
   // Fetch all employees
   const { data: usersData, isLoading: loadingUsers } =
     useQuery<ChildUsersResponse>({
@@ -118,7 +135,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
 
   const handleCalculate = async () => {
     if (!userId || !startDate || !endDate) {
-      alert("Please fill all fields");
+      toast.error("Please fill all fields");
       return;
     }
 
@@ -133,6 +150,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
       console.log(res);
       if (res.status) {
         setSalaryDetails(res.data);
+        toast.success("Salary calculated successfully!");
       } else {
         toast.error("Failed to calculate salary.");
       }
@@ -147,20 +165,47 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   const handlePay = async () => {
     if (!salaryDetails) return;
 
-    setIsPaying(true);
-    setTimeout(() => {
-      alert(
-        `Salary of ฿${salaryDetails.netSalary.toFixed(2)} paid to ${
-          salaryDetails.fullName
-        }!`
-      );
+    if (!userId || !startDate || !endDate) {
+      toast.error("User or date range missing");
+      return;
+    }
+    try {
+      setIsPaying(true);
+
+      // Generate human-readable month name from date range
+      const start = new Date(salaryDetails.startDate);
+      const end = new Date(salaryDetails.endDate);
+
+      const monthName = format(start, "MMMM yyyy"); // "December 2025"
+      const periodLabel =
+        start.getMonth() === end.getMonth() &&
+        start.getFullYear() === end.getFullYear()
+          ? monthName
+          : `${format(start, "MMM yyyy")} – ${format(end, "MMM yyyy")}`;
+      const res = await AXIOS.post(PAYROLL_RELEASE, {
+        userId: userId,
+        startDate: format(startDate, "yyyy-MM-dd"),
+        endDate: format(endDate, "yyyy-MM-dd"),
+        details: periodLabel,
+        releasedAmount: salaryDetails.netSalary,
+      });
+
+      console.log(res);
+      if (res.status) {
+        setSalaryDetails(null);
+        setUserId("");
+        setStartDate(undefined);
+        setEndDate(undefined);
+        onSuccess?.();
+      } else {
+        toast.error("Failed to release salary.");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Error releasing salary");
+      console.log(err);
+    } finally {
       setIsPaying(false);
-      setSalaryDetails(null);
-      setUserId("");
-      setStartDate(undefined);
-      setEndDate(undefined);
-      onSuccess?.();
-    }, 1500);
+    }
   };
 
   const get = <T,>(value: T | undefined | null, fallback: T): T =>
@@ -259,7 +304,11 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
 
       {/* Salary Preview Card */}
       {salaryDetails && (
-        <div className="mt-2 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl shadow-xl border-2 border-emerald-200 overflow-hidden">
+        <div
+          ref={previewRef}
+          id="salary-preview"
+          className="mt-2 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl shadow-xl border-2 border-emerald-200 overflow-hidden"
+        >
           <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 text-white">
             <h3 className="text-xl font-bold flex items-center gap-2">
               <FiCheckCircle />
