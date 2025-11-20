@@ -14,9 +14,11 @@ import {
   FaHistory,
 } from "react-icons/fa";
 import { useQueryClient } from "@tanstack/react-query";
+import ReleaseSalaryForm from "./ReleaseSalaryForm";
 
 const Payroll = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showReleaseSalaryModal, setShowReleaseSalaryModal] = useState(false);
   const [showHolidayModal, setShowHolidayModal] = useState(false);
   const queryClient = useQueryClient();
   const location = useLocation();
@@ -26,6 +28,11 @@ const Payroll = () => {
     {
       name: "Leave History",
       path: "/payroll/leave-history",
+      icon: FaCalendarTimes,
+    },
+    {
+      name: "Holiday History",
+      path: "/payroll/holiday-history",
       icon: FaCalendarTimes,
     },
     {
@@ -48,6 +55,13 @@ const Payroll = () => {
           Payroll Management
         </h1>
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowReleaseSalaryModal(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover transition-colors flex items-center gap-2"
+          >
+            <FaPlus className="w-4 h-4" />
+            Release Salary
+          </button>
           <button
             onClick={() => setShowCreateModal(true)}
             className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover transition-colors flex items-center gap-2"
@@ -137,6 +151,20 @@ const Payroll = () => {
           onSuccess={() => {
             setShowHolidayModal(false);
             toast.success("Holidays updated");
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showReleaseSalaryModal}
+        onClose={() => setShowReleaseSalaryModal(false)}
+        title="Release Salary"
+        useInnerModal={true}
+      >
+        <ReleaseSalaryForm
+          onSuccess={() => {
+            setShowReleaseSalaryModal(false);
+            toast.success("Salary released");
           }}
         />
       </Modal>
