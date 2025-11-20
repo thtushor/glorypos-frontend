@@ -269,44 +269,44 @@ const OtherShops = () => {
                 </tr>
               ) : (
                 shopData?.users?.map((shop) => (
-                  <tr key={shop.id} className="hover:bg-gray-50">
+                  <tr key={shop?.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div>
                         <div className="font-medium text-gray-900">
-                          {shop.fullName}
+                          {shop?.fullName}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {shop.email}
+                          {shop?.email}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {shop.phoneNumber}
+                          {shop?.phoneNumber}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">
-                        {shop.businessName}
+                        {shop?.businessName}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {shop.businessType}
+                        {shop?.businessType}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {shop.location}
+                        {shop?.location}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          shop.accountStatus === "active"
+                          shop?.accountStatus === "active"
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {shop.accountStatus}
+                        {shop?.accountStatus}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {shop.accountType}
+                      {shop?.accountType}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
@@ -525,10 +525,10 @@ const OtherShops = () => {
             className="space-y-4"
           >
             {/* Show parent ID if selected shop id and parent id are different */}
-            {selectedShop.parentId && selectedShop.id !== selectedShop.parentId && (
+            {selectedShop?.parentId && selectedShop?.id !== selectedShop?.parentId && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-sm text-blue-800">
-                  <span className="font-medium">Parent ID:</span> {selectedShop.parentId}
+                  <span className="font-medium">Parent ID:</span> {selectedShop?.parentId}
                 </p>
               </div>
             )}
@@ -542,7 +542,7 @@ const OtherShops = () => {
                   type="text"
                   name="fullName"
                   icon={<FiUser className="text-gray-400" />}
-                  defaultValue={selectedShop.fullName}
+                  defaultValue={selectedShop?.fullName}
                   required
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
                 />
@@ -555,7 +555,7 @@ const OtherShops = () => {
                   type="email"
                   name="email"
                   icon={<FiMail className="text-gray-400" />}
-                  defaultValue={selectedShop.email}
+                  defaultValue={selectedShop?.email}
                   readOnly
                   className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm"
                 />
