@@ -1,4 +1,4 @@
-// New file: pages/payroll/LeaveForm.tsx - Form for leave requests
+// pages/payroll/LeaveForm.tsx
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -15,7 +15,7 @@ interface LeaveFormProps {
 
 const LeaveForm = ({ user, onSuccess }: LeaveFormProps) => {
   const [formData, setFormData] = useState({
-    userId: user?.id,
+    userId: user?.id || "",
     startDate: "",
     endDate: "",
     type: "sick",
@@ -25,20 +25,21 @@ const LeaveForm = ({ user, onSuccess }: LeaveFormProps) => {
   const mutation = useMutation({
     mutationFn: (data: typeof formData) => AXIOS.post(PAYROLL_LEAVE, data),
     onSuccess: () => {
-      toast.success("Leave requested");
+      toast.success("Leave requested successfully");
       onSuccess();
     },
     onError: (error: any) =>
-      toast.error(error?.message || "Failed to request leave"),
+      toast.error(error?.response?.data?.message || "Failed to request leave"),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.userId) return toast.error("User ID is missing");
     mutation.mutate(formData);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-md mx-auto">
       <InputWithIcon
         icon={<FaCalendarDay />}
         type="date"
@@ -61,22 +62,23 @@ const LeaveForm = ({ user, onSuccess }: LeaveFormProps) => {
         value={formData.type}
         onChange={(e) => setFormData({ ...formData, type: e.target.value })}
         className="border rounded-md px-3 py-2 w-full"
+        required
       >
-        <option value="sick">Sick</option>
+        <option value="sick">Sick Leave</option>
         <option value="vacation">Vacation</option>
         <option value="personal">Personal</option>
       </select>
       <InputWithIcon
         icon={<FaNotesMedical />}
-        type="text"
-        placeholder="Notes"
+        type="textarea"
+        placeholder="Notes (optional)"
         value={formData.notes}
         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
       />
       <button
         type="submit"
         disabled={mutation.isPending}
-        className="px-4 py-2 text-white bg-brand-primary rounded flex items-center gap-2"
+        className="w-full px-4 py-2 text-white bg-brand-primary rounded flex items-center justify-center gap-2 disabled:opacity-70"
       >
         {mutation.isPending ? <Spinner /> : "Request Leave"}
       </button>
