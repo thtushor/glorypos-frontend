@@ -291,7 +291,7 @@ const POS: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     "cash" | "card"
   >("cash");
-  const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState<number | "self-sell" | null>(null);
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [staffSearchKey, setStaffSearchKey] = useState("");
   const [staffRoleFilter, setStaffRoleFilter] = useState("");
@@ -658,7 +658,11 @@ const POS: React.FC = () => {
         discount: calculateDiscount(),
         subtotal: subtotal,
         total: subtotal - calculateDiscount() + calculateTax(),
-        ...(selectedStaffId && { stuffId: selectedStaffId }),
+        ...(selectedStaffId === "self-sell" 
+          ? { stuffId: undefined } 
+          : selectedStaffId 
+          ? { stuffId: selectedStaffId } 
+          : {}),
       };
 
       const response = await AXIOS.post(ORDERS_URL, orderData);
@@ -690,20 +694,16 @@ const POS: React.FC = () => {
       return;
     }
     // Show staff selection modal if no staff is selected
-    if (!selectedStaffId) {
+    if (selectedStaffId === null) {
       setShowStaffModal(true);
       return;
     }
     createOrderMutation.mutate(cart);
   };
 
-  const handleStaffSelect = (staffId: number) => {
+  const handleStaffSelect = (staffId: number | "self-sell") => {
     setSelectedStaffId(staffId);
     setShowStaffModal(false);
-    // Proceed with order creation after staff selection
-    // if (cart.length > 0) {
-    //   createOrderMutation.mutate(cart);
-    // }
   };
 
   const handlePrintInvoice = () => {
@@ -1398,7 +1398,27 @@ const POS: React.FC = () => {
               onClick={() => setShowStaffModal(true)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white cursor-pointer hover:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary transition-colors"
             >
-              {selectedStaffId ? (
+              {selectedStaffId === "self-sell" ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="font-medium text-gray-900">
+                      Self Sell
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      Shop selling (No staff assigned)
+                    </span>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedStaffId(null);
+                    }}
+                    className="text-gray-400 hover:text-red-500"
+                  >
+                    <FaTimes className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : selectedStaffId ? (
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
                     <span className="font-medium text-gray-900">
@@ -1429,7 +1449,7 @@ const POS: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex items-center justify-between text-gray-500">
-                  <span>Click to select staff</span>
+                  <span>Click to select staff or self sell</span>
                   <FaChevronDown className="w-4 h-4" />
                 </div>
               )}
@@ -1441,7 +1461,7 @@ const POS: React.FC = () => {
             <button
               onClick={() => handlePayment("card")}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={createOrderMutation.isPending || !selectedStaffId}
+              disabled={createOrderMutation.isPending || selectedStaffId === null}
             >
               {createOrderMutation?.isPending ? (
                 <Spinner size="16px" />
@@ -1454,7 +1474,7 @@ const POS: React.FC = () => {
             <button
               onClick={() => handlePayment("cash")}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={createOrderMutation.isPending || !selectedStaffId}
+              disabled={createOrderMutation.isPending || selectedStaffId === null}
             >
               {createOrderMutation?.isPending ? (
                 <Spinner size="16px" />
@@ -1573,10 +1593,53 @@ const POS: React.FC = () => {
           setStaffSearchKey("");
           setStaffRoleFilter("");
         }}
-        title="Select Staff"
+        title="Select Staff or Self Sell"
         className="max-w-3xl"
       >
         <div className="space-y-4">
+          {/* Self Sell Option - Prominent */}
+          <button
+            onClick={() => handleStaffSelect("self-sell")}
+            className={`w-full text-left p-4 border-2 rounded-lg transition-all hover:shadow-md ${
+              selectedStaffId === "self-sell"
+                ? "border-brand-primary bg-brand-primary/5 shadow-sm"
+                : "border-gray-200 hover:border-gray-300 bg-white"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="font-semibold text-gray-900">
+                    Self Sell
+                  </span>
+                  <span className="text-xs text-gray-500 bg-blue-50 px-2 py-0.5 rounded-full">
+                    Shop Direct
+                  </span>
+                </div>
+                <div className="text-sm text-gray-500">
+                  No staff assigned - Shop selling directly
+                </div>
+              </div>
+              {selectedStaffId === "self-sell" && (
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center shadow-sm">
+                    <span className="text-white text-sm font-bold">✓</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </button>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-4 text-gray-500">OR SELECT STAFF</span>
+            </div>
+          </div>
+
           {/* Search and Filter Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* Search Input */}
