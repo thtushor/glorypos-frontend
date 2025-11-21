@@ -14,6 +14,9 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaSearch,
+  FaWallet,
+  FaCheckCircle,
+  FaExclamationCircle,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import {
@@ -23,7 +26,7 @@ import {
   ORDERS_URL,
   SUB_SHOPS_URL,
   CHILD_USERS_URL,
-  fetchProducts
+  fetchProducts,
 } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import Invoice from "@/components/Invoice";
@@ -32,7 +35,11 @@ import Modal from "@/components/Modal";
 import Pagination from "@/components/Pagination";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { ProductVariant, ProductQueryParams, Product } from "@/types/ProductType";
+import {
+  ProductVariant,
+  ProductQueryParams,
+  Product,
+} from "@/types/ProductType";
 import { toast } from "react-toastify";
 import { Unit, Brand } from "@/types/categoryType";
 import { Color, Category } from "@/types/categoryType";
@@ -70,9 +77,15 @@ interface OrderData {
   subtotal: number;
   tax: number;
   total: number;
-  paymentMethod: "cash" | "card";
+  paymentMethod: "cash" | "card" | "mobile_banking" | "mixed";
   verificationCode: string;
   expiryDate: string;
+}
+
+interface PartialPayment {
+  cashAmount: number;
+  cardAmount: number;
+  walletAmount: number;
 }
 
 interface CartAdjustments {
@@ -192,31 +205,35 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
                   key={variant.id}
                   onClick={() => setSelectedVariant(variant)}
                   disabled={variant.quantity === 0}
-                  className={`relative group rounded-lg overflow-hidden transition-all ${variant.quantity === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                    }`}
+                  className={`relative group rounded-lg overflow-hidden transition-all ${
+                    variant.quantity === 0
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
                 >
                   <div className="aspect-square">
                     <img
                       src={variant.imageUrl}
                       alt={`${variant.Color?.name} / ${variant.Size?.name}`}
-                      className={`w-full h-full object-cover transition-transform duration-300 ${selectedVariant?.id === variant.id
-                        ? "scale-110"
-                        : "group-hover:scale-105"
-                        }`}
+                      className={`w-full h-full object-cover transition-transform duration-300 ${
+                        selectedVariant?.id === variant.id
+                          ? "scale-110"
+                          : "group-hover:scale-105"
+                      }`}
                     />
                     <div
-                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${selectedVariant?.id === variant.id
-                        ? "bg-black/40"
-                        : "bg-black/0 group-hover:bg-black/20"
-                        }`}
+                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+                        selectedVariant?.id === variant.id
+                          ? "bg-black/40"
+                          : "bg-black/0 group-hover:bg-black/20"
+                      }`}
                     >
                       <div
-                        className={`px-3 py-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg transform transition-all duration-300 ${selectedVariant?.id === variant.id
-                          ? "scale-100 opacity-100"
-                          : "scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100"
-                          }`}
+                        className={`px-3 py-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg transform transition-all duration-300 ${
+                          selectedVariant?.id === variant.id
+                            ? "scale-100 opacity-100"
+                            : "scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100"
+                        }`}
                       >
                         <span className="text-sm font-medium">
                           {variant.Size?.name}
@@ -266,7 +283,9 @@ const POS: React.FC = () => {
   const [searchKey, setSearchKey] = useState("");
   const [sku, setSku] = useState("");
   const [shopId, setShopId] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<number | "all">("all");
+  const [selectedCategory, setSelectedCategory] = useState<number | "all">(
+    "all"
+  );
   const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
   const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
@@ -288,13 +307,18 @@ const POS: React.FC = () => {
     Record<number, number>
   >({});
   const [variantProduct, setVariantProduct] = useState<Product | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
-    "cash" | "card"
-  >("cash");
-  const [selectedStaffId, setSelectedStaffId] = useState<number | "self-sell" | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState<
+    number | "self-sell" | null
+  >(null);
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [staffSearchKey, setStaffSearchKey] = useState("");
   const [staffRoleFilter, setStaffRoleFilter] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [partialPayment, setPartialPayment] = useState<PartialPayment>({
+    cashAmount: 0,
+    cardAmount: 0,
+    walletAmount: 0,
+  });
   const [adjustments, setAdjustments] = useState<CartAdjustments>({
     tax: { type: "percentage", value: 0 },
     discount: { type: "percentage", value: 0 },
@@ -308,7 +332,7 @@ const POS: React.FC = () => {
     const params: ProductQueryParams = {
       page,
       pageSize,
-      status: "active"
+      status: "active",
     };
 
     if (searchKey) params.searchKey = searchKey;
@@ -317,12 +341,19 @@ const POS: React.FC = () => {
     if (selectedBrand !== "all") params.brandId = selectedBrand;
     if (selectedUnit !== "all") params.unitId = selectedUnit;
 
-
     // Add price range filters
-    if (priceRange.min !== undefined && priceRange.min !== null && priceRange.min > 0) {
+    if (
+      priceRange.min !== undefined &&
+      priceRange.min !== null &&
+      priceRange.min > 0
+    ) {
       params.minPrice = priceRange.min;
     }
-    if (priceRange.max !== undefined && priceRange.max !== null && priceRange.max > 0) {
+    if (
+      priceRange.max !== undefined &&
+      priceRange.max !== null &&
+      priceRange.max > 0
+    ) {
       params.maxPrice = priceRange.max;
     }
 
@@ -331,13 +362,20 @@ const POS: React.FC = () => {
     }
 
     return params;
-  }, [page, pageSize, searchKey, sku, shopId, selectedCategory, selectedBrand, selectedUnit, priceRange]);
+  }, [
+    page,
+    pageSize,
+    searchKey,
+    sku,
+    shopId,
+    selectedCategory,
+    selectedBrand,
+    selectedUnit,
+    priceRange,
+  ]);
 
   // Products query with pagination
-  const {
-    data: productsResponse,
-    isLoading: isLoadingProducts,
-  } = useQuery({
+  const { data: productsResponse, isLoading: isLoadingProducts } = useQuery({
     queryKey: ["products", "pos", queryParams],
     queryFn: () => fetchProducts(queryParams),
   });
@@ -353,7 +391,9 @@ const POS: React.FC = () => {
   };
 
   // Fetch Categories
-  const { data: categories = [], isLoading: isLoadingCategories } = useQuery<Category[]>({
+  const { data: categories = [], isLoading: isLoadingCategories } = useQuery<
+    Category[]
+  >({
     queryKey: ["categories"],
     queryFn: async () => {
       const response = await AXIOS.get(CATEGORY_URL);
@@ -410,9 +450,8 @@ const POS: React.FC = () => {
     },
   });
 
-  const activeStaffs = staffData?.users?.filter(
-    (staff: any) => staff.status === "active"
-  ) || [];
+  const activeStaffs =
+    staffData?.users?.filter((staff: any) => staff.status === "active") || [];
 
   // Filter staffs based on search and role
   const filteredStaffs = useMemo(() => {
@@ -443,7 +482,8 @@ const POS: React.FC = () => {
     // Filter by role
     if (staffRoleFilter) {
       filtered = filtered.filter(
-        (staff: any) => staff.role?.toLowerCase() === staffRoleFilter.toLowerCase()
+        (staff: any) =>
+          staff.role?.toLowerCase() === staffRoleFilter.toLowerCase()
       );
     }
 
@@ -459,7 +499,7 @@ const POS: React.FC = () => {
   const handleBarcodeScan = useCallback((barcode: string) => {
     if (barcode && barcode.trim()) {
       // setSearchKey(barcode.trim());
-      setSku(barcode.trim())
+      setSku(barcode.trim());
       setPage(1); // Reset to page 1
       // Optionally close scanner after scan
       setIsBarcodeScannerOpen(false);
@@ -611,36 +651,77 @@ const POS: React.FC = () => {
     setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
   };
 
-  // Calculate totals
-  const subtotal = cart.reduce((sum, item) => {
-    const adjustedPrice = adjustments.priceAdjustments[item.id] || item.price;
-    return sum + adjustedPrice * item.quantity;
-  }, 0);
+  // Calculate totals with proper decimal handling
+  const subtotal = useMemo(() => {
+    const sum = cart.reduce((sum, item) => {
+      const adjustedPrice = adjustments.priceAdjustments[item.id] || item.price;
+      return sum + adjustedPrice * item.quantity;
+    }, 0);
+    return Math.round(sum * 100) / 100; // Round to 2 decimal places
+  }, [cart, adjustments.priceAdjustments]);
 
   const calculateTax = () => {
     if (adjustments.tax.type === "percentage") {
-      return (subtotal * adjustments.tax.value) / 100;
+      const tax = (subtotal * adjustments.tax.value) / 100;
+      return Math.round(tax * 100) / 100; // Round to 2 decimal places
     }
-    return adjustments.tax.value;
+    return Math.round(adjustments.tax.value * 100) / 100; // Round to 2 decimal places
   };
 
   const calculateDiscount = () => {
     if (adjustments.discount.type === "percentage") {
-      return (subtotal * adjustments.discount.value) / 100;
+      const discount = (subtotal * adjustments.discount.value) / 100;
+      return Math.round(discount * 100) / 100; // Round to 2 decimal places
     }
-    return adjustments.discount.value;
+    return Math.round(adjustments.discount.value * 100) / 100; // Round to 2 decimal places
   };
 
   const taxAmount = calculateTax();
   const discountAmount = calculateDiscount();
-  const total = subtotal - discountAmount + taxAmount;
+  const total = Math.round((subtotal - discountAmount + taxAmount) * 100) / 100; // Round to 2 decimal places
   // Cart items count
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Calculate payment totals with proper decimal handling
+  const paymentTotal = useMemo(() => {
+    const sum =
+      partialPayment.cashAmount +
+      partialPayment.cardAmount +
+      partialPayment.walletAmount;
+    return Math.round(sum * 100) / 100; // Round to 2 decimal places
+  }, [partialPayment]);
+
+  const paymentRemaining = useMemo(() => {
+    const remaining = total - paymentTotal;
+    return Math.round(Math.max(0, remaining) * 100) / 100; // Round to 2 decimal places
+  }, [total, paymentTotal]);
+
+  const isPaymentComplete = useMemo(() => {
+    return Math.abs(paymentTotal - total) < 0.01; // Allow small floating point differences
+  }, [paymentTotal, total]);
+
+  const isPaymentOver = useMemo(() => {
+    return paymentTotal > total + 0.01; // Add small buffer for floating point comparison
+  }, [paymentTotal, total]);
 
   // Add this mutation
   const createOrderMutation = useMutation({
     mutationFn: async (cartItems: CartItem[]) => {
-      const orderData = {
+      const orderTotal = subtotal - calculateDiscount() + calculateTax();
+      const isMixed =
+        (partialPayment.cashAmount > 0 &&
+          (partialPayment.cardAmount > 0 || partialPayment.walletAmount > 0)) ||
+        (partialPayment.cardAmount > 0 && partialPayment.walletAmount > 0);
+
+      const paymentMethod = isMixed
+        ? "mixed"
+        : partialPayment.cashAmount > 0
+        ? "cash"
+        : partialPayment.cardAmount > 0
+        ? "card"
+        : "mobile_banking";
+
+      const orderData: any = {
         items: cartItems.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
@@ -652,18 +733,30 @@ const POS: React.FC = () => {
         address: "",
         email: "",
         paymentStatus: "completed",
-        paymentMethod: selectedPaymentMethod,
+        paymentMethod: paymentMethod,
         orderStatus: "completed",
         tax: calculateTax(),
         discount: calculateDiscount(),
         subtotal: subtotal,
-        total: subtotal - calculateDiscount() + calculateTax(),
-        ...(selectedStaffId === "self-sell" 
-          ? { stuffId: undefined } 
-          : selectedStaffId 
-          ? { stuffId: selectedStaffId } 
+        total: orderTotal,
+        ...(selectedStaffId === "self-sell"
+          ? { stuffId: undefined }
+          : selectedStaffId
+          ? { stuffId: selectedStaffId }
           : {}),
       };
+
+      // Add partial payment amounts if mixed payment
+      if (
+        isMixed ||
+        partialPayment.cashAmount > 0 ||
+        partialPayment.cardAmount > 0 ||
+        partialPayment.walletAmount > 0
+      ) {
+        orderData.cashAmount = partialPayment.cashAmount || 0;
+        orderData.cardAmount = partialPayment.cardAmount || 0;
+        orderData.walletAmount = partialPayment.walletAmount || 0;
+      }
 
       const response = await AXIOS.post(ORDERS_URL, orderData);
       return response.data;
@@ -671,8 +764,14 @@ const POS: React.FC = () => {
     onSuccess: (data) => {
       setCurrentOrder(data);
       setShowInvoice(true);
+      setShowPaymentModal(false);
       setCart([]);
       setSelectedStaffId(null); // Reset staff selection after order
+      setPartialPayment({
+        cashAmount: 0,
+        cardAmount: 0,
+        walletAmount: 0,
+      });
       setAdjustments({
         tax: { type: "percentage", value: 0 },
         discount: { type: "percentage", value: 0 },
@@ -687,8 +786,7 @@ const POS: React.FC = () => {
   });
 
   // Add these handlers
-  const handlePayment = (method: "cash" | "card") => {
-    setSelectedPaymentMethod(method);
+  const handlePaymentClick = () => {
     if (cart.length === 0) {
       toast.error("Cart is empty");
       return;
@@ -698,7 +796,39 @@ const POS: React.FC = () => {
       setShowStaffModal(true);
       return;
     }
+    // Reset payment amounts and open payment modal
+    setPartialPayment({
+      cashAmount: 0,
+      cardAmount: 0,
+      walletAmount: 0,
+    });
+    setShowPaymentModal(true);
+  };
+
+  const handleProcessPayment = () => {
+    if (!isPaymentComplete) {
+      toast.error(
+        `Payment incomplete. Remaining: $${paymentRemaining.toFixed(2)}`
+      );
+      return;
+    }
+    if (isPaymentOver) {
+      toast.error(
+        `Payment exceeds total. Overpayment: $${(paymentTotal - total).toFixed(
+          2
+        )}`
+      );
+      return;
+    }
     createOrderMutation.mutate(cart);
+  };
+
+  const handleQuickPayment = (method: "cash" | "card" | "mobile_banking") => {
+    setPartialPayment({
+      cashAmount: method === "cash" ? total : 0,
+      cardAmount: method === "card" ? total : 0,
+      walletAmount: method === "mobile_banking" ? total : 0,
+    });
   };
 
   const handleStaffSelect = (staffId: number | "self-sell") => {
@@ -760,29 +890,65 @@ const POS: React.FC = () => {
     return product.stock;
   };
 
+  // Currency formatting helpers
+  const formatCurrency = (value: number | string): number => {
+    const numValue = typeof value === "string" ? parseFloat(value) || 0 : value;
+    return Math.round(numValue * 100) / 100; // Round to 2 decimal places
+  };
+
+  const parseCurrencyInput = (value: string): number => {
+    // Remove any non-numeric characters except decimal point
+    const cleaned = value.replace(/[^\d.]/g, "");
+    // Handle multiple decimal points
+    const parts = cleaned.split(".");
+    if (parts.length > 2) {
+      return parseFloat(parts[0] + "." + parts.slice(1).join("")) || 0;
+    }
+    const numValue = parseFloat(cleaned) || 0;
+    // Round to 2 decimal places
+    return Math.round(numValue * 100) / 100;
+  };
+
+  const formatCurrencyDisplay = (value: number | string): string => {
+    const numValue = typeof value === "string" ? parseFloat(value) || 0 : value;
+    return numValue.toFixed(2);
+  };
+
   const updateItemPrice = (itemId: string, newPrice: number) => {
+    const formattedPrice = formatCurrency(newPrice);
     setAdjustments((prev) => ({
       ...prev,
       priceAdjustments: {
         ...prev.priceAdjustments,
-        [itemId]: newPrice,
+        [itemId]: formattedPrice,
       },
     }));
   };
 
   const updateTax = (newTax: number) => {
+    const formattedTax = formatCurrency(newTax);
     setAdjustments((prev) => ({
       ...prev,
-      tax: { type: "percentage", value: Math.max(0, Math.min(100, newTax)) },
+      tax: {
+        type: prev.tax.type,
+        value:
+          prev.tax.type === "percentage"
+            ? Math.max(0, Math.min(100, formattedTax))
+            : Math.max(0, formattedTax),
+      },
     }));
   };
 
   const updateDiscount = (newDiscount: number) => {
+    const formattedDiscount = formatCurrency(newDiscount);
     setAdjustments((prev) => ({
       ...prev,
       discount: {
-        type: "percentage",
-        value: Math.max(0, Math.min(100, newDiscount)),
+        type: prev.discount.type,
+        value:
+          prev.discount.type === "percentage"
+            ? Math.max(0, Math.min(100, formattedDiscount))
+            : Math.max(0, formattedDiscount),
       },
     }));
   };
@@ -810,8 +976,9 @@ const POS: React.FC = () => {
     <div className=" flex flex-col lg:flex-row gap-6 relative">
       {/* Products Section */}
       <div
-        className={`flex-1 flex flex-col  bg-white rounded-lg shadow overflow-hidden ${showMobileCart ? "hidden xl:flex" : "flex"
-          }`}
+        className={`flex-1 flex flex-col  bg-white rounded-lg shadow overflow-hidden ${
+          showMobileCart ? "hidden xl:flex" : "flex"
+        }`}
       >
         {/* Search and Filters */}
         <div className="border-b bg-white">
@@ -834,11 +1001,13 @@ const POS: React.FC = () => {
 
               {sku && (
                 <div className="inline-flex mt-4 items-center gap-2 bg-gray-100 text-gray-700 px-3 py-1 rounded-full border border-gray-300">
-                  <span><strong>Scanned:</strong> {sku}</span>
+                  <span>
+                    <strong>Scanned:</strong> {sku}
+                  </span>
                   <button
                     type="button"
                     onClick={() => {
-                      setSku("")
+                      setSku("");
                     }}
                     className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-full transition"
                   >
@@ -847,10 +1016,6 @@ const POS: React.FC = () => {
                 </div>
               )}
             </div>
-
-
-
-
           </div>
 
           {/* Expandable Filters Section */}
@@ -869,10 +1034,10 @@ const POS: React.FC = () => {
                   shopId !== "" ||
                   priceRange.min > 0 ||
                   priceRange.max > 0) && (
-                    <span className="px-2 py-0.5 bg-brand-primary text-white text-xs rounded-full">
-                      Active
-                    </span>
-                  )}
+                  <span className="px-2 py-0.5 bg-brand-primary text-white text-xs rounded-full">
+                    Active
+                  </span>
+                )}
               </div>
               {isFiltersExpanded ? (
                 <FaChevronUp className="text-gray-500" />
@@ -883,8 +1048,9 @@ const POS: React.FC = () => {
 
             {/* Expandable Filter Content */}
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${isFiltersExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                }`}
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                isFiltersExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+              }`}
             >
               <div className="p-4 space-y-4 bg-gray-50">
                 {/* Filters Grid - 2 Columns */}
@@ -898,7 +1064,9 @@ const POS: React.FC = () => {
                       value={selectedCategory}
                       onChange={(e) => {
                         const value = e.target.value;
-                        setSelectedCategory(value === "all" ? "all" : Number(value));
+                        setSelectedCategory(
+                          value === "all" ? "all" : Number(value)
+                        );
                         handleFilterChange();
                       }}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors"
@@ -921,7 +1089,9 @@ const POS: React.FC = () => {
                       value={selectedBrand}
                       onChange={(e) => {
                         const value = e.target.value;
-                        setSelectedBrand(value === "all" ? "all" : Number(value));
+                        setSelectedBrand(
+                          value === "all" ? "all" : Number(value)
+                        );
                         handleFilterChange();
                       }}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors"
@@ -944,7 +1114,9 @@ const POS: React.FC = () => {
                       value={selectedUnit}
                       onChange={(e) => {
                         const value = e.target.value;
-                        setSelectedUnit(value === "all" ? "all" : Number(value));
+                        setSelectedUnit(
+                          value === "all" ? "all" : Number(value)
+                        );
                         handleFilterChange();
                       }}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors"
@@ -1004,18 +1176,26 @@ const POS: React.FC = () => {
                       placeholder="Min Price"
                       value={priceRange.min || ""}
                       onChange={(e) => {
-                        setPriceRange({ ...priceRange, min: Number(e.target.value) || 0 });
+                        setPriceRange({
+                          ...priceRange,
+                          min: Number(e.target.value) || 0,
+                        });
                         handleFilterChange();
                       }}
                       className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors"
                     />
-                    <span className="text-gray-400 text-sm flex-shrink-0">-</span>
+                    <span className="text-gray-400 text-sm flex-shrink-0">
+                      -
+                    </span>
                     <input
                       type="number"
                       placeholder="Max Price"
                       value={priceRange.max || ""}
                       onChange={(e) => {
-                        setPriceRange({ ...priceRange, max: Number(e.target.value) || 0 });
+                        setPriceRange({
+                          ...priceRange,
+                          max: Number(e.target.value) || 0,
+                        });
                         handleFilterChange();
                       }}
                       className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors"
@@ -1028,7 +1208,13 @@ const POS: React.FC = () => {
         </div>
 
         {/* Products Grid */}
-        <div className={`flex-1 p-4 overflow-y-auto ${isLoadingProducts || isLoadingCategories || isLoadingShops ? "flex items-center justify-center" : ""}`}>
+        <div
+          className={`flex-1 p-4 overflow-y-auto ${
+            isLoadingProducts || isLoadingCategories || isLoadingShops
+              ? "flex items-center justify-center"
+              : ""
+          }`}
+        >
           {isLoadingProducts || isLoadingCategories || isLoadingShops ? (
             <div className="flex justify-center items-center">
               <Spinner color="#32cd32" size="40px" />
@@ -1047,11 +1233,11 @@ const POS: React.FC = () => {
                         src={
                           selectedVariants[product.id]
                             ? product.ProductVariants.find(
-                              (v) => v.id === selectedVariants[product.id]
-                            )?.imageUrl
+                                (v) => v.id === selectedVariants[product.id]
+                              )?.imageUrl
                             : product.ProductVariants?.length > 0
-                              ? product.ProductVariants[0]?.imageUrl
-                              : product.productImage
+                            ? product.ProductVariants[0]?.imageUrl
+                            : product.productImage
                         }
                         alt={product.name}
                         className="w-full h-full object-cover rounded-t-lg"
@@ -1084,10 +1270,12 @@ const POS: React.FC = () => {
                                 (variant, index) => (
                                   <div
                                     key={index}
-                                    className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${selectedVariants[product.id] === variant.id
-                                      ? "z-10 ring-2 rounded-full ring-brand-primary"
-                                      : ""
-                                      }`}
+                                    className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${
+                                      selectedVariants[product.id] ===
+                                      variant.id
+                                        ? "z-10 ring-2 rounded-full ring-brand-primary"
+                                        : ""
+                                    }`}
                                   >
                                     <img
                                       src={variant.imageUrl}
@@ -1101,7 +1289,8 @@ const POS: React.FC = () => {
                                     />
                                     {/* Tooltip */}
                                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap">
-                                      {variant.Color?.name} - {variant.Size?.name}
+                                      {variant.Color?.name} -{" "}
+                                      {variant.Size?.name}
                                     </div>
                                     {/* Stock Badge */}
                                     {variant.quantity < 5 && (
@@ -1132,12 +1321,13 @@ const POS: React.FC = () => {
 
                       <div className="mt-2 flex items-center gap-2">
                         <span
-                          className={`w-2 h-2 rounded-full ${getTotalStock(product) > 10
-                            ? "bg-green-500"
-                            : getTotalStock(product) > 5
+                          className={`w-2 h-2 rounded-full ${
+                            getTotalStock(product) > 10
+                              ? "bg-green-500"
+                              : getTotalStock(product) > 5
                               ? "bg-yellow-500"
                               : "bg-red-500"
-                            }`}
+                          }`}
                         />
                         <span className="text-xs text-gray-500">
                           {getTotalStock(product)} in stock
@@ -1178,8 +1368,9 @@ const POS: React.FC = () => {
 
       {/* Cart Section - Desktop */}
       <div
-        className={` bg-white rounded-lg shadow flex flex-col xl:flex ${showMobileCart ? "flex" : "hidden"
-          }`}
+        className={` bg-white rounded-lg shadow flex flex-col xl:flex ${
+          showMobileCart ? "flex" : "hidden"
+        }`}
       >
         {/* Mobile Cart Header */}
         <div className="xl:hidden flex items-center justify-between p-4 border-b">
@@ -1244,46 +1435,63 @@ const POS: React.FC = () => {
                   <div className="flex-1">
                     <h4 className="font-medium">{item.name}</h4>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-sm text-gray-500">$</span>
+                      <span className="text-xs sm:text-sm text-gray-500">
+                        $
+                      </span>
                       <input
                         type="number"
+                        inputMode="decimal"
                         min="0"
                         step="0.01"
                         value={
-                          adjustments.priceAdjustments[item.id] || item.price
+                          adjustments.priceAdjustments[item.id]
+                            ? formatCurrencyDisplay(
+                                adjustments.priceAdjustments[item.id]
+                              )
+                            : formatCurrencyDisplay(item.price)
                         }
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const parsed = parseCurrencyInput(e.target.value);
+                          updateItemPrice(item.id?.toString() || "", parsed);
+                        }}
+                        onBlur={(e) => {
+                          const parsed = parseCurrencyInput(e.target.value);
                           updateItemPrice(
                             item.id?.toString() || "",
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-20 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                            formatCurrency(parsed)
+                          );
+                        }}
+                        className="w-20 sm:w-24 px-2 py-1.5 sm:py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary"
                       />
-                      <span className="text-sm text-gray-500">
+                      <span className="text-xs sm:text-sm text-gray-500">
                         × {item.quantity}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     <button
                       onClick={() => updateQuantity(item?.cartItemId, -1)}
-                      className="p-1 hover:bg-gray-200 rounded"
+                      className="p-2 sm:p-1 active:bg-gray-200 hover:bg-gray-200 rounded touch-manipulation"
+                      aria-label="Decrease quantity"
                     >
-                      <FaMinus className="w-3 h-3" />
+                      <FaMinus className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                     </button>
-                    <span className="w-8 text-center">{item.quantity}</span>
+                    <span className="w-8 sm:w-8 text-center text-sm sm:text-base font-medium">
+                      {item.quantity}
+                    </span>
                     <button
                       onClick={() => updateQuantity(item?.cartItemId, 1)}
-                      className="p-1 hover:bg-gray-200 rounded"
+                      className="p-2 sm:p-1 active:bg-gray-200 hover:bg-gray-200 rounded touch-manipulation"
+                      aria-label="Increase quantity"
                     >
-                      <FaPlus className="w-3 h-3" />
+                      <FaPlus className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                     </button>
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      className="p-1 text-red-500 hover:bg-red-50 rounded"
+                      className="p-2 sm:p-1 text-red-500 active:bg-red-50 hover:bg-red-50 rounded touch-manipulation"
+                      aria-label="Remove item"
                     >
-                      <FaTrash className="w-3 h-3" />
+                      <FaTrash className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                     </button>
                   </div>
                 </div>
@@ -1295,30 +1503,38 @@ const POS: React.FC = () => {
         {/* Totals and Checkout */}
         <div className="p-4 border-t bg-gray-50">
           <div className="space-y-3 mb-4">
-            <div className="flex justify-between text-sm items-center">
+            <div className="flex justify-between text-xs sm:text-sm items-center">
               <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span className="font-medium">
+                ${formatCurrencyDisplay(subtotal)}
+              </span>
             </div>
 
             {/* Tax Input */}
-            <div className="flex justify-between text-sm items-center">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-xs sm:text-sm">
+              <div className="flex items-center gap-2 flex-1">
                 <span>Tax</span>
-                <div className="flex items-center">
+                <div className="flex items-center flex-1 sm:flex-initial">
                   <input
                     type="number"
+                    inputMode="decimal"
                     min="0"
-                    value={adjustments.tax.value}
-                    onChange={(e) =>
-                      setAdjustments((prev) => ({
-                        ...prev,
-                        tax: {
-                          ...prev.tax,
-                          value: Math.max(0, Number(e.target.value)),
-                        },
-                      }))
+                    step={
+                      adjustments.tax.type === "percentage" ? "0.01" : "0.01"
                     }
-                    className="w-20 px-2 py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                    max={
+                      adjustments.tax.type === "percentage" ? "100" : undefined
+                    }
+                    value={formatCurrencyDisplay(adjustments.tax.value)}
+                    onChange={(e) => {
+                      const parsed = parseCurrencyInput(e.target.value);
+                      updateTax(parsed);
+                    }}
+                    onBlur={(e) => {
+                      const parsed = parseCurrencyInput(e.target.value);
+                      updateTax(parsed);
+                    }}
+                    className="w-full sm:w-20 px-2 py-1.5 sm:py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
                   />
                   <select
                     value={adjustments.tax.type}
@@ -1331,35 +1547,47 @@ const POS: React.FC = () => {
                         },
                       }))
                     }
-                    className="text-sm border-y border-r rounded-r bg-gray-50 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                    className="text-sm border-y border-r rounded-r bg-gray-50 px-2 py-1.5 sm:py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
                   >
                     <option value="fixed">$</option>
                     <option value="percentage">%</option>
                   </select>
                 </div>
               </div>
-              <span>${taxAmount.toFixed(2)}</span>
+              <span className="font-medium sm:ml-auto">
+                ${formatCurrencyDisplay(taxAmount)}
+              </span>
             </div>
 
             {/* Discount Input */}
-            <div className="flex justify-between text-sm items-center">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-xs sm:text-sm">
+              <div className="flex items-center gap-2 flex-1">
                 <span>Discount</span>
-                <div className="flex items-center">
+                <div className="flex items-center flex-1 sm:flex-initial">
                   <input
                     type="number"
+                    inputMode="decimal"
                     min="0"
-                    value={adjustments.discount.value}
-                    onChange={(e) =>
-                      setAdjustments((prev) => ({
-                        ...prev,
-                        discount: {
-                          ...prev.discount,
-                          value: Math.max(0, Number(e.target.value)),
-                        },
-                      }))
+                    step={
+                      adjustments.discount.type === "percentage"
+                        ? "0.01"
+                        : "0.01"
                     }
-                    className="w-20 px-2 py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                    max={
+                      adjustments.discount.type === "percentage"
+                        ? "100"
+                        : undefined
+                    }
+                    value={formatCurrencyDisplay(adjustments.discount.value)}
+                    onChange={(e) => {
+                      const parsed = parseCurrencyInput(e.target.value);
+                      updateDiscount(parsed);
+                    }}
+                    onBlur={(e) => {
+                      const parsed = parseCurrencyInput(e.target.value);
+                      updateDiscount(parsed);
+                    }}
+                    className="w-full sm:w-20 px-2 py-1.5 sm:py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
                   />
                   <select
                     value={adjustments.discount.type}
@@ -1372,20 +1600,22 @@ const POS: React.FC = () => {
                         },
                       }))
                     }
-                    className="text-sm border-y border-r rounded-r bg-gray-50 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                    className="text-sm border-y border-r rounded-r bg-gray-50 px-2 py-1.5 sm:py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
                   >
                     <option value="fixed">$</option>
                     <option value="percentage">%</option>
                   </select>
                 </div>
               </div>
-              <span>-${discountAmount.toFixed(2)}</span>
+              <span className="font-medium sm:ml-auto">
+                -${formatCurrencyDisplay(discountAmount)}
+              </span>
             </div>
 
             {/* Total */}
-            <div className="flex justify-between font-semibold text-lg pt-2 border-t">
+            <div className="flex justify-between font-semibold text-base sm:text-lg pt-2 border-t">
               <span>Total</span>
-              <span>${(subtotal - discountAmount + taxAmount).toFixed(2)}</span>
+              <span>${formatCurrencyDisplay(total)}</span>
             </div>
           </div>
 
@@ -1401,9 +1631,7 @@ const POS: React.FC = () => {
               {selectedStaffId === "self-sell" ? (
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="font-medium text-gray-900">
-                      Self Sell
-                    </span>
+                    <span className="font-medium text-gray-900">Self Sell</span>
                     <span className="text-xs text-gray-500">
                       Shop selling (No staff assigned)
                     </span>
@@ -1456,36 +1684,28 @@ const POS: React.FC = () => {
             </div>
           </div>
 
-          {/* Payment Methods */}
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <button
-              onClick={() => handlePayment("card")}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={createOrderMutation.isPending || selectedStaffId === null}
-            >
-              {createOrderMutation?.isPending ? (
+          {/* Payment Button */}
+          <button
+            onClick={handlePaymentClick}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3.5 sm:py-3 bg-brand-primary text-white rounded-md active:bg-brand-hover hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors mb-4 text-base sm:text-sm touch-manipulation"
+            disabled={
+              createOrderMutation.isPending ||
+              selectedStaffId === null ||
+              cart.length === 0
+            }
+          >
+            {createOrderMutation?.isPending ? (
+              <>
                 <Spinner size="16px" />
-              ) : (
-                <>
-                  <FaCreditCard /> <span>Card</span>
-                </>
-              )}
-            </button>
-            <button
-              onClick={() => handlePayment("cash")}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={createOrderMutation.isPending || selectedStaffId === null}
-            >
-              {createOrderMutation?.isPending ? (
-                <Spinner size="16px" />
-              ) : (
-                <>
-                  <FaMoneyBill />
-                  <span>Cash</span>
-                </>
-              )}
-            </button>
-          </div>
+                <span>Processing...</span>
+              </>
+            ) : (
+              <>
+                <FaCreditCard />
+                <span>Process Payment</span>
+              </>
+            )}
+          </button>
 
           <button
             onClick={() => setIsBarcodeScannerOpen(true)}
@@ -1515,7 +1735,8 @@ const POS: React.FC = () => {
                   Scanner Error
                 </h3>
                 <p className="text-sm text-red-700 mb-4">
-                  The barcode scanner encountered an error. Please try again or use the manual input option.
+                  The barcode scanner encountered an error. Please try again or
+                  use the manual input option.
                 </p>
                 <button
                   onClick={() => setIsBarcodeScannerOpen(false)}
@@ -1539,8 +1760,9 @@ const POS: React.FC = () => {
       {/* Mobile Cart Toggle Button */}
       <button
         onClick={() => setShowMobileCart(true)}
-        className={`xl:hidden fixed bottom-4 right-4 bg-brand-primary text-white p-4 rounded-full shadow-lg ${showMobileCart ? "hidden" : "flex"
-          } items-center justify-center`}
+        className={`xl:hidden fixed bottom-4 right-4 bg-brand-primary text-white p-4 rounded-full shadow-lg ${
+          showMobileCart ? "hidden" : "flex"
+        } items-center justify-center`}
       >
         <div className="relative">
           <FaShoppingCart className="w-6 h-6" />
@@ -1609,9 +1831,7 @@ const POS: React.FC = () => {
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="font-semibold text-gray-900">
-                    Self Sell
-                  </span>
+                  <span className="font-semibold text-gray-900">Self Sell</span>
                   <span className="text-xs text-gray-500 bg-blue-50 px-2 py-0.5 rounded-full">
                     Shop Direct
                   </span>
@@ -1636,7 +1856,9 @@ const POS: React.FC = () => {
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-4 text-gray-500">OR SELECT STAFF</span>
+              <span className="bg-white px-4 text-gray-500">
+                OR SELECT STAFF
+              </span>
             </div>
           </div>
 
@@ -1694,7 +1916,9 @@ const POS: React.FC = () => {
               <div className="text-gray-400 mb-2">
                 <FaUser className="w-12 h-12 mx-auto" />
               </div>
-              <p className="text-gray-500 font-medium">No active staff available</p>
+              <p className="text-gray-500 font-medium">
+                No active staff available
+              </p>
               <p className="text-sm text-gray-400 mt-1">
                 Please add staff members to continue
               </p>
@@ -1734,47 +1958,728 @@ const POS: React.FC = () => {
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="font-semibold text-gray-900 truncate">
-                          {staff.fullName}
-                        </span>
-                        <span className="text-xs text-gray-500 whitespace-nowrap">
-                          (ID: {staff.id})
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm">
-                        <div className="text-gray-500 truncate">
-                          {staff.parent?.businessName || "N/A"}
+                      {/* Staff Name and ID - Primary Info */}
+                      <div className="mb-3 pb-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            Staff Name:
+                          </span>
+                          <span className="font-semibold text-gray-900 truncate">
+                            {staff.fullName}
+                          </span>
                         </div>
-                        {staff.email && (
-                          <div className="text-gray-400 truncate hidden md:block">
-                            • {staff.email}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            Staff ID:
+                          </span>
+                          <span className="text-sm font-bold text-brand-primary bg-brand-primary/10 px-2 py-0.5 rounded">
+                            #{staff.id}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Shop/User Information */}
+                      <div className="mb-3 pb-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            Shop Name:
+                          </span>
+                          <span className="text-sm font-semibold text-blue-700 truncate">
+                            {staff.parent?.businessName || "N/A"}
+                          </span>
+                        </div>
+                        {staff.parent?.id && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                              Shop ID:
+                            </span>
+                            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                              #{staff.parent.id}
+                            </span>
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 mt-2">
+
+                      {/* Additional Info */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                         {staff.role && (
-                          <span className="inline-block px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full capitalize">
-                            {staff.role}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">Role:</span>
+                            <span className="inline-block px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full capitalize">
+                              {staff.role}
+                            </span>
+                          </div>
+                        )}
+                        {staff.email && (
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="text-gray-500">Email:</span>
+                            <span className="text-gray-600 truncate">
+                              {staff.email}
+                            </span>
+                          </div>
                         )}
                         {staff.phone && (
-                          <span className="text-xs text-gray-500">
-                            {staff.phone}
-                          </span>
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="text-gray-500">Phone:</span>
+                            <span className="text-gray-600">{staff.phone}</span>
+                          </div>
                         )}
                       </div>
                     </div>
                     {selectedStaffId === staff.id && (
                       <div className="flex-shrink-0">
-                        <div className="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center shadow-sm">
-                          <span className="text-white text-sm font-bold">✓</span>
+                        <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center shadow-lg">
+                          <FaCheckCircle className="text-white text-lg" />
                         </div>
                       </div>
                     )}
                   </div>
                 </button>
               ))}
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Payment Modal */}
+      <Modal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setPartialPayment({
+            cashAmount: 0,
+            cardAmount: 0,
+            walletAmount: 0,
+          });
+        }}
+        title="Process Payment"
+        className="max-w-2xl w-full mx-2 sm:mx-4"
+      >
+        <div className="space-y-4 sm:space-y-6 max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
+          {/* Order Total Display */}
+          <div className="bg-gradient-to-r from-brand-primary to-brand-hover text-white rounded-lg p-4 sm:p-6 shadow-lg">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-xs sm:text-sm opacity-90 mb-1">
+                  Total Amount
+                </p>
+                <p className="text-2xl sm:text-3xl font-bold">
+                  ${formatCurrencyDisplay(total)}
+                </p>
+              </div>
+              <div className="text-left sm:text-right w-full sm:w-auto">
+                <p className="text-xs sm:text-sm opacity-90 mb-1">
+                  Payment Status
+                </p>
+                <div className="flex items-center gap-2">
+                  {isPaymentComplete ? (
+                    <>
+                      <FaCheckCircle className="text-xl sm:text-2xl" />
+                      <span className="text-base sm:text-lg font-semibold">
+                        Complete
+                      </span>
+                    </>
+                  ) : isPaymentOver ? (
+                    <>
+                      <FaExclamationCircle className="text-xl sm:text-2xl text-yellow-300" />
+                      <span className="text-base sm:text-lg font-semibold">
+                        Overpaid
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <FaExclamationCircle className="text-xl sm:text-2xl opacity-75" />
+                      <span className="text-base sm:text-lg font-semibold">
+                        Pending
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Amount Summary */}
+          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
+              <div
+                className={`p-2 sm:p-3 rounded-lg transition-all ${
+                  partialPayment.cashAmount > 0
+                    ? "bg-green-100 border-2 border-green-400 shadow-sm"
+                    : "bg-transparent"
+                }`}
+              >
+                <p
+                  className={`text-xs mb-1 ${
+                    partialPayment.cashAmount > 0
+                      ? "text-green-700 font-semibold"
+                      : "text-gray-500"
+                  }`}
+                >
+                  Cash
+                  {partialPayment.cashAmount > 0 && (
+                    <span className="ml-1 text-green-600">✓</span>
+                  )}
+                </p>
+                <p
+                  className={`text-base sm:text-lg font-semibold ${
+                    partialPayment.cashAmount > 0
+                      ? "text-green-700"
+                      : "text-gray-900"
+                  }`}
+                >
+                  ${formatCurrencyDisplay(partialPayment.cashAmount)}
+                </p>
+              </div>
+              <div
+                className={`p-2 sm:p-3 rounded-lg transition-all ${
+                  partialPayment.cardAmount > 0
+                    ? "bg-blue-100 border-2 border-blue-400 shadow-sm"
+                    : "bg-transparent"
+                }`}
+              >
+                <p
+                  className={`text-xs mb-1 ${
+                    partialPayment.cardAmount > 0
+                      ? "text-blue-700 font-semibold"
+                      : "text-gray-500"
+                  }`}
+                >
+                  Card
+                  {partialPayment.cardAmount > 0 && (
+                    <span className="ml-1 text-blue-600">✓</span>
+                  )}
+                </p>
+                <p
+                  className={`text-base sm:text-lg font-semibold ${
+                    partialPayment.cardAmount > 0
+                      ? "text-blue-700"
+                      : "text-gray-900"
+                  }`}
+                >
+                  ${formatCurrencyDisplay(partialPayment.cardAmount)}
+                </p>
+              </div>
+              <div
+                className={`p-2 sm:p-3 rounded-lg transition-all ${
+                  partialPayment.walletAmount > 0
+                    ? "bg-purple-100 border-2 border-purple-400 shadow-sm"
+                    : "bg-transparent"
+                }`}
+              >
+                <p
+                  className={`text-xs mb-1 ${
+                    partialPayment.walletAmount > 0
+                      ? "text-purple-700 font-semibold"
+                      : "text-gray-500"
+                  }`}
+                >
+                  Wallet
+                  {partialPayment.walletAmount > 0 && (
+                    <span className="ml-1 text-purple-600">✓</span>
+                  )}
+                </p>
+                <p
+                  className={`text-base sm:text-lg font-semibold ${
+                    partialPayment.walletAmount > 0
+                      ? "text-purple-700"
+                      : "text-gray-900"
+                  }`}
+                >
+                  ${formatCurrencyDisplay(partialPayment.walletAmount)}
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="text-sm sm:text-base font-medium text-gray-700">
+                  Total Paid:
+                </span>
+                <span
+                  className={`text-lg sm:text-xl font-bold ${
+                    isPaymentComplete
+                      ? "text-green-600"
+                      : isPaymentOver
+                      ? "text-yellow-600"
+                      : "text-gray-900"
+                  }`}
+                >
+                  ${formatCurrencyDisplay(paymentTotal)}
+                </span>
+              </div>
+              {!isPaymentComplete && (
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-xs sm:text-sm text-gray-600">
+                    Remaining:
+                  </span>
+                  <span
+                    className={`text-base sm:text-lg font-semibold ${
+                      isPaymentOver ? "text-yellow-600" : "text-red-600"
+                    }`}
+                  >
+                    {isPaymentOver
+                      ? `+$${formatCurrencyDisplay(Math.abs(paymentRemaining))}`
+                      : `$${formatCurrencyDisplay(paymentRemaining)}`}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Payment Buttons */}
+          <div>
+            <p className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">
+              Quick Payment (Full Amount)
+            </p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              <button
+                onClick={() => handleQuickPayment("cash")}
+                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${
+                  partialPayment.cashAmount > 0 &&
+                  partialPayment.cardAmount === 0 &&
+                  partialPayment.walletAmount === 0
+                    ? "bg-green-100 border-green-400 shadow-md"
+                    : "bg-green-50 border-green-200 active:bg-green-100 hover:bg-green-100 hover:border-green-300"
+                }`}
+              >
+                <FaMoneyBill
+                  className={`text-xl sm:text-2xl ${
+                    partialPayment.cashAmount > 0 &&
+                    partialPayment.cardAmount === 0 &&
+                    partialPayment.walletAmount === 0
+                      ? "text-green-700"
+                      : "text-green-600"
+                  }`}
+                />
+                <span
+                  className={`text-xs sm:text-sm font-medium ${
+                    partialPayment.cashAmount > 0 &&
+                    partialPayment.cardAmount === 0 &&
+                    partialPayment.walletAmount === 0
+                      ? "text-green-800"
+                      : "text-green-700"
+                  }`}
+                >
+                  Cash
+                  {partialPayment.cashAmount > 0 &&
+                    partialPayment.cardAmount === 0 &&
+                    partialPayment.walletAmount === 0 && (
+                      <span className="ml-1">✓</span>
+                    )}
+                </span>
+              </button>
+              <button
+                onClick={() => handleQuickPayment("card")}
+                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${
+                  partialPayment.cardAmount > 0 &&
+                  partialPayment.cashAmount === 0 &&
+                  partialPayment.walletAmount === 0
+                    ? "bg-blue-100 border-blue-400 shadow-md"
+                    : "bg-blue-50 border-blue-200 active:bg-blue-100 hover:bg-blue-100 hover:border-blue-300"
+                }`}
+              >
+                <FaCreditCard
+                  className={`text-xl sm:text-2xl ${
+                    partialPayment.cardAmount > 0 &&
+                    partialPayment.cashAmount === 0 &&
+                    partialPayment.walletAmount === 0
+                      ? "text-blue-700"
+                      : "text-blue-600"
+                  }`}
+                />
+                <span
+                  className={`text-xs sm:text-sm font-medium ${
+                    partialPayment.cardAmount > 0 &&
+                    partialPayment.cashAmount === 0 &&
+                    partialPayment.walletAmount === 0
+                      ? "text-blue-800"
+                      : "text-blue-700"
+                  }`}
+                >
+                  Card
+                  {partialPayment.cardAmount > 0 &&
+                    partialPayment.cashAmount === 0 &&
+                    partialPayment.walletAmount === 0 && (
+                      <span className="ml-1">✓</span>
+                    )}
+                </span>
+              </button>
+              <button
+                onClick={() => handleQuickPayment("mobile_banking")}
+                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${
+                  partialPayment.walletAmount > 0 &&
+                  partialPayment.cashAmount === 0 &&
+                  partialPayment.cardAmount === 0
+                    ? "bg-purple-100 border-purple-400 shadow-md"
+                    : "bg-purple-50 border-purple-200 active:bg-purple-100 hover:bg-purple-100 hover:border-purple-300"
+                }`}
+              >
+                <FaWallet
+                  className={`text-xl sm:text-2xl ${
+                    partialPayment.walletAmount > 0 &&
+                    partialPayment.cashAmount === 0 &&
+                    partialPayment.cardAmount === 0
+                      ? "text-purple-700"
+                      : "text-purple-600"
+                  }`}
+                />
+                <span
+                  className={`text-xs sm:text-sm font-medium ${
+                    partialPayment.walletAmount > 0 &&
+                    partialPayment.cashAmount === 0 &&
+                    partialPayment.cardAmount === 0
+                      ? "text-purple-800"
+                      : "text-purple-700"
+                  }`}
+                >
+                  Wallet
+                  {partialPayment.walletAmount > 0 &&
+                    partialPayment.cashAmount === 0 &&
+                    partialPayment.cardAmount === 0 && (
+                      <span className="ml-1">✓</span>
+                    )}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Manual Payment Inputs */}
+          <div className="space-y-3 sm:space-y-4">
+            <p className="text-xs sm:text-sm font-medium text-gray-700">
+              Manual Payment Entry
+            </p>
+
+            {/* Cash Payment */}
+            <div
+              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${
+                partialPayment.cashAmount > 0
+                  ? "bg-green-50 border-green-300"
+                  : "bg-transparent border-transparent"
+              }`}
+            >
+              <label
+                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${
+                  partialPayment.cashAmount > 0
+                    ? "text-green-700"
+                    : "text-gray-700"
+                }`}
+              >
+                <FaMoneyBill
+                  className={`text-sm sm:text-base ${
+                    partialPayment.cashAmount > 0
+                      ? "text-green-600"
+                      : "text-green-500"
+                  }`}
+                />
+                Cash Amount
+                {partialPayment.cashAmount > 0 && (
+                  <span className="ml-auto text-green-600 font-bold">
+                    ✓ Selected
+                  </span>
+                )}
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm sm:text-base">
+                  $
+                </span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={
+                    partialPayment.cashAmount > 0
+                      ? formatCurrencyDisplay(partialPayment.cashAmount)
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const parsed = parseCurrencyInput(e.target.value);
+                    setPartialPayment((prev) => ({
+                      ...prev,
+                      cashAmount: parsed,
+                    }));
+                  }}
+                  onBlur={(e) => {
+                    const parsed = parseCurrencyInput(e.target.value);
+                    const formatted = formatCurrency(parsed);
+                    setPartialPayment((prev) => ({
+                      ...prev,
+                      cashAmount: formatted,
+                    }));
+                  }}
+                  placeholder="0.00"
+                  className="w-full pl-8 sm:pl-10 pr-20 sm:pr-24 py-3 sm:py-3.5 text-base sm:text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                />
+                <button
+                  onClick={() => {
+                    const remaining = Math.max(
+                      0,
+                      total - paymentTotal + partialPayment.cashAmount
+                    );
+                    const formatted = formatCurrency(remaining);
+                    setPartialPayment((prev) => ({
+                      ...prev,
+                      cashAmount: formatted,
+                    }));
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium text-green-600 bg-green-50 rounded-md active:bg-green-100 hover:bg-green-100 transition-colors touch-manipulation whitespace-nowrap"
+                >
+                  Fill
+                </button>
+              </div>
+            </div>
+
+            {/* Card Payment */}
+            <div
+              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${
+                partialPayment.cardAmount > 0
+                  ? "bg-blue-50 border-blue-300"
+                  : "bg-transparent border-transparent"
+              }`}
+            >
+              <label
+                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${
+                  partialPayment.cardAmount > 0
+                    ? "text-blue-700"
+                    : "text-gray-700"
+                }`}
+              >
+                <FaCreditCard
+                  className={`text-sm sm:text-base ${
+                    partialPayment.cardAmount > 0
+                      ? "text-blue-600"
+                      : "text-blue-500"
+                  }`}
+                />
+                Card Amount
+                {partialPayment.cardAmount > 0 && (
+                  <span className="ml-auto text-blue-600 font-bold">
+                    ✓ Selected
+                  </span>
+                )}
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm sm:text-base">
+                  $
+                </span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={
+                    partialPayment.cardAmount > 0
+                      ? formatCurrencyDisplay(partialPayment.cardAmount)
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const parsed = parseCurrencyInput(e.target.value);
+                    setPartialPayment((prev) => ({
+                      ...prev,
+                      cardAmount: parsed,
+                    }));
+                  }}
+                  onBlur={(e) => {
+                    const parsed = parseCurrencyInput(e.target.value);
+                    const formatted = formatCurrency(parsed);
+                    setPartialPayment((prev) => ({
+                      ...prev,
+                      cardAmount: formatted,
+                    }));
+                  }}
+                  placeholder="0.00"
+                  className="w-full pl-8 sm:pl-10 pr-20 sm:pr-24 py-3 sm:py-3.5 text-base sm:text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                />
+                <button
+                  onClick={() => {
+                    const remaining = Math.max(
+                      0,
+                      total - paymentTotal + partialPayment.cardAmount
+                    );
+                    const formatted = formatCurrency(remaining);
+                    setPartialPayment((prev) => ({
+                      ...prev,
+                      cardAmount: formatted,
+                    }));
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-md active:bg-blue-100 hover:bg-blue-100 transition-colors touch-manipulation whitespace-nowrap"
+                >
+                  Fill
+                </button>
+              </div>
+            </div>
+
+            {/* Wallet Payment */}
+            <div
+              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${
+                partialPayment.walletAmount > 0
+                  ? "bg-purple-50 border-purple-300"
+                  : "bg-transparent border-transparent"
+              }`}
+            >
+              <label
+                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${
+                  partialPayment.walletAmount > 0
+                    ? "text-purple-700"
+                    : "text-gray-700"
+                }`}
+              >
+                <FaWallet
+                  className={`text-sm sm:text-base ${
+                    partialPayment.walletAmount > 0
+                      ? "text-purple-600"
+                      : "text-purple-500"
+                  }`}
+                />
+                <span className="hidden sm:inline">
+                  Wallet/Mobile Banking Amount
+                </span>
+                <span className="sm:hidden">Wallet Amount</span>
+                {partialPayment.walletAmount > 0 && (
+                  <span className="ml-auto text-purple-600 font-bold">
+                    ✓ Selected
+                  </span>
+                )}
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm sm:text-base">
+                  $
+                </span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={
+                    partialPayment.walletAmount > 0
+                      ? formatCurrencyDisplay(partialPayment.walletAmount)
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const parsed = parseCurrencyInput(e.target.value);
+                    setPartialPayment((prev) => ({
+                      ...prev,
+                      walletAmount: parsed,
+                    }));
+                  }}
+                  onBlur={(e) => {
+                    const parsed = parseCurrencyInput(e.target.value);
+                    const formatted = formatCurrency(parsed);
+                    setPartialPayment((prev) => ({
+                      ...prev,
+                      walletAmount: formatted,
+                    }));
+                  }}
+                  placeholder="0.00"
+                  className="w-full pl-8 sm:pl-10 pr-20 sm:pr-24 py-3 sm:py-3.5 text-base sm:text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                />
+                <button
+                  onClick={() => {
+                    const remaining = Math.max(
+                      0,
+                      total - paymentTotal + partialPayment.walletAmount
+                    );
+                    const formatted = formatCurrency(remaining);
+                    setPartialPayment((prev) => ({
+                      ...prev,
+                      walletAmount: formatted,
+                    }));
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium text-purple-600 bg-purple-50 rounded-md active:bg-purple-100 hover:bg-purple-100 transition-colors touch-manipulation whitespace-nowrap"
+                >
+                  Fill
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Clear All Button */}
+          {(partialPayment.cashAmount > 0 ||
+            partialPayment.cardAmount > 0 ||
+            partialPayment.walletAmount > 0) && (
+            <button
+              onClick={() => {
+                setPartialPayment({
+                  cashAmount: 0,
+                  cardAmount: 0,
+                  walletAmount: 0,
+                });
+              }}
+              className="w-full py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Clear All
+            </button>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 border-t sticky bottom-0 bg-white pb-2 sm:pb-0">
+            <button
+              onClick={() => {
+                setShowPaymentModal(false);
+                setPartialPayment({
+                  cashAmount: 0,
+                  cardAmount: 0,
+                  walletAmount: 0,
+                });
+              }}
+              className="flex-1 px-4 py-3.5 sm:py-3 text-gray-700 bg-gray-100 rounded-lg active:bg-gray-200 hover:bg-gray-200 transition-colors font-medium text-base sm:text-sm touch-manipulation"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleProcessPayment}
+              disabled={!isPaymentComplete || createOrderMutation.isPending}
+              className={`flex-1 px-4 py-3.5 sm:py-3 text-white rounded-lg font-medium transition-all text-base sm:text-sm touch-manipulation ${
+                isPaymentComplete
+                  ? "bg-brand-primary active:bg-brand-hover hover:bg-brand-hover shadow-lg active:shadow-xl hover:shadow-xl"
+                  : "bg-gray-400 cursor-not-allowed"
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {createOrderMutation.isPending ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Spinner size="16px" />
+                  <span>Processing...</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <FaCheckCircle />
+                  <span>Complete Payment</span>
+                </div>
+              )}
+            </button>
+          </div>
+
+          {/* Validation Messages */}
+          {!isPaymentComplete && paymentTotal > 0 && (
+            <div
+              className={`p-3 rounded-lg ${
+                isPaymentOver
+                  ? "bg-yellow-50 border border-yellow-200"
+                  : "bg-red-50 border border-red-200"
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <FaExclamationCircle
+                  className={`mt-0.5 ${
+                    isPaymentOver ? "text-yellow-600" : "text-red-600"
+                  }`}
+                />
+                <div className="flex-1">
+                  <p
+                    className={`text-sm font-medium ${
+                      isPaymentOver ? "text-yellow-800" : "text-red-800"
+                    }`}
+                  >
+                    {isPaymentOver
+                      ? `Payment exceeds total by $${(
+                          paymentTotal - total
+                        ).toFixed(2)}. Please adjust amounts.`
+                      : `Payment incomplete. Please add $${paymentRemaining.toFixed(
+                          2
+                        )} more to complete the payment.`}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
