@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { FaPrint } from "react-icons/fa";
+import { FaPrint, FaMoneyBill, FaCreditCard, FaWallet } from "react-icons/fa";
 // import LogoSvg from "./icons/LogoSvg";
 import Barcode from "react-barcode";
 import { getExpiryDate } from "@/utils/utils";
@@ -39,8 +39,16 @@ interface InvoiceData {
     total: string;
   };
   payment: {
-    method: "cash" | "card";
+    method: "cash" | "card" | "mobile_banking" | "mixed";
     status: string;
+    cashAmount?: number;
+    cardAmount?: number;
+    walletAmount?: number;
+    paidAmount: number;
+    totalAmount: number;
+    remainingAmount: number;
+    isPaid: boolean;
+    isPartial: boolean;
   };
   orderStatus: string;
   businessInfo: {
@@ -198,16 +206,98 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
               <span>Total</span>
               <span>${invoiceData.summary.total}</span>
             </div>
+
+            {/* Payment Information */}
+            <div className="pt-2 border-t space-y-2">
+              {/* Payment Method */}
+              {invoiceData.payment.method === "mixed" ? (
+                <>
+                  {Number(invoiceData?.payment?.cashAmount || 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="flex items-center gap-1">
+                        <FaMoneyBill className="text-green-600 text-xs" />
+                        Cash
+                      </span>
+                      <span>
+                        ${Number(invoiceData.payment.cashAmount).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {Number(invoiceData?.payment?.cardAmount || 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="flex items-center gap-1">
+                        <FaCreditCard className="text-blue-600 text-xs" />
+                        Card
+                      </span>
+                      <span>
+                        ${Number(invoiceData.payment.cardAmount).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {Number(invoiceData?.payment?.walletAmount || 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="flex items-center gap-1">
+                        <FaWallet className="text-purple-600 text-xs" />
+                        Wallet
+                      </span>
+                      <span>
+                        ${Number(invoiceData.payment.walletAmount).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex justify-between">
+                  <span className="flex items-center gap-1">
+                    {invoiceData.payment.method === "cash" && (
+                      <FaMoneyBill className="text-green-600 text-xs" />
+                    )}
+                    {invoiceData.payment.method === "card" && (
+                      <FaCreditCard className="text-blue-600 text-xs" />
+                    )}
+                    {invoiceData.payment.method === "mobile_banking" && (
+                      <FaWallet className="text-purple-600 text-xs" />
+                    )}
+                    Payment Method
+                  </span>
+                  <span className="capitalize">
+                    {invoiceData.payment.method === "mobile_banking"
+                      ? "Mobile Banking"
+                      : invoiceData.payment.method.toUpperCase()}
+                  </span>
+                </div>
+              )}
+
+              {/* Payment Amounts */}
+              <div className="flex justify-between">
+                <span>Paid Amount</span>
+                <span className="text-green-600 font-medium">
+                  ${Number(invoiceData.payment.paidAmount).toFixed(2)}
+                </span>
+              </div>
+              {invoiceData.payment.remainingAmount > 0 && (
+                <div className="flex justify-between text-red-600">
+                  <span>Remaining</span>
+                  <span>
+                    ${Number(invoiceData.payment.remainingAmount).toFixed(2)}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span>Payment Status</span>
+                <span className="capitalize">{invoiceData.payment.status}</span>
+              </div>
+              {invoiceData.payment.isPartial && (
+                <div className="flex justify-between text-orange-600 text-xs">
+                  <span>⚠ Partial Payment</span>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Payment Info */}
-          <div className="mt-6 pt-4 border-t text-center text-sm text-gray-500">
-            <p>Paid via {invoiceData.payment.method.toUpperCase()}</p>
-            <p className="mt-1">
-              Status: {invoiceData.payment.status.toUpperCase()}
-            </p>
-            <p className="mt-2">Thank you for your business!</p>
-          </div>
+          <p className="mt-6 text-center text-sm text-gray-500">
+            Thank you for your business!
+          </p>
 
           {/* Barcode */}
           <div className="mt-6 flex flex-col items-center justify-center border-t pt-4">

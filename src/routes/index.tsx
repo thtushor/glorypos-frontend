@@ -100,6 +100,7 @@ const AppRoutes = () => {
           <Route path="sales">
             <Route path="pos" element={<POS />} />
             <Route path="orders" element={<Orders />} />
+            <Route path="product-statement" element={<Orders />} />
           </Route>
           <Route path="inventory">
             <Route path="products" element={<Products />} />

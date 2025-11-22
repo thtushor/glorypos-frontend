@@ -45,6 +45,12 @@ export const menuItems = [
         path: "/sales/orders",
         icon: <FaBoxOpen className="w-5 h-5" />,
       },
+      {
+        id: "statement",
+        title: "Product Statement",
+        path: "/sales/product-statement",
+        icon: <FaBoxOpen className="w-5 h-5" />,
+      },
     ],
   },
   {
