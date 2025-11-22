@@ -44,6 +44,8 @@ import { toast } from "react-toastify";
 import { Unit, Brand } from "@/types/categoryType";
 import { Color, Category } from "@/types/categoryType";
 import { useAuth } from "@/context/AuthContext";
+import { FaUserGear } from "react-icons/fa6";
+// import UserIcon from "@/components/icons/UserIcon";
 
 // Product interface is now imported from types
 
@@ -450,6 +452,7 @@ const POS: React.FC = () => {
     },
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const activeStaffs =
     staffData?.users?.filter((staff: any) => staff.status === "active") || [];
 
@@ -1815,8 +1818,8 @@ const POS: React.FC = () => {
           setStaffSearchKey("");
           setStaffRoleFilter("");
         }}
-        title="Select Staff or Self Sell"
-        className="max-w-3xl"
+        title="Select Staff"
+        className="!max-w-[90vw]"
       >
         <div className="space-y-4">
           {/* Self Sell Option - Prominent */}
@@ -1945,92 +1948,72 @@ const POS: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2.5  pr-2">
               {filteredStaffs.map((staff: any) => (
                 <button
                   key={staff.id}
                   onClick={() => handleStaffSelect(staff.id)}
-                  className={`w-full text-left p-4 border-2 rounded-lg transition-all hover:shadow-md ${
+                  className={`relative text-left p-3 border-2 rounded-lg transition-all hover:shadow-md hover:scale-[1.02] ${
                     selectedStaffId === staff.id
-                      ? "border-brand-primary bg-brand-primary/5 shadow-sm"
+                      ? "border-brand-primary bg-brand-primary/10 shadow-md ring-2 ring-brand-primary/20"
                       : "border-gray-200 hover:border-gray-300 bg-white"
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      {/* Staff Name and ID - Primary Info */}
-                      <div className="mb-3 pb-2 border-b border-gray-200">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                            Staff Name:
-                          </span>
-                          <span className="font-semibold text-gray-900 truncate">
-                            {staff.fullName}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                            Staff ID:
-                          </span>
-                          <span className="text-sm font-bold text-brand-primary bg-brand-primary/10 px-2 py-0.5 rounded">
-                            #{staff.id}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Shop/User Information */}
-                      <div className="mb-3 pb-2 border-b border-gray-200">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                            Shop Name:
-                          </span>
-                          <span className="text-sm font-semibold text-blue-700 truncate">
-                            {staff.parent?.businessName || "N/A"}
-                          </span>
-                        </div>
-                        {staff.parent?.id && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                              Shop ID:
-                            </span>
-                            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                              #{staff.parent.id}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Additional Info */}
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                        {staff.role && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">Role:</span>
-                            <span className="inline-block px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full capitalize">
-                              {staff.role}
-                            </span>
-                          </div>
-                        )}
-                        {staff.email && (
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="text-gray-500">Email:</span>
-                            <span className="text-gray-600 truncate">
-                              {staff.email}
-                            </span>
-                          </div>
-                        )}
-                        {staff.phone && (
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="text-gray-500">Phone:</span>
-                            <span className="text-gray-600">{staff.phone}</span>
-                          </div>
-                        )}
+                  {selectedStaffId === staff.id && (
+                    <div className="absolute top-1.5 right-1.5">
+                      <div className="w-5 h-5 rounded-full bg-brand-primary flex items-center justify-center shadow-sm">
+                        <FaCheckCircle className="text-white text-[10px]" />
                       </div>
                     </div>
-                    {selectedStaffId === staff.id && (
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center shadow-lg">
-                          <FaCheckCircle className="text-white text-lg" />
+                  )}
+                  <div className="space-y-1.5 pr-5">
+                    {/* Header: Name and ID */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold flex items-center gap-2 text-sm text-gray-900 truncate mb-0.5">
+                          <FaUserGear /> Employee: {staff.fullName}
+                        </h4>
+                        <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-lg shadow-sm">
+                          {/* ID Chip */}
+                          <span className="text-[10px] font-bold text-brand-primary bg-brand-primary/10 px-2 py-1 rounded-full">
+                            ID: {staff.id}
+                          </span>
+
+                          {/* Phone Chip */}
+                          {staff.phone && (
+                            <span className="text-[10px] text-gray-700 bg-gray-100 px-2 py-1 rounded-full truncate">
+                              {staff.phone}
+                            </span>
+                          )}
+
+                          {/* Email Chip */}
+                          {staff.email && (
+                            <span className="text-[10px] text-gray-700 bg-gray-100 px-2 py-1 rounded-full truncate">
+                              {staff.email}
+                            </span>
+                          )}
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Shop Info */}
+                    <div className="pt-1 border-t border-gray-100">
+                      <p className="text-xs font-medium text-blue-700 truncate mb-0.5">
+                        Shop: {staff.parent?.businessName || "N/A"}
+                      </p>
+                      {staff.parent?.id && (
+                        <span className="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                          Shop #{staff.parent.id}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Role Badge */}
+                    {staff.role && (
+                      <div className="pt-1">
+                        <span className="inline-block px-2 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-700 rounded-full capitalize">
+                          {staff.role}
+                        </span>
                       </div>
                     )}
                   </div>
