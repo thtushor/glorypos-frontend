@@ -19,8 +19,15 @@ interface StatementItem {
   ProductId: number;
   ProductVariantId: number | null;
   Product: {
+    id: number;
     name: string;
     sku: string;
+    UserId: number;
+    User?: {
+      id: number;
+      businessName: string;
+      fullName: string;
+    };
   };
   ProductVariant?: {
     sku: string;
@@ -32,6 +39,7 @@ interface StatementItem {
     };
   } | null;
   Order: {
+    id: number;
     orderNumber: string;
     orderDate: string;
     customerName: string;
@@ -40,6 +48,23 @@ interface StatementItem {
     tax: string;
     paymentMethod: string;
     paymentStatus: string;
+    UserId: number;
+    User?: {
+      id: number;
+      businessName: string;
+      fullName: string;
+    };
+    commissions?: Array<{
+      id: number;
+      commissionAmount: string;
+      commissionPercentage: string;
+      staff?: {
+        id: number;
+        fullName: string;
+        email: string;
+        role: string;
+      };
+    }>;
   };
 }
 
@@ -115,6 +140,22 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
     },
     { totalSales: 0, totalProfit: 0, totalLoss: 0, totalTax: 0 }
   );
+
+  // Helper function to determine if order is Self or Shop
+  const getSaleType = (
+    item: StatementItem
+  ): { type: "Self" | "Shop"; name: string } => {
+    if (item.Order.UserId === item.Product.UserId) {
+      return { type: "Self", name: "Self" };
+    }
+    return {
+      type: "Shop",
+      name:
+        item.Order.User?.businessName ||
+        item.Order.User?.fullName ||
+        "Unknown Shop",
+    };
+  };
 
   // Handle print
   const handlePrint = useReactToPrint({
@@ -209,6 +250,12 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                       <th className="px-2 py-1.5 text-left print:px-1 print:w-1/4">
                         Product
                       </th>
+                      <th className="px-2 py-1.5 text-left print:px-1">
+                        Shop/Self
+                      </th>
+                      <th className="px-2 py-1.5 text-left print:px-1">
+                        Commission
+                      </th>
                       <th className="px-2 py-1.5 text-right print:px-1">Qty</th>
                       <th className="px-2 py-1.5 text-right print:px-1">
                         Unit Price
@@ -228,7 +275,7 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                     {!statementData || statementData.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={8}
+                          colSpan={10}
                           className="px-2 py-6 text-center text-gray-500"
                         >
                           No statement data available
@@ -239,6 +286,8 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                         const cost = Number(item.purchasePrice) * item.quantity;
                         const sales = Number(item.subtotal);
                         const profit = sales - cost;
+                        const saleType = getSaleType(item);
+                        const commissions = item.Order.commissions || [];
 
                         return (
                           <tr key={item.id} className="hover:bg-gray-50">
@@ -267,6 +316,44 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                                   {item.ProductVariant?.sku || item.Product.sku}
                                 </span>
                               </div>
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <span
+                                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium print:text-[7pt] ${
+                                  saleType.type === "Self"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-purple-100 text-purple-800"
+                                }`}
+                              >
+                                {saleType.name}
+                              </span>
+                            </td>
+                            <td className="px-2 py-1.5">
+                              {commissions.length > 0 ? (
+                                <div className="space-y-0.5">
+                                  {commissions.map((commission) => (
+                                    <div
+                                      key={commission.id}
+                                      className="text-[10px] print:text-[7pt]"
+                                    >
+                                      <div className="font-medium text-gray-900">
+                                        {commission.staff?.fullName || "N/A"}
+                                      </div>
+                                      <div className="text-gray-500">
+                                        $
+                                        {Number(
+                                          commission.commissionAmount
+                                        ).toFixed(2)}{" "}
+                                        ({commission.commissionPercentage}%)
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-gray-400 text-[10px] print:text-[7pt]">
+                                  No commission
+                                </span>
+                              )}
                             </td>
                             <td className="px-2 py-1.5 text-right">
                               {item.quantity}
@@ -298,7 +385,7 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                   </tbody>
                   <tfoot className="border-t-2 border-gray-200 font-semibold print:border-t">
                     <tr>
-                      <td colSpan={3} className="px-4 py-2 text-right">
+                      <td colSpan={5} className="px-4 py-2 text-right">
                         Totals:
                       </td>
                       <td className="pl-4 pr-2 py-2 text-right">

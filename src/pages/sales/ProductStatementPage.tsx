@@ -18,8 +18,15 @@ interface StatementItem {
   ProductId: number;
   ProductVariantId: number | null;
   Product: {
+    id: number;
     name: string;
     sku: string;
+    UserId: number;
+    User?: {
+      id: number;
+      businessName: string;
+      fullName: string;
+    };
   };
   ProductVariant?: {
     sku: string;
@@ -31,6 +38,7 @@ interface StatementItem {
     };
   } | null;
   Order: {
+    id: number;
     orderNumber: string;
     orderDate: string;
     customerName: string;
@@ -39,6 +47,28 @@ interface StatementItem {
     tax: string;
     paymentMethod: string;
     paymentStatus: string;
+    UserId: number;
+    User?: {
+      id: number;
+      businessName: string;
+      fullName: string;
+    };
+    commissions?: Array<{
+      id: number;
+      commissionAmount: string;
+      commissionPercentage: string;
+      staff?: {
+        id: number;
+        fullName: string;
+        email: string;
+        role: string;
+        parent?: {
+          id: number;
+          businessName: string;
+          fullName: string;
+        };
+      };
+    }>;
   };
 }
 
@@ -163,6 +193,30 @@ const ProductStatementPage: React.FC = () => {
 
   const handleFilterChange = (name: string, value: string | number) => {
     setFilters((prev) => ({ ...prev, page: 1, [name]: value }));
+  };
+
+  // Helper function to determine if order is Self or Shop
+  const getSaleType = (
+    item: StatementItem
+  ): { type: "Self" | "Shop"; name: string } => {
+    if (item.Order.UserId === item.Product.UserId) {
+      return {
+        type: "Self",
+        name: `${
+          item.Order?.User?.businessName ||
+          item.Order?.User?.fullName ||
+          "Unknown Shop"
+        } (Self)`,
+      };
+    }
+    return {
+      type: "Shop",
+      name: `Taken from - ${
+        item.Product?.User?.businessName ||
+        item.Product?.User?.fullName ||
+        "Unknown Shop"
+      }`,
+    };
   };
 
   const pagination = (statementData as StatementResponse)?.pagination || {
@@ -309,6 +363,12 @@ const ProductStatementPage: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Product
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Shop/Self
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Commission
+                </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Qty
                 </th>
@@ -329,7 +389,7 @@ const ProductStatementPage: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading || isFetching ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center">
+                  <td colSpan={10} className="px-6 py-4 text-center">
                     <div className="flex justify-center items-center w-full">
                       <Spinner color="#32cd32" size="40px" />
                     </div>
@@ -338,7 +398,7 @@ const ProductStatementPage: React.FC = () => {
               ) : !dataArray || dataArray.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={10}
                     className="px-6 py-4 text-center text-gray-500"
                   >
                     No statement data found
@@ -349,6 +409,8 @@ const ProductStatementPage: React.FC = () => {
                   const cost = Number(item.purchasePrice) * item.quantity;
                   const sales = Number(item.subtotal);
                   const profit = sales - cost;
+                  const saleType = getSaleType(item);
+                  const commissions = item.Order.commissions || [];
 
                   return (
                     <tr key={item.id} className="hover:bg-gray-50">
@@ -374,6 +436,52 @@ const ProductStatementPage: React.FC = () => {
                             SKU: {item.ProductVariant?.sku || item.Product.sku}
                           </span>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            saleType.type === "Self"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-purple-100 text-purple-800"
+                          }`}
+                        >
+                          {saleType.name}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        {commissions.length > 0 ? (
+                          <div className="space-y-1">
+                            {commissions.map((commission) => (
+                              <div key={commission.id} className="text-xs">
+                                <div className="font-medium text-gray-900">
+                                  <span>
+                                    <strong>Staff: </strong>
+                                    {commission.staff?.fullName || "N/A"}
+                                  </span>
+                                </div>
+                                <div className="font-medium text-gray-900">
+                                  <span>
+                                    <strong>Shop: </strong>
+                                    {commission.staff?.parent?.businessName ||
+                                      commission.staff?.parent?.fullName ||
+                                      "N/A"}
+                                  </span>
+                                </div>
+                                <div className="text-gray-500">
+                                  $
+                                  {Number(commission.commissionAmount).toFixed(
+                                    2
+                                  )}{" "}
+                                  ({commission.commissionPercentage}%)
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">
+                            No commission
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
                         {item.quantity}
@@ -405,7 +513,7 @@ const ProductStatementPage: React.FC = () => {
               <tfoot className="bg-gray-50 border-t-2 border-gray-300">
                 <tr>
                   <td
-                    colSpan={3}
+                    colSpan={5}
                     className="px-6 py-3 text-right text-sm font-semibold text-gray-900"
                   >
                     Totals:
