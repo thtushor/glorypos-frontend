@@ -49,6 +49,7 @@ interface Order {
   createdAt: string;
   updatedAt: string;
   UserId: number;
+  commissions: any[];
   OrderItems: OrderItem[];
 }
 
@@ -249,6 +250,12 @@ const Orders: React.FC = () => {
                   Customer
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Seller
+                </th>
+                {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Seller from
+                </th> */}
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -295,6 +302,37 @@ const Orders: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {order.customerName}
                     </td>
+                    {/* stuff commission */}
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      <div className="flex flex-col gap-0.5">
+                        {order.commissions?.[0]?.staff?.fullName && (
+                          <span className="text-sm font-medium text-gray-800">
+                            {order.commissions?.[0]?.staff?.fullName}
+                          </span>
+                        )}
+                        {order.commissions?.[0]?.staff?.role && (
+                          <div>
+                            <span className="text-xs text-gray-500 px-2 py-1 rounded-md bg-gray-100 inline-block">
+                              {order.commissions?.[0]?.staff?.role}
+                            </span>
+                          </div>
+                        )}
+                        {order?.commissions?.[0]?.staff?.parent
+                          ?.businessName && (
+                          <strong className="text-xs text-gray-500">
+                            shop:{" "}
+                            {order.commissions[0].staff.parent.businessName}
+                          </strong>
+                        )}
+                        {order?.commissions?.[0]?.commissionAmount > 0 && (
+                          <span className="text-xs text-green-700">
+                            commission: $
+                            {order?.commissions?.[0]?.commissionAmount}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       {new Date(order.orderDate).toLocaleDateString()}
                     </td>

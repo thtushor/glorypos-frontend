@@ -5,6 +5,7 @@ import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
 import POS from "../pages/sales/POS";
 import Orders from "../pages/sales/Orders";
+import ProductStatementPage from "../pages/sales/ProductStatementPage";
 import Products from "../pages/inventory/Products";
 import Suppliers from "../pages/inventory/Suppliers";
 import Reports from "../pages/Reports";
@@ -100,7 +101,10 @@ const AppRoutes = () => {
           <Route path="sales">
             <Route path="pos" element={<POS />} />
             <Route path="orders" element={<Orders />} />
-            <Route path="product-statement" element={<Orders />} />
+            <Route
+              path="product-statement"
+              element={<ProductStatementPage />}
+            />
           </Route>
           <Route path="inventory">
             <Route path="products" element={<Products />} />
