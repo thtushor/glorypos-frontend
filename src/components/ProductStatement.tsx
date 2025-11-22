@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useRef } from "react";
 import { FaPrint } from "react-icons/fa";
 import Modal from "./Modal";
 import AXIOS from "@/api/network/Axios";
 import { useReactToPrint } from "react-to-print";
-import { useRef } from "react";
 // import LogoSvg from "./icons/LogoSvg";
 import Spinner from "./Spinner";
 
@@ -73,43 +73,102 @@ interface StatementItem {
   };
 }
 
+interface SummaryData {
+  totalSold: number;
+  totalRevenue: number;
+  totalCost: number;
+  totalProfit: number;
+  totalLoss: number;
+  profitMargin: number;
+  netProfit: number;
+}
+
+interface StatementResponse {
+  statements: StatementItem[];
+  summary: SummaryData;
+  pagination?: {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalItems: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
 interface ProductStatementProps {
   isOpen: boolean;
   onClose: () => void;
   productId?: number;
+  productVariantId?: number;
   startDate?: string;
   endDate?: string;
+  productUserId?: number;
+  userRoleId?: number;
+  orderStartDate?: string;
+  orderEndDate?: string;
+  searchKey?: string;
 }
 
 const ProductStatement: React.FC<ProductStatementProps> = ({
   isOpen,
   onClose,
   productId,
+  productVariantId,
   startDate,
   endDate,
+  productUserId,
+  userRoleId,
+  orderStartDate,
+  orderEndDate,
+  searchKey,
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Build query parameters using useMemo (similar to POS.tsx)
+  const queryParams = useMemo(() => {
+    const params: Record<string, any> = {};
+
+    if (productId) params.productId = productId;
+    if (productVariantId) params.productVariantId = productVariantId;
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    if (productUserId) params.productUserId = productUserId;
+    if (userRoleId) params.userRoleId = userRoleId;
+    if (orderStartDate) params.orderStartDate = orderStartDate;
+    if (orderEndDate) params.orderEndDate = orderEndDate;
+    if (searchKey) params.searchKey = searchKey;
+
+    return params;
+  }, [
+    productId,
+    productVariantId,
+    startDate,
+    endDate,
+    productUserId,
+    userRoleId,
+    orderStartDate,
+    orderEndDate,
+    searchKey,
+  ]);
+
   // Fetch statement data
-  const { data: statementData, isLoading } = useQuery({
-    queryKey: ["product-statement", productId, startDate, endDate],
+  const { data: statementData, isLoading } = useQuery<StatementResponse>({
+    queryKey: ["product-statement", queryParams],
     queryFn: async () => {
-      const url = productId
-        ? `/statement/products/${productId}`
-        : "/statement/products";
-      const response = await AXIOS.get(url, {
-        params: {
-          startDate,
-          endDate,
-        },
+      const response = await AXIOS.get("/statement/products", {
+        params: queryParams,
       });
       return response.data;
     },
     enabled: isOpen,
   });
 
-  // Calculate totals
-  const totals = statementData?.reduce(
+  // Extract statements array from response
+  const statements = statementData?.statements || [];
+
+  // Calculate totals for table footer
+  const totals = statements?.reduce(
     (acc: any, item: StatementItem) => {
       acc.quantity += item.quantity;
       acc.sales += Number(item.subtotal);
@@ -119,32 +178,34 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
     { quantity: 0, sales: 0, cost: 0 }
   );
 
-  // Calculate summary
-  const summary = statementData?.reduce(
-    (acc: any, item: StatementItem) => {
-      const cost = Number(item.purchasePrice) * Number(item.quantity); // Ensure numbers
-      const sales = Number(item.subtotal);
-      const profit = sales - cost;
+  // Use API summary data
+  const apiSummary = statementData?.summary;
 
-      const orderTax = Number(item?.Order?.tax) || 0; // Default to 0 if undefined
-      const orderSubtotal = Number(item?.Order?.subtotal) || 1; // Avoid division by 0
+  // Calculate tax from statements if needed (since it's not in summary)
+  const calculatedTax =
+    statements?.reduce((acc: number, item: StatementItem) => {
+      const orderTax = Number(item?.Order?.tax) || 0;
+      const orderSubtotal = Number(item?.Order?.subtotal) || 1;
       const itemSubtotal = Number(item?.subtotal) || 0;
-
       const tax = Number(
         (orderTax * (itemSubtotal / orderSubtotal) || 0).toFixed(2)
       );
+      return acc + tax;
+    }, 0) || 0;
 
-      acc.totalSales += sales;
-      acc.totalTax += tax;
-      if (profit >= 0) {
-        acc.totalProfit += profit;
-      } else {
-        acc.totalLoss += Math.abs(profit);
+  const summary = apiSummary
+    ? {
+        totalSales: apiSummary.totalRevenue,
+        totalProfit: apiSummary.totalProfit,
+        totalLoss: apiSummary.totalLoss,
+        totalTax: calculatedTax,
       }
-      return acc;
-    },
-    { totalSales: 0, totalProfit: 0, totalLoss: 0, totalTax: 0 }
-  );
+    : {
+        totalSales: 0,
+        totalProfit: 0,
+        totalLoss: 0,
+        totalTax: 0,
+      };
 
   // Helper function to determine if order is Self or Shop
   const getSaleType = (
@@ -285,7 +346,7 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {!statementData || statementData.length === 0 ? (
+                    {!statements || statements.length === 0 ? (
                       <tr>
                         <td
                           colSpan={10}
@@ -295,7 +356,7 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                         </td>
                       </tr>
                     ) : (
-                      statementData.map((item: StatementItem) => {
+                      statements.map((item: StatementItem) => {
                         const cost = Number(item.purchasePrice) * item.quantity;
                         const sales = Number(item.subtotal);
                         const profit = sales - cost;

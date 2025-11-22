@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FaSearch, FaFilter } from "react-icons/fa";
 import { BiSpreadsheet } from "react-icons/bi";
@@ -81,18 +81,34 @@ interface PaginationData {
   hasPreviousPage: boolean;
 }
 
+interface SummaryData {
+  totalSold: number;
+  totalRevenue: number;
+  totalCost: number;
+  totalProfit: number;
+  totalLoss: number;
+  profitMargin: number;
+  netProfit: number;
+}
+
 interface StatementResponse {
-  data?: StatementItem[];
-  pagination?: PaginationData;
+  statements: StatementItem[];
+  summary: SummaryData;
+  pagination: PaginationData;
 }
 
 interface FilterParams {
   page: number;
   pageSize: number;
   searchKey?: string;
+  productId?: number;
+  productVariantId?: number;
   startDate?: string;
   endDate?: string;
-  productId?: number;
+  productUserId?: number;
+  userRoleId?: number;
+  orderStartDate?: string;
+  orderEndDate?: string;
 }
 
 const ProductStatementPage: React.FC = () => {
@@ -104,47 +120,70 @@ const ProductStatementPage: React.FC = () => {
     pageSize: 20,
   });
 
+  // Build query parameters using useMemo (similar to POS.tsx)
+  const queryParams = useMemo(() => {
+    const params: Record<string, any> = {
+      page: filters.page,
+      pageSize: filters.pageSize,
+    };
+
+    if (filters.searchKey) params.searchKey = filters.searchKey;
+    if (filters.productId) params.productId = filters.productId;
+    if (filters.productVariantId)
+      params.productVariantId = filters.productVariantId;
+    if (filters.startDate) params.startDate = filters.startDate;
+    if (filters.endDate) params.endDate = filters.endDate;
+    if (filters.productUserId) params.productUserId = filters.productUserId;
+    if (filters.userRoleId) params.userRoleId = filters.userRoleId;
+    if (filters.orderStartDate) params.orderStartDate = filters.orderStartDate;
+    if (filters.orderEndDate) params.orderEndDate = filters.orderEndDate;
+
+    return params;
+  }, [filters]);
+
   // Fetch Statement Data
   const {
     data: statementData,
     isLoading,
     isFetching,
-  } = useQuery<StatementResponse | StatementItem[]>({
-    queryKey: ["product-statement-page", filters],
+  } = useQuery<StatementResponse>({
+    queryKey: ["product-statement-page", queryParams],
     queryFn: async () => {
       try {
-        const url = filters.productId
-          ? `/statement/products/${filters.productId}`
-          : "/statement/products";
-        const response = await AXIOS.get(url, {
-          params: {
-            page: filters.page,
-            pageSize: filters.pageSize,
-            startDate: filters.startDate,
-            endDate: filters.endDate,
-            searchKey: filters.searchKey,
-          },
+        const response = await AXIOS.get("/statement/products", {
+          params: queryParams,
         });
-        const data = response.data;
-
-        // Handle both array response and object response
-        if (Array.isArray(data)) {
-          return { data, pagination: undefined };
-        }
-        return data;
+        return response.data;
       } catch (error: any) {
         toast.error(error?.message || "Failed to fetch product statement");
-        return { data: [], pagination: undefined };
+        return {
+          statements: [],
+          summary: {
+            totalSold: 0,
+            totalRevenue: 0,
+            totalCost: 0,
+            totalProfit: 0,
+            totalLoss: 0,
+            profitMargin: 0,
+            netProfit: 0,
+          },
+          pagination: {
+            page: 1,
+            pageSize: 20,
+            totalPages: 0,
+            totalItems: 0,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+        };
       }
     },
   });
 
-  // Normalize data - handle both array and object responses
-  const dataArray = Array.isArray(statementData)
-    ? statementData
-    : (statementData as StatementResponse)?.data || [];
+  // Extract data from response
+  const dataArray = statementData?.statements || [];
 
-  // Calculate totals
+  // Use API summary or calculate totals for table footer
   const totals = dataArray?.reduce(
     (acc: any, item: StatementItem) => {
       acc.quantity += item.quantity;
@@ -155,32 +194,34 @@ const ProductStatementPage: React.FC = () => {
     { quantity: 0, sales: 0, cost: 0 }
   );
 
-  // Calculate summary stats
-  const summary = dataArray?.reduce(
-    (acc: any, item: StatementItem) => {
-      const cost = Number(item.purchasePrice) * Number(item.quantity);
-      const sales = Number(item.subtotal);
-      const profit = sales - cost;
+  // Use API summary data
+  const apiSummary = statementData?.summary;
 
+  // Calculate tax from statements if needed (since it's not in summary)
+  const calculatedTax =
+    dataArray?.reduce((acc: number, item: StatementItem) => {
       const orderTax = Number(item?.Order?.tax) || 0;
       const orderSubtotal = Number(item?.Order?.subtotal) || 1;
       const itemSubtotal = Number(item?.subtotal) || 0;
-
       const tax = Number(
         (orderTax * (itemSubtotal / orderSubtotal) || 0).toFixed(2)
       );
+      return acc + tax;
+    }, 0) || 0;
 
-      acc.totalSales += sales;
-      acc.totalTax += tax;
-      if (profit >= 0) {
-        acc.totalProfit += profit;
-      } else {
-        acc.totalLoss += Math.abs(profit);
+  const summary = apiSummary
+    ? {
+        totalSales: apiSummary.totalRevenue,
+        totalProfit: apiSummary.totalProfit,
+        totalLoss: apiSummary.totalLoss,
+        totalTax: calculatedTax,
       }
-      return acc;
-    },
-    { totalSales: 0, totalProfit: 0, totalLoss: 0, totalTax: 0 }
-  );
+    : {
+        totalSales: 0,
+        totalProfit: 0,
+        totalLoss: 0,
+        totalTax: 0,
+      };
 
   const handlePageChange = (newPage: number) => {
     setFilters((prev) => ({ ...prev, page: newPage }));
@@ -219,11 +260,11 @@ const ProductStatementPage: React.FC = () => {
     };
   };
 
-  const pagination = (statementData as StatementResponse)?.pagination || {
+  const pagination = statementData?.pagination || {
     page: filters.page,
     pageSize: filters.pageSize,
-    totalPages: Math.ceil((dataArray?.length || 0) / filters.pageSize),
-    totalItems: dataArray?.length || 0,
+    totalPages: 0,
+    totalItems: 0,
     hasNextPage: false,
     hasPreviousPage: false,
   };
@@ -305,45 +346,158 @@ const ProductStatementPage: React.FC = () => {
 
       {/* Filters */}
       {showFilters && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white rounded-lg shadow">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Start Date
-            </label>
-            <input
-              type="date"
-              value={filters.startDate || ""}
-              onChange={(e) => handleFilterChange("startDate", e.target.value)}
-              className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-brand-primary"
-            />
+        <div className="p-4 bg-white rounded-lg shadow">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Filter Options
+            </h3>
+            <p className="text-sm text-gray-500">
+              Filter product statements by various criteria
+            </p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              End Date
-            </label>
-            <input
-              type="date"
-              value={filters.endDate || ""}
-              onChange={(e) => handleFilterChange("endDate", e.target.value)}
-              className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-brand-primary"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Product Filters */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Product ID
+              </label>
+              <input
+                type="number"
+                placeholder="Filter by Product ID"
+                value={filters.productId || ""}
+                onChange={(e) =>
+                  handleFilterChange(
+                    "productId",
+                    e.target.value ? Number(e.target.value) : ""
+                  )
+                }
+                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Product Variant ID
+              </label>
+              <input
+                type="number"
+                placeholder="Filter by Variant ID"
+                value={filters.productVariantId || ""}
+                onChange={(e) =>
+                  handleFilterChange(
+                    "productVariantId",
+                    e.target.value ? Number(e.target.value) : ""
+                  )
+                }
+                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Product Owner User ID
+              </label>
+              <input
+                type="number"
+                placeholder="Filter by Product Owner"
+                value={filters.productUserId || ""}
+                onChange={(e) =>
+                  handleFilterChange(
+                    "productUserId",
+                    e.target.value ? Number(e.target.value) : ""
+                  )
+                }
+                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+            </div>
+
+            {/* Order Item Date Filters */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Order Item Start Date
+              </label>
+              <input
+                type="date"
+                value={filters.startDate || ""}
+                onChange={(e) =>
+                  handleFilterChange("startDate", e.target.value)
+                }
+                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Order Item End Date
+              </label>
+              <input
+                type="date"
+                value={filters.endDate || ""}
+                onChange={(e) => handleFilterChange("endDate", e.target.value)}
+                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+            </div>
+
+            {/* Order Date Filters */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Order Start Date
+              </label>
+              <input
+                type="date"
+                value={filters.orderStartDate || ""}
+                onChange={(e) =>
+                  handleFilterChange("orderStartDate", e.target.value)
+                }
+                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Order End Date
+              </label>
+              <input
+                type="date"
+                value={filters.orderEndDate || ""}
+                onChange={(e) =>
+                  handleFilterChange("orderEndDate", e.target.value)
+                }
+                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+            </div>
+
+            {/* Staff/Commission Filter */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Commission User Role ID
+              </label>
+              <input
+                type="number"
+                placeholder="Filter by Commission UserRoleId"
+                value={filters.userRoleId || ""}
+                onChange={(e) =>
+                  handleFilterChange(
+                    "userRoleId",
+                    e.target.value ? Number(e.target.value) : ""
+                  )
+                }
+                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Filters orders with commissions for this UserRoleId
+              </p>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Product ID (Optional)
-            </label>
-            <input
-              type="number"
-              placeholder="Filter by Product ID"
-              value={filters.productId || ""}
-              onChange={(e) =>
-                handleFilterChange(
-                  "productId",
-                  e.target.value ? Number(e.target.value) : ""
-                )
-              }
-              className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-brand-primary"
-            />
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={() => {
+                setFilters({
+                  page: 1,
+                  pageSize: 20,
+                });
+                setSearchQuery("");
+              }}
+              className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Clear All Filters
+            </button>
           </div>
         </div>
       )}
@@ -562,9 +716,15 @@ const ProductStatementPage: React.FC = () => {
       {/* Product Statement Modal for Printing */}
       <ProductStatement
         isOpen={isOpen}
+        productId={filters.productId}
+        productVariantId={filters.productVariantId}
         startDate={filters.startDate}
         endDate={filters.endDate}
-        productId={filters.productId}
+        productUserId={filters.productUserId}
+        userRoleId={filters.userRoleId}
+        orderStartDate={filters.orderStartDate}
+        orderEndDate={filters.orderEndDate}
+        searchKey={filters.searchKey}
         onClose={() => {
           setIsOpen(false);
         }}
