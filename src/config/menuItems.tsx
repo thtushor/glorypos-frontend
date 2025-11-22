@@ -124,6 +124,12 @@ export const menuItems = [
     icon: <FaUser className="w-5 h-5" />,
   },
   {
+    id: "payroll", // Added
+    title: "Payroll",
+    path: "/payroll",
+    icon: <FaMoneyCheckAlt className="w-5 h-5" />,
+  },
+  {
     id: "profile",
     title: "Profile",
     path: "/profile",
