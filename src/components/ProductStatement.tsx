@@ -63,6 +63,11 @@ interface StatementItem {
         fullName: string;
         email: string;
         role: string;
+        parent?: {
+          id: number;
+          businessName: string;
+          fullName: string;
+        };
       };
     }>;
   };
@@ -146,14 +151,22 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
     item: StatementItem
   ): { type: "Self" | "Shop"; name: string } => {
     if (item.Order.UserId === item.Product.UserId) {
-      return { type: "Self", name: "Self" };
+      return {
+        type: "Self",
+        name: `${
+          item.Order?.User?.businessName ||
+          item.Order?.User?.fullName ||
+          "Unknown Shop"
+        } (Self)`,
+      };
     }
     return {
       type: "Shop",
-      name:
-        item.Order.User?.businessName ||
-        item.Order.User?.fullName ||
-        "Unknown Shop",
+      name: `Taken from - ${
+        item.Product?.User?.businessName ||
+        item.Product?.User?.fullName ||
+        "Unknown Shop"
+      }`,
     };
   };
 
@@ -337,7 +350,20 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                                       className="text-[10px] print:text-[7pt]"
                                     >
                                       <div className="font-medium text-gray-900">
-                                        {commission.staff?.fullName || "N/A"}
+                                        <span>
+                                          <strong>Staff: </strong>
+                                          {commission.staff?.fullName || "N/A"}
+                                        </span>
+                                      </div>
+                                      <div className="font-medium text-gray-900">
+                                        <span>
+                                          <strong>Shop: </strong>
+                                          {commission.staff?.parent
+                                            ?.businessName ||
+                                            commission.staff?.parent
+                                              ?.fullName ||
+                                            "N/A"}
+                                        </span>
                                       </div>
                                       <div className="text-gray-500">
                                         $
