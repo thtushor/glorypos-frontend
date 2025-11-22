@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FaSearch, FaFilter, FaPrint } from "react-icons/fa";
+import { FaSearch, FaFilter } from "react-icons/fa";
 import { BiSpreadsheet } from "react-icons/bi";
 import AXIOS from "@/api/network/Axios";
 import Pagination from "@/components/Pagination";
@@ -96,7 +96,7 @@ const ProductStatementPage: React.FC = () => {
           },
         });
         const data = response.data;
-        
+
         // Handle both array response and object response
         if (Array.isArray(data)) {
           return { data, pagination: undefined };
@@ -165,15 +165,14 @@ const ProductStatementPage: React.FC = () => {
     setFilters((prev) => ({ ...prev, page: 1, [name]: value }));
   };
 
-  const pagination =
-    (statementData as StatementResponse)?.pagination || {
-      page: filters.page,
-      pageSize: filters.pageSize,
-      totalPages: Math.ceil((dataArray?.length || 0) / filters.pageSize),
-      totalItems: dataArray?.length || 0,
-      hasNextPage: false,
-      hasPreviousPage: false,
-    };
+  const pagination = (statementData as StatementResponse)?.pagination || {
+    page: filters.page,
+    pageSize: filters.pageSize,
+    totalPages: Math.ceil((dataArray?.length || 0) / filters.pageSize),
+    totalItems: dataArray?.length || 0,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  };
 
   return (
     <div className="space-y-6">
@@ -286,7 +285,7 @@ const ProductStatementPage: React.FC = () => {
               onChange={(e) =>
                 handleFilterChange(
                   "productId",
-                  e.target.value ? Number(e.target.value) : undefined
+                  e.target.value ? Number(e.target.value) : ""
                 )
               }
               className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-brand-primary"
@@ -467,4 +466,3 @@ const ProductStatementPage: React.FC = () => {
 };
 
 export default ProductStatementPage;
-
