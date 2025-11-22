@@ -3,10 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { FaSearch, FaFilter } from "react-icons/fa";
 import { BiSpreadsheet } from "react-icons/bi";
 import AXIOS from "@/api/network/Axios";
+import { SUB_SHOPS_URL, CHILD_USERS_URL } from "@/api/api";
 import Pagination from "@/components/Pagination";
 import { toast } from "react-toastify";
 import ProductStatement from "@/components/ProductStatement";
 import Spinner from "@/components/Spinner";
+import { useAuth } from "@/context/AuthContext";
 
 interface StatementItem {
   id: number;
@@ -112,6 +114,7 @@ interface FilterParams {
 }
 
 const ProductStatementPage: React.FC = () => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -119,6 +122,40 @@ const ProductStatementPage: React.FC = () => {
     page: 1,
     pageSize: 20,
   });
+
+  // Fetch Shops (similar to POS.tsx)
+  const { data: shopData, isLoading: isLoadingShops } = useQuery({
+    queryKey: ["sub-shops-for-filter"],
+    queryFn: async () => {
+      const response = await AXIOS.get(SUB_SHOPS_URL, {
+        params: {
+          page: 1,
+          pageSize: 10000,
+        },
+      });
+      return response.data;
+    },
+  });
+
+  const shops = shopData?.users || [];
+
+  // Fetch Active Staff/Child Users (similar to POS.tsx)
+  const { data: staffData, isLoading: isLoadingStaff } = useQuery({
+    queryKey: ["active-staff-for-filter"],
+    queryFn: async () => {
+      const response = await AXIOS.get(CHILD_USERS_URL, {
+        params: {
+          page: 1,
+          pageSize: 10000,
+          status: "active",
+        },
+      });
+      return response.data;
+    },
+  });
+
+  const activeStaffs =
+    staffData?.users?.filter((staff: any) => staff.status === "active") || [];
 
   // Build query parameters using useMemo (similar to POS.tsx)
   const queryParams = useMemo(() => {
@@ -393,11 +430,9 @@ const ProductStatementPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
-                Product Owner User ID
+                Shop ID
               </label>
-              <input
-                type="number"
-                placeholder="Filter by Product Owner"
+              <select
                 value={filters.productUserId || ""}
                 onChange={(e) =>
                   handleFilterChange(
@@ -405,8 +440,24 @@ const ProductStatementPage: React.FC = () => {
                     e.target.value ? Number(e.target.value) : ""
                   )
                 }
-                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-              />
+                disabled={isLoadingShops}
+                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">All Shops</option>
+                {isLoadingShops ? (
+                  <option value="" disabled>
+                    Loading shops...
+                  </option>
+                ) : (
+                  [...(user?.id ? [{ id: user.id, ...user }] : []), ...shops]
+                    .filter((shop: any) => shop?.id != null)
+                    .map((shop: any) => (
+                      <option key={shop.id} value={shop.id}>
+                        {shop.businessName || shop.fullName}
+                      </option>
+                    ))
+                )}
+              </select>
             </div>
 
             {/* Order Item Date Filters */}
@@ -466,11 +517,9 @@ const ProductStatementPage: React.FC = () => {
             {/* Staff/Commission Filter */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
-                Commission User Role ID
+                Staff
               </label>
-              <input
-                type="number"
-                placeholder="Filter by Commission UserRoleId"
+              <select
                 value={filters.userRoleId || ""}
                 onChange={(e) =>
                   handleFilterChange(
@@ -478,10 +527,25 @@ const ProductStatementPage: React.FC = () => {
                     e.target.value ? Number(e.target.value) : ""
                   )
                 }
-                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-              />
+                disabled={isLoadingStaff}
+                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">All Staff</option>
+                {isLoadingStaff ? (
+                  <option value="" disabled>
+                    Loading staff...
+                  </option>
+                ) : (
+                  activeStaffs.map((staff: any) => (
+                    <option key={staff.id} value={staff.id}>
+                      {staff.fullName} ({staff.role}) -{" "}
+                      {staff.parent?.businessName || "N/A"}
+                    </option>
+                  ))
+                )}
+              </select>
               <p className="text-xs text-gray-500 mt-1">
-                Filters orders with commissions for this UserRoleId
+                Filter by staff member (uses their ID for commission filtering)
               </p>
             </div>
           </div>
