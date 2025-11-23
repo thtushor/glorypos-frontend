@@ -6,6 +6,7 @@ import Dashboard from "../pages/Dashboard";
 import POS from "../pages/sales/POS";
 import Orders from "../pages/sales/Orders";
 import ProductStatementPage from "../pages/sales/ProductStatementPage";
+import StaffCommissionsPage from "../pages/sales/StaffCommissionsPage";
 import Products from "../pages/inventory/Products";
 import Suppliers from "../pages/inventory/Suppliers";
 import Reports from "../pages/Reports";
@@ -107,7 +108,7 @@ const AppRoutes = () => {
             />
             <Route
               path="staff-commissions"
-              element={<ProductStatementPage />}
+              element={<StaffCommissionsPage />}
             />
           </Route>
           <Route path="inventory">
