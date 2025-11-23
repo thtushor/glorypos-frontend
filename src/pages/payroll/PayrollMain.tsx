@@ -16,7 +16,6 @@ import {
   FaBuilding,
   FaCalendarTimes,
 } from "react-icons/fa";
-import { FcMoneyTransfer } from "react-icons/fc";
 import AXIOS from "@/api/network/Axios";
 import {
   CHILD_USERS_URL,
@@ -378,7 +377,7 @@ const PayrollMain = () => {
                           : "Working"}
                         {user.isHalfDay && " (½)"}
                       </span>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 text-nowrap">
                         {format(new Date(), "dd MMM, yyyy")}
                       </div>
                     </div>
@@ -387,7 +386,7 @@ const PayrollMain = () => {
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className="font-medium">{user.fullName}</span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500 text-nowrap">
                         {user.email}
                       </span>
                     </div>
@@ -395,10 +394,10 @@ const PayrollMain = () => {
 
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="font-medium">
+                      <span className="font-medium text-nowrap">
                         {user.parent.businessName}
                       </span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500 text-nowrap">
                         {user.parent.businessType}
                       </span>
                     </div>
@@ -464,24 +463,7 @@ const PayrollMain = () => {
                           },
                           color: "purple",
                         },
-                        {
-                          label: "Current Salary",
-                          icon: <FaMoneyBillWave className="w-4 h-4" />,
-                          onClick: () => {
-                            setSelectedUser(user);
-                            setShowSalaryModal(true);
-                          },
-                          color: "orange",
-                        },
-                        {
-                          label: "Release Salary",
-                          icon: <FcMoneyTransfer className="w-4 h-4" />,
-                          onClick: () => {
-                            setSelectedUser(user);
-                            setShowReleaseModal(true);
-                          },
-                          color: "teal",
-                        },
+
                         {
                           label: "Edit Employee",
                           icon: <FaEdit className="w-4 h-4" />,
