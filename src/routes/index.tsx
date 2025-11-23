@@ -105,6 +105,10 @@ const AppRoutes = () => {
               path="product-statement"
               element={<ProductStatementPage />}
             />
+            <Route
+              path="staff-commissions"
+              element={<ProductStatementPage />}
+            />
           </Route>
           <Route path="inventory">
             <Route path="products" element={<Products />} />

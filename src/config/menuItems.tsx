@@ -52,6 +52,12 @@ export const menuItems = [
         path: "/sales/product-statement",
         icon: <FaChartLine className="w-5 h-5" />,
       },
+      {
+        id: "statement",
+        title: "Staff Commissions",
+        path: "/sales/staff-commissions",
+        icon: <FaChartLine className="w-5 h-5" />,
+      },
     ],
   },
   {

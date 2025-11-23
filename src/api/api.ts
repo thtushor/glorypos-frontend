@@ -1,6 +1,10 @@
 // Product API Function with Filtering and Pagination
 import AXIOS from "./network/Axios";
-import { ProductsResponse, ProductQueryParams, Product } from "@/types/ProductType";
+import {
+  ProductsResponse,
+  ProductQueryParams,
+  Product,
+} from "@/types/ProductType";
 
 // export const BASE_URL = "https://glorypos.com/api/api";
 export const BASE_URL = "http://localhost:3000/api";
@@ -13,6 +17,7 @@ export const PROFILE_URL = `${BASE_URL}/profile`;
 export const PRODUCT_URL = `${BASE_URL}/products`;
 export const DELETE_PRODUCT_URL = `${BASE_URL}/products/delete`;
 export const UPDATE_PRODUCT_URL = `${BASE_URL}/products/update`;
+export const COMMISSIONS_URL = `${BASE_URL}/commissions`;
 
 /**
  * Fetches products with comprehensive filtering and pagination support
@@ -78,7 +83,11 @@ export const fetchProducts = async (
 
   // Add any other filters dynamically
   Object.keys(otherFilters).forEach((key) => {
-    if (otherFilters[key] !== undefined && otherFilters[key] !== null && otherFilters[key] !== "") {
+    if (
+      otherFilters[key] !== undefined &&
+      otherFilters[key] !== null &&
+      otherFilters[key] !== ""
+    ) {
       params[key] = otherFilters[key];
     }
   });
@@ -86,7 +95,7 @@ export const fetchProducts = async (
   // Make API call
   // AXIOS interceptor already extracts response.data, so response is the data object
   const response = await AXIOS.get(PRODUCT_URL, { params });
-  
+
   // Return the response with proper typing
   return response.data as unknown as ProductsResponse;
 };
