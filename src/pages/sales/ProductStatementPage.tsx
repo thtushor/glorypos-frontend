@@ -277,7 +277,7 @@ const ProductStatementPage: React.FC = () => {
   const getSaleType = (
     item: StatementItem
   ): { type: "Self" | "Shop"; name: string } => {
-    if (item.Order.UserId === item.Product.UserId) {
+    if (item?.Order?.UserId === item?.Product?.UserId) {
       return {
         type: "Self",
         name: `${
@@ -628,30 +628,31 @@ const ProductStatementPage: React.FC = () => {
                   const sales = Number(item.subtotal);
                   const profit = sales - cost;
                   const saleType = getSaleType(item);
-                  const commissions = item.Order.commissions || [];
+                  const commissions = item?.Order?.commissions || [];
 
                   return (
                     <tr key={item.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(item.Order.orderDate).toLocaleDateString()}
+                        {new Date(item?.Order?.orderDate).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {item.Order.orderNumber}
+                        {item?.Order?.orderNumber}
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <div>
                           <span className="font-medium text-gray-900">
-                            {item.Product.name}
-                            {item.ProductVariant && (
+                            {item?.Product?.name}
+                            {item?.ProductVariant && (
                               <span className="text-gray-500 ml-1">
-                                - {item.ProductVariant.Color.name},{" "}
-                                {item.ProductVariant.Size.name}
+                                - {item?.ProductVariant?.Color?.name},{" "}
+                                {item?.ProductVariant?.Size?.name}
                               </span>
                             )}
                           </span>
                           <br />
                           <span className="text-xs text-gray-500">
-                            SKU: {item.ProductVariant?.sku || item.Product.sku}
+                            SKU:{" "}
+                            {item?.ProductVariant?.sku || item?.Product?.sku}
                           </span>
                         </div>
                       </td>
@@ -663,34 +664,34 @@ const ProductStatementPage: React.FC = () => {
                               : "bg-purple-100 text-purple-800"
                           }`}
                         >
-                          {saleType.name}
+                          {saleType?.name}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        {commissions.length > 0 ? (
+                        {commissions?.length > 0 ? (
                           <div className="space-y-1">
-                            {commissions.map((commission) => (
-                              <div key={commission.id} className="text-xs">
+                            {commissions?.map((commission) => (
+                              <div key={commission?.id} className="text-xs">
                                 <div className="font-medium text-gray-900">
                                   <span>
                                     <strong>Staff: </strong>
-                                    {commission.staff?.fullName || "N/A"}
+                                    {commission?.staff?.fullName || "N/A"}
                                   </span>
                                 </div>
                                 <div className="font-medium text-gray-900">
                                   <span>
                                     <strong>Shop: </strong>
-                                    {commission.staff?.parent?.businessName ||
-                                      commission.staff?.parent?.fullName ||
+                                    {commission?.staff?.parent?.businessName ||
+                                      commission?.staff?.parent?.fullName ||
                                       "N/A"}
                                   </span>
                                 </div>
                                 <div className="text-gray-500">
                                   $
-                                  {Number(commission.commissionAmount).toFixed(
+                                  {Number(commission?.commissionAmount).toFixed(
                                     2
                                   )}{" "}
-                                  ({commission.commissionPercentage}%)
+                                  ({commission?.commissionPercentage}%)
                                 </div>
                               </div>
                             ))}
@@ -702,16 +703,16 @@ const ProductStatementPage: React.FC = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                        {item.quantity}
+                        {item?.quantity}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                        ${Number(item.unitPrice).toFixed(2)}
+                        ${Number(item?.unitPrice).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                        ${cost.toFixed(2)}
+                        ${cost?.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                        ${sales.toFixed(2)}
+                        ${sales?.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                         <span
@@ -719,7 +720,7 @@ const ProductStatementPage: React.FC = () => {
                             profit >= 0 ? "text-green-600" : "text-red-600"
                           }`}
                         >
-                          ${profit.toFixed(2)}
+                          ${profit?.toFixed(2)}
                         </span>
                       </td>
                     </tr>
@@ -737,24 +738,24 @@ const ProductStatementPage: React.FC = () => {
                     Totals:
                   </td>
                   <td className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                    {totals.quantity}
+                    {totals?.quantity}
                   </td>
                   <td className="px-6 py-3"></td>
                   <td className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                    ${totals.cost.toFixed(2)}
+                    ${totals?.cost?.toFixed(2)}
                   </td>
                   <td className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                    ${totals.sales.toFixed(2)}
+                    ${totals?.sales?.toFixed(2)}
                   </td>
                   <td className="px-6 py-3 text-right text-sm font-semibold">
                     <span
                       className={
-                        totals.sales - totals.cost >= 0
+                        totals?.sales - totals?.cost >= 0
                           ? "text-green-600"
                           : "text-red-600"
                       }
                     >
-                      ${(totals.sales - totals.cost).toFixed(2)}
+                      ${(totals?.sales - totals?.cost).toFixed(2)}
                     </span>
                   </td>
                 </tr>
