@@ -1,7 +1,13 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FaSearch, FaFilter, FaDollarSign, FaUsers, FaChartLine } from "react-icons/fa";
-import { BiSpreadsheet } from "react-icons/bi";
+import {
+  FaSearch,
+  FaFilter,
+  FaDollarSign,
+  FaUsers,
+  FaChartLine,
+} from "react-icons/fa";
+// import { BiSpreadsheet } from "react-icons/bi";
 import AXIOS from "@/api/network/Axios";
 import { SUB_SHOPS_URL, CHILD_USERS_URL, COMMISSIONS_URL } from "@/api/api";
 import Pagination from "@/components/Pagination";
@@ -43,26 +49,26 @@ interface CommissionItem {
   };
 }
 
-interface PaginationData {
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  totalItems: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-}
+// interface PaginationData {
+//   page: number;
+//   pageSize: number;
+//   totalPages: number;
+//   totalItems: number;
+//   hasNextPage: boolean;
+//   hasPreviousPage: boolean;
+// }
 
-interface SummaryData {
-  totalCommission: number;
-  totalOrders: number;
-  averageCommission: string;
-}
+// interface SummaryData {
+//   totalCommission: number;
+//   totalOrders: number;
+//   averageCommission: string;
+// }
 
-interface CommissionsResponse {
-  items: CommissionItem[];
-  summary: SummaryData;
-  pagination: PaginationData;
-}
+// interface CommissionsResponse {
+//   items: CommissionItem[];
+//   summary: SummaryData;
+//   pagination: PaginationData;
+// }
 
 interface FilterParams {
   page: number;
@@ -161,7 +167,7 @@ const StaffCommissionsPage: React.FC = () => {
     data: commissionsData,
     isLoading,
     isFetching,
-  } = useQuery<CommissionsResponse>({
+  } = useQuery({
     queryKey: ["staff-commissions", queryParams],
     queryFn: async () => {
       try {
@@ -193,16 +199,18 @@ const StaffCommissionsPage: React.FC = () => {
   });
 
   // Extract data from response (handle both structures)
-  const dataArray = commissionsData?.data?.items || commissionsData?.items || [];
+  const dataArray =
+    commissionsData?.data?.items || commissionsData?.items || [];
   const summary = commissionsData?.data?.summary || commissionsData?.summary;
-  const pagination = commissionsData?.data?.pagination || commissionsData?.pagination || {
-    page: filters.page,
-    pageSize: filters.pageSize,
-    totalPages: 0,
-    totalItems: 0,
-    hasNextPage: false,
-    hasPreviousPage: false,
-  };
+  const pagination = commissionsData?.data?.pagination ||
+    commissionsData?.pagination || {
+      page: filters.page,
+      pageSize: filters.pageSize,
+      totalPages: 0,
+      totalItems: 0,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    };
 
   // Calculate totals for table footer
   const totals = dataArray?.reduce(
@@ -239,7 +247,9 @@ const StaffCommissionsPage: React.FC = () => {
       {/* Header and Search */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Staff Commissions</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Staff Commissions
+          </h1>
           <p className="text-sm text-gray-500 mt-1">
             Track and manage staff commission payments
           </p>
@@ -405,7 +415,9 @@ const StaffCommissionsPage: React.FC = () => {
               </label>
               <select
                 value={filters.staffRole || ""}
-                onChange={(e) => handleFilterChange("staffRole", e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("staffRole", e.target.value)
+                }
                 className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
                 <option value="">All Roles</option>
@@ -504,7 +516,9 @@ const StaffCommissionsPage: React.FC = () => {
               <input
                 type="date"
                 value={filters.startDate || ""}
-                onChange={(e) => handleFilterChange("startDate", e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("startDate", e.target.value)
+                }
                 className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
               />
             </div>
@@ -712,4 +726,3 @@ const StaffCommissionsPage: React.FC = () => {
 };
 
 export default StaffCommissionsPage;
-

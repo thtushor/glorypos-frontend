@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from "react";
+import { Component, ErrorInfo, ReactNode } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
 
 interface Props {
@@ -69,18 +69,19 @@ class ErrorBoundary extends Component<Props, State> {
               <p className="text-sm text-red-700 mb-3">
                 {this.state.error?.message || "An unexpected error occurred"}
               </p>
-              {process.env.NODE_ENV === "development" && this.state.errorInfo && (
-                <details className="mb-3">
-                  <summary className="text-xs text-red-600 cursor-pointer hover:text-red-800 mb-2">
-                    Error Details
-                  </summary>
-                  <pre className="text-xs bg-red-100 p-3 rounded overflow-auto max-h-40">
-                    {this.state.error?.stack}
-                    {"\n\n"}
-                    {this.state.errorInfo.componentStack}
-                  </pre>
-                </details>
-              )}
+              {import.meta.env.MODE === "development" &&
+                this.state.errorInfo && (
+                  <details className="mb-3">
+                    <summary className="text-xs text-red-600 cursor-pointer hover:text-red-800 mb-2">
+                      Error Details
+                    </summary>
+                    <pre className="text-xs bg-red-100 p-3 rounded overflow-auto max-h-40">
+                      {this.state.error?.stack}
+                      {"\n\n"}
+                      {this.state.errorInfo.componentStack}
+                    </pre>
+                  </details>
+                )}
               <button
                 onClick={this.handleReset}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
@@ -98,4 +99,3 @@ class ErrorBoundary extends Component<Props, State> {
 }
 
 export default ErrorBoundary;
-
