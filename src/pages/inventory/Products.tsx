@@ -1,13 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import {
-  FaPlus,
-  FaEdit,
-  FaTrash,
-  FaEye,
-  FaBarcode,
-} from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaEye, FaBarcode } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import {
   DELETE_PRODUCT_URL,
@@ -20,12 +14,17 @@ import Spinner from "@/components/Spinner";
 import Modal from "@/components/Modal";
 import Pagination from "@/components/Pagination";
 import AddProduct from "@/components/shared/AddProduct";
-import { Product, ProductFormData, ProductQueryParams } from "@/types/ProductType";
+import {
+  Product,
+  ProductFormData,
+  ProductQueryParams,
+} from "@/types/ProductType";
 import { Brand, Unit } from "@/types/categoryType";
 import { Category } from "@/types/categoryType";
 import BarcodeModal from "@/components/BarcodeModal";
 import InventoryFilters from "@/components/shared/InventoryFilters";
 import { useAuth } from "@/context/AuthContext";
+import money from "@/utils/money";
 
 // Add this interface at the top
 
@@ -43,7 +42,7 @@ const Products: React.FC = () => {
   const { user } = useAuth();
   const currentShopId = user?.child?.id ?? user?.id;
   const hasAppliedDefaultShop = useRef(false);
-  
+
   // Pagination state
   const [page, setPage] = useState(1);
   const pageSize = 20;
@@ -51,7 +50,9 @@ const Products: React.FC = () => {
   // Filter states for API
   const [searchKey, setSearchKey] = useState("");
   const [shopId, setShopId] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<number | "all">("all");
+  const [selectedCategory, setSelectedCategory] = useState<number | "all">(
+    "all"
+  );
   const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
   const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
 
@@ -61,7 +62,7 @@ const Products: React.FC = () => {
       hasAppliedDefaultShop.current = true;
     }
   }, [currentShopId]);
-  
+
   // Price range filter for API
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
     min: 0,
@@ -79,7 +80,7 @@ const Products: React.FC = () => {
     BrandId: 0,
     UnitId: 0,
     ColorId: 0,
-    SizeId:0,
+    SizeId: 0,
     alertQuantity: 0,
     productImage: "",
     discountType: null,
@@ -109,23 +110,37 @@ const Products: React.FC = () => {
     if (selectedCategory !== "all") params.categoryId = selectedCategory;
     if (selectedBrand !== "all") params.brandId = selectedBrand;
     if (selectedUnit !== "all") params.unitId = selectedUnit;
-    
+
     // Add price range filters
-    if (priceRange.min !== undefined && priceRange.min !== null && priceRange.min > 0) {
+    if (
+      priceRange.min !== undefined &&
+      priceRange.min !== null &&
+      priceRange.min > 0
+    ) {
       params.minPrice = priceRange.min;
     }
-    if (priceRange.max !== undefined && priceRange.max !== null && priceRange.max > 0) {
+    if (
+      priceRange.max !== undefined &&
+      priceRange.max !== null &&
+      priceRange.max > 0
+    ) {
       params.maxPrice = priceRange.max;
     }
 
     return params;
-  }, [page, pageSize, searchKey, shopId, selectedCategory, selectedBrand, selectedUnit, priceRange]);
+  }, [
+    page,
+    pageSize,
+    searchKey,
+    shopId,
+    selectedCategory,
+    selectedBrand,
+    selectedUnit,
+    priceRange,
+  ]);
 
   // Products query with pagination
-  const {
-    data: productsResponse,
-    isLoading: isLoadingProducts,
-  } = useQuery({
+  const { data: productsResponse, isLoading: isLoadingProducts } = useQuery({
     queryKey: ["products", queryParams],
     queryFn: () => fetchProducts(queryParams),
   });
@@ -192,8 +207,8 @@ const Products: React.FC = () => {
       CategoryId: product.CategoryId,
       BrandId: product.BrandId,
       UnitId: product.UnitId,
-      SizeId:product.SizeId,
-      ColorId:product.ColorId,
+      SizeId: product.SizeId,
+      ColorId: product.ColorId,
       alertQuantity: product.alertQuantity,
       productImage: product.productImage || "",
       discountType: product.discountType,
@@ -224,8 +239,8 @@ const Products: React.FC = () => {
       CategoryId: 0,
       BrandId: 0,
       UnitId: 0,
-      SizeId:0,
-      ColorId:0,
+      SizeId: 0,
+      ColorId: 0,
       alertQuantity: 0,
       productImage: "",
       discountType: null,
@@ -438,10 +453,14 @@ const Products: React.FC = () => {
                     Brand: {product.Brand?.name}
                   </p>
                   <p className="text-sm text-gray-600">
-                    Shop: {product.User?.businessName || product.User?.fullName || "N/A"} (ID: {product.User?.id || product.UserId || "N/A"})
+                    Shop:{" "}
+                    {product.User?.businessName ||
+                      product.User?.fullName ||
+                      "N/A"}{" "}
+                    (ID: {product.User?.id || product.UserId || "N/A"})
                   </p>
                   <p className="text-sm font-medium text-brand-primary">
-                    ${Number(product.price || 0).toFixed(2)}
+                    {money.format(Number(product.price || 0))}
                   </p>
                 </div>
 
@@ -458,7 +477,11 @@ const Products: React.FC = () => {
                             [product.id]: variant.id,
                           })
                         }
-                        className={`w-8 h-8 rounded-full border-2 border-white object-cover ${selectedVariants[product.id] === variant.id ? "border-brand-primary" : ""}`}
+                        className={`w-8 h-8 rounded-full border-2 border-white object-cover ${
+                          selectedVariants[product.id] === variant.id
+                            ? "border-brand-primary"
+                            : ""
+                        }`}
                       />
                     ))}
                     {product.ProductVariants.length > 3 && (
@@ -538,7 +561,12 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
   };
 
   const calculateTotalStock = () => {
-    return product.ProductVariants?.reduce((acc, variant) => acc + variant.quantity, 0) || 0;
+    return (
+      product.ProductVariants?.reduce(
+        (acc, variant) => acc + variant.quantity,
+        0
+      ) || 0
+    );
   };
 
   return (
@@ -632,16 +660,28 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-500">Color</p>
                 <p className="font-medium truncate">
-                  {product.ProductVariants?.length > 0 
-                    ? [...new Set(product.ProductVariants.map(item => item?.Color?.name))].join(", ")
+                  {product.ProductVariants?.length > 0
+                    ? [
+                        ...new Set(
+                          product.ProductVariants.map(
+                            (item) => item?.Color?.name
+                          )
+                        ),
+                      ].join(", ")
                     : product.Color?.name}
                 </p>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-500">Size</p>
                 <p className="font-medium truncate">
-                  {product.ProductVariants?.length > 0 
-                    ? [...new Set(product.ProductVariants.map(item => item?.Size?.name))].join(", ")
+                  {product.ProductVariants?.length > 0
+                    ? [
+                        ...new Set(
+                          product.ProductVariants.map(
+                            (item) => item?.Size?.name
+                          )
+                        ),
+                      ].join(", ")
                     : product.Size?.name}
                 </p>
               </div>

@@ -43,9 +43,14 @@ import PromotionHistory from "@/pages/payroll/PromotionHistory";
 import PayrollMain from "@/pages/payroll/PayrollMain";
 import ReleaseHistory from "@/pages/payroll/ReleaseHistory";
 import HolidayHistory from "@/pages/payroll/HolidayHistory";
+import money, { CurrencyPresets } from "@/utils/money";
+import { useEffect } from "react";
 
 const AppRoutes = () => {
   const { isLoadingProfile, user } = useAuth();
+  useEffect(() => {
+    money.configure({ ...CurrencyPresets.thailand });
+  }, []);
 
   if (isLoadingProfile) {
     return (
