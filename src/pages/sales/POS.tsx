@@ -1258,9 +1258,33 @@ const POS: React.FC = () => {
                         {product.name}
                       </h3>
 
-                      {/* Price */}
-                      <div className="mt-1 text-brand-primary font-medium">
-                        {money.format(Number(product.price || 0))}
+                      {/* Price Section with Discount Info */}
+                      <div className="mt-2 space-y-1">
+                        {product.discountType &&
+                        Number(product.discountAmount || 0) > 0 &&
+                        Number(product.salesPrice || 0) >
+                          Number(product.price || 0) ? (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Sales Price with Strikethrough */}
+                            <span className="text-xs text-gray-400 line-through">
+                              {money.format(Number(product.salesPrice || 0))}
+                            </span>
+                            {/* Discount Badge */}
+                            <span className="px-1.5 py-0.5 text-[10px] font-bold text-white bg-red-500 rounded">
+                              {product.discountType === "percentage"
+                                ? `-${product.discountAmount}%`
+                                : `-${money.format(
+                                    Number(product.discountAmount || 0)
+                                  )}`}
+                            </span>
+                          </div>
+                        ) : null}
+                        {/* Final Price - Prominently Displayed */}
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-lg font-bold text-brand-primary">
+                            {money.format(Number(product.price || 0))}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Improved Variant Preview */}
