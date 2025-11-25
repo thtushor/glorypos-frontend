@@ -459,9 +459,49 @@ const Products: React.FC = () => {
                       "N/A"}{" "}
                     (ID: {product.User?.id || product.UserId || "N/A"})
                   </p>
-                  <p className="text-sm font-medium text-brand-primary">
-                    {money.format(Number(product.price || 0))}
-                  </p>
+
+                  {/* Detailed Pricing Section */}
+                  <div className="mt-3 pt-3 border-t border-gray-200 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">
+                        Sales Price:
+                      </span>
+                      <span className="text-xs font-medium text-gray-700">
+                        {money.format(Number(product.salesPrice || 0))}
+                      </span>
+                    </div>
+                    {product.discountType &&
+                      Number(product.discountAmount || 0) > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">
+                            Discount:
+                          </span>
+                          <span className="text-xs font-medium text-red-600">
+                            {product.discountType === "percentage"
+                              ? `${product.discountAmount}%`
+                              : money.format(
+                                  Number(product.discountAmount || 0)
+                                )}
+                          </span>
+                        </div>
+                      )}
+                    {Number(product.vat || 0) > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">VAT:</span>
+                        <span className="text-xs font-medium text-gray-700">
+                          {money.format(Number(product.vat || 0))}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between pt-1 border-t border-gray-200">
+                      <span className="text-sm font-semibold text-gray-900">
+                        Final Price:
+                      </span>
+                      <span className="text-sm font-bold text-brand-primary">
+                        {money.format(Number(product.price || 0))}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Variant Preview */}

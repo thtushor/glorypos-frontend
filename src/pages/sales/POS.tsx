@@ -45,6 +45,7 @@ import { Unit, Brand } from "@/types/categoryType";
 import { Color, Category } from "@/types/categoryType";
 import { useAuth } from "@/context/AuthContext";
 import { FaUserGear } from "react-icons/fa6";
+import money from "@/utils/money";
 // import UserIcon from "@/components/icons/UserIcon";
 
 // Product interface is now imported from types
@@ -811,7 +812,7 @@ const POS: React.FC = () => {
   const handleProcessPayment = () => {
     if (!isPaymentComplete) {
       toast.error(
-        `Payment incomplete. Remaining: $${paymentRemaining.toFixed(2)}`
+        `Payment incomplete. Remaining: ${money.format(paymentRemaining)}`
       );
       return;
     }
@@ -912,7 +913,8 @@ const POS: React.FC = () => {
     return Math.round(numValue * 100) / 100;
   };
 
-  const formatCurrencyDisplay = (value: number | string): string => {
+  // Helper to extract numeric value from formatted currency string for input fields
+  const getNumericValue = (value: number | string): string => {
     const numValue = typeof value === "string" ? parseFloat(value) || 0 : value;
     return numValue.toFixed(2);
   };
@@ -1258,7 +1260,7 @@ const POS: React.FC = () => {
 
                       {/* Price */}
                       <div className="mt-1 text-brand-primary font-medium">
-                        ${Number(product.price).toFixed(2)}
+                        {money.format(Number(product.price || 0))}
                       </div>
 
                       {/* Improved Variant Preview */}
@@ -1448,10 +1450,10 @@ const POS: React.FC = () => {
                         step="0.01"
                         value={
                           adjustments.priceAdjustments[item.id]
-                            ? formatCurrencyDisplay(
+                            ? getNumericValue(
                                 adjustments.priceAdjustments[item.id]
                               )
-                            : formatCurrencyDisplay(item.price)
+                            : getNumericValue(item.price)
                         }
                         onChange={(e) => {
                           const parsed = parseCurrencyInput(e.target.value);
@@ -1508,9 +1510,7 @@ const POS: React.FC = () => {
           <div className="space-y-3 mb-4">
             <div className="flex justify-between text-xs sm:text-sm items-center">
               <span>Subtotal</span>
-              <span className="font-medium">
-                ${formatCurrencyDisplay(subtotal)}
-              </span>
+              <span className="font-medium">{money.format(subtotal)}</span>
             </div>
 
             {/* Tax Input */}
@@ -1528,7 +1528,7 @@ const POS: React.FC = () => {
                     max={
                       adjustments.tax.type === "percentage" ? "100" : undefined
                     }
-                    value={formatCurrencyDisplay(adjustments.tax.value)}
+                    value={getNumericValue(adjustments.tax.value)}
                     onChange={(e) => {
                       const parsed = parseCurrencyInput(e.target.value);
                       updateTax(parsed);
@@ -1558,7 +1558,7 @@ const POS: React.FC = () => {
                 </div>
               </div>
               <span className="font-medium sm:ml-auto">
-                ${formatCurrencyDisplay(taxAmount)}
+                {money.format(taxAmount)}
               </span>
             </div>
 
@@ -1581,7 +1581,7 @@ const POS: React.FC = () => {
                         ? "100"
                         : undefined
                     }
-                    value={formatCurrencyDisplay(adjustments.discount.value)}
+                    value={getNumericValue(adjustments.discount.value)}
                     onChange={(e) => {
                       const parsed = parseCurrencyInput(e.target.value);
                       updateDiscount(parsed);
@@ -1611,14 +1611,14 @@ const POS: React.FC = () => {
                 </div>
               </div>
               <span className="font-medium sm:ml-auto">
-                -${formatCurrencyDisplay(discountAmount)}
+                -{money.format(discountAmount)}
               </span>
             </div>
 
             {/* Total */}
             <div className="flex justify-between font-semibold text-base sm:text-lg pt-2 border-t">
               <span>Total</span>
-              <span>${formatCurrencyDisplay(total)}</span>
+              <span>{money.format(total)}</span>
             </div>
           </div>
 
@@ -2047,7 +2047,7 @@ const POS: React.FC = () => {
                   Total Amount
                 </p>
                 <p className="text-2xl sm:text-3xl font-bold">
-                  ${formatCurrencyDisplay(total)}
+                  {money.format(total)}
                 </p>
               </div>
               <div className="text-left sm:text-right w-full sm:w-auto">
@@ -2111,7 +2111,7 @@ const POS: React.FC = () => {
                       : "text-gray-900"
                   }`}
                 >
-                  ${formatCurrencyDisplay(partialPayment.cashAmount)}
+                  {money.format(partialPayment.cashAmount)}
                 </p>
               </div>
               <div
@@ -2140,7 +2140,7 @@ const POS: React.FC = () => {
                       : "text-gray-900"
                   }`}
                 >
-                  ${formatCurrencyDisplay(partialPayment.cardAmount)}
+                  {money.format(partialPayment.cardAmount)}
                 </p>
               </div>
               <div
@@ -2169,7 +2169,7 @@ const POS: React.FC = () => {
                       : "text-gray-900"
                   }`}
                 >
-                  ${formatCurrencyDisplay(partialPayment.walletAmount)}
+                  {money.format(partialPayment.walletAmount)}
                 </p>
               </div>
             </div>
@@ -2187,7 +2187,7 @@ const POS: React.FC = () => {
                       : "text-gray-900"
                   }`}
                 >
-                  ${formatCurrencyDisplay(paymentTotal)}
+                  {money.format(paymentTotal)}
                 </span>
               </div>
               {!isPaymentComplete && (
@@ -2201,8 +2201,8 @@ const POS: React.FC = () => {
                     }`}
                   >
                     {isPaymentOver
-                      ? `+$${formatCurrencyDisplay(Math.abs(paymentRemaining))}`
-                      : `$${formatCurrencyDisplay(paymentRemaining)}`}
+                      ? `+${money.format(Math.abs(paymentRemaining))}`
+                      : money.format(paymentRemaining)}
                   </span>
                 </div>
               )}
@@ -2372,7 +2372,7 @@ const POS: React.FC = () => {
                   step="0.01"
                   value={
                     partialPayment.cashAmount > 0
-                      ? formatCurrencyDisplay(partialPayment.cashAmount)
+                      ? getNumericValue(partialPayment.cashAmount)
                       : ""
                   }
                   onChange={(e) => {
@@ -2452,7 +2452,7 @@ const POS: React.FC = () => {
                   step="0.01"
                   value={
                     partialPayment.cardAmount > 0
-                      ? formatCurrencyDisplay(partialPayment.cardAmount)
+                      ? getNumericValue(partialPayment.cardAmount)
                       : ""
                   }
                   onChange={(e) => {
@@ -2535,7 +2535,7 @@ const POS: React.FC = () => {
                   step="0.01"
                   value={
                     partialPayment.walletAmount > 0
-                      ? formatCurrencyDisplay(partialPayment.walletAmount)
+                      ? getNumericValue(partialPayment.walletAmount)
                       : ""
                   }
                   onChange={(e) => {
@@ -2654,11 +2654,11 @@ const POS: React.FC = () => {
                     }`}
                   >
                     {isPaymentOver
-                      ? `Payment exceeds total by $${(
+                      ? `Payment exceeds total by ${money.format(
                           paymentTotal - total
-                        ).toFixed(2)}. Please adjust amounts.`
-                      : `Payment incomplete. Please add $${paymentRemaining.toFixed(
-                          2
+                        )}. Please adjust amounts.`
+                      : `Payment incomplete. Please add ${money.format(
+                          paymentRemaining
                         )} more to complete the payment.`}
                   </p>
                 </div>
