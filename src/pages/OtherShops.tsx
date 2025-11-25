@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FaSearch, FaEdit, FaFilter, FaPlus, FaPercent } from "react-icons/fa";
+import {
+  FaSearch,
+  FaEdit,
+  FaFilter,
+  FaPlus,
+  FaPercent,
+  // FaStore,
+} from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import { toast } from "react-toastify";
 import Pagination from "@/components/Pagination";
@@ -24,6 +31,7 @@ import PhoneIcon from "@/components/icons/PhoneIcon";
 import LocationIcon from "@/components/icons/Location";
 import Category from "@/components/icons/Category";
 import BusinessIcon from "@/components/icons/BusinessIcon";
+// import FallbackAvatar from "@/components/shared/FallbackAvatar";
 
 interface SubShop {
   id: number;
@@ -41,6 +49,7 @@ interface SubShop {
   password?: string;
   ignoreEmailVerification?: boolean;
   stuffCommission?: number;
+  image?: string;
 }
 
 interface SubShopResponse {
@@ -112,10 +121,7 @@ const OtherShops = () => {
   // Update Sub Shop Mutation
   const updateShopMutation = useMutation({
     mutationFn: async (data: Partial<SubShop> & { shopId: number }) => {
-      const response = await AXIOS.post(
-        `/profile?userId=${data.shopId}`,
-        data
-      );
+      const response = await AXIOS.post(`/profile?userId=${data.shopId}`, data);
       return response;
     },
     onSuccess: (data: any) => {
@@ -263,7 +269,10 @@ const OtherShops = () => {
                 </tr>
               ) : shopData?.users?.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                  <td
+                    colSpan={5}
+                    className="px-6 py-4 text-center text-gray-500"
+                  >
                     No shops found
                   </td>
                 </tr>
@@ -525,13 +534,15 @@ const OtherShops = () => {
             className="space-y-4"
           >
             {/* Show parent ID if selected shop id and parent id are different */}
-            {selectedShop?.parentId && selectedShop?.id !== selectedShop?.parentId && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-sm text-blue-800">
-                  <span className="font-medium">Parent ID:</span> {selectedShop?.parentId}
-                </p>
-              </div>
-            )}
+            {selectedShop?.parentId &&
+              selectedShop?.id !== selectedShop?.parentId && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-medium">Parent ID:</span>{" "}
+                    {selectedShop?.parentId}
+                  </p>
+                </div>
+              )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -669,7 +680,9 @@ const OtherShops = () => {
                 disabled={updateShopMutation.isPending}
                 className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md disabled:opacity-50"
               >
-                {updateShopMutation.isPending ? "Updating..." : "Update Sub Shop"}
+                {updateShopMutation.isPending
+                  ? "Updating..."
+                  : "Update Sub Shop"}
               </button>
             </div>
           </form>
@@ -680,4 +693,3 @@ const OtherShops = () => {
 };
 
 export default OtherShops;
-

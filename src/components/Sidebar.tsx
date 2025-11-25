@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { FaChevronDown } from "react-icons/fa";
+import { FaChevronDown, FaStore } from "react-icons/fa";
+import { useQuery } from "@tanstack/react-query";
 
 import { adminMenuItems, menuItems } from "../config/menuItems";
 import LogoSvg from "./icons/LogoSvg";
 import { useAuth } from "@/context/AuthContext";
 import FallbackAvatar from "./shared/FallbackAvatar";
+import AXIOS from "@/api/network/Axios";
+import { SUB_SHOPS_URL } from "@/api/api";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -17,6 +20,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
 
   const { user } = useAuth();
+
+  // Fetch total shops count for shop users
+  const { data: shopCountData } = useQuery({
+    queryKey: ["sub-shops-count"],
+    queryFn: async () => {
+      const response = await AXIOS.get(SUB_SHOPS_URL, {
+        params: { page: 1, pageSize: 1 },
+      });
+      return response.data;
+    },
+    enabled: user?.accountType === "shop",
+  });
+
+  const totalShops = shopCountData?.pagination?.totalItems || 0;
 
   // Close sidebar on mobile when navigating screen sizes.
   useEffect(() => {
@@ -40,19 +57,52 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
   return (
     <div className="h-screen bg-white shadow-lg w-sidebar">
-      <div className="h-20 flex items-center justify-center border-b border-gray-200/80 px-4">
+      <div
+        className={`${
+          isOpen ? "h-auto" : "h-20"
+        } flex flex-col items-center justify-center border-b border-gray-200/80 px-4 py-4 transition-all duration-300`}
+      >
         {user?.accountType === "shop" ? (
-          <div className="relative group">
-            <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-gray-100 shadow-md hover:shadow-lg transition-shadow duration-300">
-              <FallbackAvatar
-                src={user.image || null}
-                alt={user.businessName || "Shop Logo"}
-                className="w-full h-full"
-              />
+          <div className="w-full flex flex-col items-center space-y-3">
+            <div className="relative group">
+              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md hover:shadow-lg transition-shadow duration-300">
+                <FallbackAvatar
+                  src={user.image || null}
+                  alt={user.businessName || "Shop Logo"}
+                  className="w-full h-full"
+                />
+              </div>
             </div>
-
-            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-max opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gray-800 text-white text-xs py-1 px-2 rounded-md pointer-events-none">
-              {user.businessName}
+            <div className="w-full text-center space-y-2">
+              {isOpen ? (
+                <>
+                  <h3 className="text-base font-bold text-gray-900 truncate px-2">
+                    {user.businessName || "Shop Name"}
+                  </h3>
+                  {totalShops > 0 && (
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-700 bg-gradient-to-r from-brand-primary/10 to-brand-primary/5 rounded-lg px-4 py-2 border border-brand-primary/20">
+                      <FaStore className="w-4 h-4 text-brand-primary" />
+                      <span className="font-bold text-brand-primary">
+                        {totalShops}
+                      </span>
+                      <span className="text-gray-600">
+                        {totalShops === 1 ? "Sub Shop" : "Sub Shops"}
+                      </span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-8 h-8 rounded-full bg-brand-primary/10 flex items-center justify-center">
+                    <FaStore className="w-4 h-4 text-brand-primary" />
+                  </div>
+                  {totalShops > 0 && (
+                    <span className="text-xs font-bold text-brand-primary bg-brand-primary/10 rounded-full w-6 h-6 flex items-center justify-center">
+                      {totalShops}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ) : (
