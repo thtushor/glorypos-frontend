@@ -642,6 +642,33 @@ const POS: React.FC = () => {
       );
     } else {
       setCart([...cart, { ...product, quantity: 1 }]);
+
+      // Initialize discount adjustment if product has discount
+      if (product.discountType && Number(product.discountAmount || 0) > 0) {
+        setAdjustments((prev) => ({
+          ...prev,
+          discountAdjustments: {
+            ...prev.discountAdjustments,
+            [product.id]: {
+              type:
+                (product.discountType as "percentage" | "amount") ||
+                "percentage",
+              value: formatCurrency(Number(product.discountAmount || 0)),
+            },
+          },
+        }));
+      }
+
+      // Initialize sales price adjustment if product has salesPrice
+      if (product.salesPrice && Number(product.salesPrice) > 0) {
+        setAdjustments((prev) => ({
+          ...prev,
+          salesPriceAdjustments: {
+            ...prev.salesPriceAdjustments,
+            [product.id]: formatCurrency(Number(product.salesPrice)),
+          },
+        }));
+      }
     }
   };
 
@@ -665,16 +692,49 @@ const POS: React.FC = () => {
 
   const removeFromCart = (productId: number) => {
     setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+
+    // Clean up adjustments for removed item
+    setAdjustments((prev) => {
+      const newDiscountAdjustments = { ...prev.discountAdjustments };
+      const newSalesPriceAdjustments = { ...prev.salesPriceAdjustments };
+      delete newDiscountAdjustments[productId];
+      delete newSalesPriceAdjustments[productId];
+
+      return {
+        ...prev,
+        discountAdjustments: newDiscountAdjustments,
+        salesPriceAdjustments: newSalesPriceAdjustments,
+      };
+    });
   };
+
+  // Get sales price for an item (before discount)
+  const getItemSalesPrice = useCallback(
+    (item: CartItem): number => {
+      return (
+        adjustments.salesPriceAdjustments[item.id] ||
+        item.salesPrice ||
+        item.price
+      );
+    },
+    [adjustments.salesPriceAdjustments]
+  );
 
   // Calculate final price for an item based on sales price and discount
   const calculateItemFinalPrice = useCallback(
     (item: CartItem): number => {
-      const salesPrice =
-        adjustments.salesPriceAdjustments[item.id] ||
-        item.salesPrice ||
-        item.price;
-      const discount = adjustments.discountAdjustments[item.id];
+      const salesPrice = getItemSalesPrice(item);
+
+      // Get discount from adjustments or fallback to item's original discount
+      const discount =
+        adjustments.discountAdjustments[item.id] ||
+        (item.discountType && Number(item.discountAmount || 0) > 0
+          ? {
+              type:
+                (item.discountType as "percentage" | "amount") || "percentage",
+              value: Number(item.discountAmount || 0),
+            }
+          : null);
 
       if (discount && discount.value > 0) {
         if (discount.type === "percentage") {
@@ -686,14 +746,10 @@ const POS: React.FC = () => {
         }
       }
 
-      // If no discount adjustment, use the original price or price adjustment
-      return adjustments.priceAdjustments[item.id] || item.price;
+      // If no discount, return the sales price
+      return salesPrice;
     },
-    [
-      adjustments.salesPriceAdjustments,
-      adjustments.discountAdjustments,
-      adjustments.priceAdjustments,
-    ]
+    [getItemSalesPrice, adjustments.discountAdjustments]
   );
 
   // Calculate totals with proper decimal handling
@@ -705,25 +761,25 @@ const POS: React.FC = () => {
     return Math.round(sum * 100) / 100; // Round to 2 decimal places
   }, [cart, calculateItemFinalPrice]);
 
-  const calculateTax = () => {
+  const taxAmount = useMemo(() => {
     if (adjustments.tax.type === "percentage") {
       const tax = (subtotal * adjustments.tax.value) / 100;
       return Math.round(tax * 100) / 100; // Round to 2 decimal places
     }
     return Math.round(adjustments.tax.value * 100) / 100; // Round to 2 decimal places
-  };
+  }, [subtotal, adjustments.tax]);
 
-  const calculateDiscount = () => {
+  const discountAmount = useMemo(() => {
     if (adjustments.discount.type === "percentage") {
       const discount = (subtotal * adjustments.discount.value) / 100;
       return Math.round(discount * 100) / 100; // Round to 2 decimal places
     }
     return Math.round(adjustments.discount.value * 100) / 100; // Round to 2 decimal places
-  };
+  }, [subtotal, adjustments.discount]);
 
-  const taxAmount = calculateTax();
-  const discountAmount = calculateDiscount();
-  const total = Math.round((subtotal - discountAmount + taxAmount) * 100) / 100; // Round to 2 decimal places
+  const total = useMemo(() => {
+    return Math.round((subtotal - discountAmount + taxAmount) * 100) / 100; // Round to 2 decimal places
+  }, [subtotal, discountAmount, taxAmount]);
   // Cart items count
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -752,7 +808,7 @@ const POS: React.FC = () => {
   // Add this mutation
   const createOrderMutation = useMutation({
     mutationFn: async (cartItems: CartItem[]) => {
-      const orderTotal = subtotal - calculateDiscount() + calculateTax();
+      const orderTotal = total;
       const isMixed =
         (partialPayment.cashAmount > 0 &&
           (partialPayment.cardAmount > 0 || partialPayment.walletAmount > 0)) ||
@@ -768,16 +824,19 @@ const POS: React.FC = () => {
 
       const orderData: any = {
         items: cartItems.map((item) => {
+          // Get sales price (before discount) - this will be the unitPrice
+          const salesPrice = getItemSalesPrice(item);
+
+          // Get discount adjustment or use item's default discount
           const discount = adjustments.discountAdjustments[item.id] || {
             type: (item.discountType as "percentage" | "amount") || null,
             value: Number(item.discountAmount || 0),
           };
-          const finalPrice = calculateItemFinalPrice(item);
 
           return {
             productId: item.id,
             quantity: item.quantity,
-            unitPrice: finalPrice,
+            unitPrice: salesPrice, // Use sales price as unitPrice (before discount)
             discountType: discount?.type || null,
             discountAmount: discount?.value || 0,
             ...(item.selectedVariant && { variantId: item.selectedVariant.id }),
@@ -790,8 +849,8 @@ const POS: React.FC = () => {
         paymentStatus: "completed",
         paymentMethod: paymentMethod,
         orderStatus: "completed",
-        tax: calculateTax(),
-        discount: calculateDiscount(),
+        tax: taxAmount,
+        discount: discountAmount,
         subtotal: subtotal,
         total: orderTotal,
         ...(selectedStaffId === "self-sell"
@@ -978,29 +1037,34 @@ const POS: React.FC = () => {
   };
 
   // Update item sales price
-  const updateItemSalesPrice = (itemId: string, newSalesPrice: number) => {
+  const updateItemSalesPrice = (
+    itemId: string | number,
+    newSalesPrice: number
+  ) => {
     const formattedPrice = formatCurrency(newSalesPrice);
+    const key = typeof itemId === "string" ? Number(itemId) : itemId;
     setAdjustments((prev) => ({
       ...prev,
       salesPriceAdjustments: {
         ...prev.salesPriceAdjustments,
-        [itemId]: formattedPrice,
+        [key]: formattedPrice,
       },
     }));
   };
 
   // Update item discount
   const updateItemDiscount = (
-    itemId: string,
+    itemId: string | number,
     discountType: "percentage" | "amount",
     discountValue: number
   ) => {
     const formattedValue = formatCurrency(discountValue);
+    const key = typeof itemId === "string" ? Number(itemId) : itemId;
     setAdjustments((prev) => ({
       ...prev,
       discountAdjustments: {
         ...prev.discountAdjustments,
-        [itemId]: {
+        [key]: {
           type: discountType,
           value: formattedValue,
         },
@@ -1530,10 +1594,8 @@ const POS: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {cart.map((item) => {
-                const salesPrice =
-                  adjustments.salesPriceAdjustments[item.id] ||
-                  item.salesPrice ||
-                  item.price;
+                // Use the helper function to get sales price (reactive)
+                const salesPrice = getItemSalesPrice(item);
                 const discount = adjustments.discountAdjustments[item.id] || {
                   type:
                     (item.discountType as "percentage" | "amount") ||
@@ -1573,17 +1635,14 @@ const POS: React.FC = () => {
                                 const parsed = parseCurrencyInput(
                                   e.target.value
                                 );
-                                updateItemSalesPrice(
-                                  item.id?.toString() || "",
-                                  parsed
-                                );
+                                updateItemSalesPrice(item.id || 0, parsed);
                               }}
                               onBlur={(e) => {
                                 const parsed = parseCurrencyInput(
                                   e.target.value
                                 );
                                 updateItemSalesPrice(
-                                  item.id?.toString() || "",
+                                  item.id || 0,
                                   formatCurrency(parsed)
                                 );
                               }}
@@ -1616,7 +1675,7 @@ const POS: React.FC = () => {
                                   e.target.value
                                 );
                                 updateItemDiscount(
-                                  item.id?.toString() || "",
+                                  item.id || 0,
                                   discount.type,
                                   parsed
                                 );
@@ -1626,7 +1685,7 @@ const POS: React.FC = () => {
                                   e.target.value
                                 );
                                 updateItemDiscount(
-                                  item.id?.toString() || "",
+                                  item.id || 0,
                                   discount.type,
                                   formatCurrency(parsed)
                                 );
@@ -1637,7 +1696,7 @@ const POS: React.FC = () => {
                               value={discount.type}
                               onChange={(e) => {
                                 updateItemDiscount(
-                                  item.id?.toString() || "",
+                                  item.id || 0,
                                   e.target.value as "percentage" | "amount",
                                   discount.value
                                 );

@@ -10,6 +10,7 @@ import Spinner from "./Spinner";
 import { toast } from "react-toastify";
 import { useReactToPrint } from "react-to-print";
 import LogoSvg from "./icons/LogoSvg";
+import money from "@/utils/money";
 // import { useAuth } from "@/context/AuthContext";
 
 interface InvoiceItem {
@@ -176,8 +177,12 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                       </div>
                     </td>
                     <td className="text-center py-2">{item.quantity}</td>
-                    <td className="text-right py-2">${item.unitPrice}</td>
-                    <td className="text-right py-2">${item.subtotal}</td>
+                    <td className="text-right py-2">
+                      {money.format(Number(item.unitPrice))}
+                    </td>
+                    <td className="text-right py-2">
+                      {money.format(Number(item.subtotal))}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -188,23 +193,25 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>${invoiceData.summary.subtotal}</span>
+              <span>{money.format(Number(invoiceData.summary.subtotal))}</span>
             </div>
             {Number(invoiceData.summary.tax) > 0 && (
               <div className="flex justify-between">
                 <span>Tax ({invoiceData.summary.taxRate})</span>
-                <span>${invoiceData.summary.tax}</span>
+                <span>{money.format(Number(invoiceData.summary.tax))}</span>
               </div>
             )}
             {Number(invoiceData.summary.discount) > 0 && (
               <div className="flex justify-between text-red-600">
                 <span>Discount ({invoiceData.summary.discountRate})</span>
-                <span>-${invoiceData.summary.discount}</span>
+                <span>
+                  -{money.format(Number(invoiceData.summary.discount))}
+                </span>
               </div>
             )}
             <div className="flex justify-between font-medium text-lg pt-2 border-t">
               <span>Total</span>
-              <span>${invoiceData.summary.total}</span>
+              <span>{money.format(Number(invoiceData.summary.total))}</span>
             </div>
 
             {/* Payment Information */}
@@ -219,7 +226,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                         Cash
                       </span>
                       <span>
-                        ${Number(invoiceData.payment.cashAmount).toFixed(2)}
+                        {money.format(Number(invoiceData.payment.cashAmount))}
                       </span>
                     </div>
                   )}
@@ -230,7 +237,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                         Card
                       </span>
                       <span>
-                        ${Number(invoiceData.payment.cardAmount).toFixed(2)}
+                        {money.format(Number(invoiceData.payment.cardAmount))}
                       </span>
                     </div>
                   )}
@@ -241,7 +248,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                         Wallet
                       </span>
                       <span>
-                        ${Number(invoiceData.payment.walletAmount).toFixed(2)}
+                        {money.format(Number(invoiceData.payment.walletAmount))}
                       </span>
                     </div>
                   )}
@@ -272,14 +279,14 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
               <div className="flex justify-between">
                 <span>Paid Amount</span>
                 <span className="text-green-600 font-medium">
-                  ${Number(invoiceData.payment.paidAmount).toFixed(2)}
+                  {money.format(Number(invoiceData.payment.paidAmount))}
                 </span>
               </div>
               {invoiceData.payment.remainingAmount > 0 && (
                 <div className="flex justify-between text-red-600">
                   <span>Remaining</span>
                   <span>
-                    ${Number(invoiceData.payment.remainingAmount).toFixed(2)}
+                    {money.format(Number(invoiceData.payment.remainingAmount))}
                   </span>
                 </div>
               )}
