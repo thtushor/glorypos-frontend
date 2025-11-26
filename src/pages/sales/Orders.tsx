@@ -10,6 +10,7 @@ import Invoice from "@/components/Invoice";
 import { BiSpreadsheet } from "react-icons/bi";
 import ProductStatement from "@/components/ProductStatement";
 import Spinner from "@/components/Spinner";
+import money from "@/utils/money";
 
 interface OrderItem {
   id: number;
@@ -326,8 +327,10 @@ const Orders: React.FC = () => {
                         )}
                         {order?.commissions?.[0]?.commissionAmount > 0 && (
                           <span className="text-xs text-green-700">
-                            commission: $
-                            {order?.commissions?.[0]?.commissionAmount}
+                            commission:{" "}
+                            {money.format(
+                              Number(order?.commissions?.[0]?.commissionAmount)
+                            )}
                           </span>
                         )}
                       </div>
@@ -355,7 +358,7 @@ const Orders: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap font-medium">
-                      ${Number(order.total).toFixed(2)}
+                      {money.format(Number(order.total))}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex gap-2">

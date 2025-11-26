@@ -58,8 +58,10 @@ class MoneyFormatter {
    * @returns Formatted currency string
    */
   format(value: number, options: MoneyOptions = {}): string {
+    let newValue = value;
     if (typeof value !== "number") {
-      throw new TypeError("Value must be a number");
+      //   throw new TypeError("Value must be a number");
+      newValue = Number(newValue || 0);
     }
 
     const { locale, currency, decimals } = { ...this.defaults, ...options };
@@ -69,7 +71,7 @@ class MoneyFormatter {
       currency,
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
-    }).format(value);
+    }).format(newValue);
   }
 
   /**

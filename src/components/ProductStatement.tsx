@@ -8,6 +8,7 @@ import { useReactToPrint } from "react-to-print";
 import Spinner from "./Spinner";
 
 import LogoSvg from "./icons/LogoSvg";
+import money from "@/utils/money";
 
 interface StatementItem {
   id: number;
@@ -283,7 +284,7 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                     Total Sales
                   </h3>
                   <p className="text-2xl print:!text-base font-bold text-blue-800">
-                    ${summary?.totalSales.toFixed(2) || "0.00"}
+                    {money.format(summary?.totalSales || 0)}
                   </p>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg">
@@ -291,7 +292,7 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                     Total Profit
                   </h3>
                   <p className="text-2xl print:!text-base font-bold text-green-800">
-                    ${summary?.totalProfit.toFixed(2) || "0.00"}
+                    {money.format(summary?.totalProfit || 0)}
                   </p>
                 </div>
                 <div className="bg-red-50 p-4 rounded-lg">
@@ -299,7 +300,7 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                     Total Loss
                   </h3>
                   <p className="text-2xl print:!text-base font-bold text-red-800">
-                    ${summary?.totalLoss.toFixed(2) || "0.00"}
+                    {money.format(summary?.totalLoss || 0)}
                   </p>
                 </div>
                 <div className="bg-purple-50 p-4 rounded-lg">
@@ -307,7 +308,7 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                     Total Tax
                   </h3>
                   <p className="text-2xl print:!text-base font-bold text-purple-800">
-                    ${summary?.totalTax.toFixed(2) || "0.00"}
+                    {money.format(summary?.totalTax || 0)}
                   </p>
                 </div>
               </div>
@@ -427,10 +428,9 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                                         </span>
                                       </div>
                                       <div className="text-gray-500">
-                                        $
-                                        {Number(
-                                          commission.commissionAmount
-                                        ).toFixed(2)}{" "}
+                                        {money.format(
+                                          Number(commission.commissionAmount)
+                                        )}{" "}
                                         ({commission.commissionPercentage}%)
                                       </div>
                                     </div>
@@ -446,13 +446,13 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                               {item.quantity}
                             </td>
                             <td className="px-2 py-1.5 text-right whitespace-nowrap">
-                              ${Number(item.unitPrice).toFixed(2)}
+                              {money.format(Number(item.unitPrice))}
                             </td>
                             <td className="px-2 py-1.5 text-right whitespace-nowrap">
-                              ${cost.toFixed(2)}
+                              {money.format(cost)}
                             </td>
                             <td className="px-2 py-1.5 text-right whitespace-nowrap">
-                              ${sales.toFixed(2)}
+                              {money.format(sales)}
                             </td>
                             <td className="px-2 py-1.5 text-right whitespace-nowrap">
                               <span
@@ -462,7 +462,7 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                                     : "text-red-600"
                                 }
                               >
-                                ${profit.toFixed(2)}
+                                {money.format(profit)}
                               </span>
                             </td>
                           </tr>
@@ -480,10 +480,10 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                       </td>
                       <td className="px-4 py-2"></td>
                       <td className="pl-4 pr-2 py-2 text-right">
-                        ${totals?.cost.toFixed(2) || "0.00"}
+                        {money.format(totals?.cost || 0)}
                       </td>
                       <td className="pl-4 pr-2 py-2 text-right">
-                        ${totals?.sales.toFixed(2) || "0.00"}
+                        {money.format(totals?.sales || 0)}
                       </td>
                       <td className="pl-4 pr-2 py-2 text-right">
                         <span
@@ -493,9 +493,8 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                               : "text-red-600"
                           }
                         >
-                          $
-                          {((totals?.sales || 0) - (totals?.cost || 0)).toFixed(
-                            2
+                          {money.format(
+                            (totals?.sales || 0) - (totals?.cost || 0)
                           )}
                         </span>
                       </td>

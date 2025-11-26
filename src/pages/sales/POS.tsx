@@ -101,6 +101,10 @@ interface CartAdjustments {
     value: number;
   };
   priceAdjustments: { [key: string]: number };
+  salesPriceAdjustments: { [key: string]: number }; // Per-item sales price adjustments
+  discountAdjustments: {
+    [key: string]: { type: "percentage" | "amount"; value: number };
+  }; // Per-item discount adjustments
 }
 
 // Add this component for variant selection modal
@@ -276,6 +280,12 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
   );
 };
 
+// Currency formatting helpers
+const formatCurrency = (value: number | string): number => {
+  const numValue = typeof value === "string" ? parseFloat(value) || 0 : value;
+  return Math.round(numValue * 100) / 100; // Round to 2 decimal places
+};
+
 const POS: React.FC = () => {
   // Pagination state
   const [page, setPage] = useState(1);
@@ -326,6 +336,8 @@ const POS: React.FC = () => {
     tax: { type: "percentage", value: 0 },
     discount: { type: "percentage", value: 0 },
     priceAdjustments: {},
+    salesPriceAdjustments: {},
+    discountAdjustments: {},
   });
 
   const queryClient = useQueryClient();
@@ -655,14 +667,43 @@ const POS: React.FC = () => {
     setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
   };
 
+  // Calculate final price for an item based on sales price and discount
+  const calculateItemFinalPrice = useCallback(
+    (item: CartItem): number => {
+      const salesPrice =
+        adjustments.salesPriceAdjustments[item.id] ||
+        item.salesPrice ||
+        item.price;
+      const discount = adjustments.discountAdjustments[item.id];
+
+      if (discount && discount.value > 0) {
+        if (discount.type === "percentage") {
+          const discountAmount = (salesPrice * discount.value) / 100;
+          return formatCurrency(salesPrice - discountAmount);
+        } else {
+          // amount type
+          return formatCurrency(salesPrice - discount.value);
+        }
+      }
+
+      // If no discount adjustment, use the original price or price adjustment
+      return adjustments.priceAdjustments[item.id] || item.price;
+    },
+    [
+      adjustments.salesPriceAdjustments,
+      adjustments.discountAdjustments,
+      adjustments.priceAdjustments,
+    ]
+  );
+
   // Calculate totals with proper decimal handling
   const subtotal = useMemo(() => {
     const sum = cart.reduce((sum, item) => {
-      const adjustedPrice = adjustments.priceAdjustments[item.id] || item.price;
-      return sum + adjustedPrice * item.quantity;
+      const finalPrice = calculateItemFinalPrice(item);
+      return sum + finalPrice * item.quantity;
     }, 0);
     return Math.round(sum * 100) / 100; // Round to 2 decimal places
-  }, [cart, adjustments.priceAdjustments]);
+  }, [cart, calculateItemFinalPrice]);
 
   const calculateTax = () => {
     if (adjustments.tax.type === "percentage") {
@@ -726,12 +767,22 @@ const POS: React.FC = () => {
         : "mobile_banking";
 
       const orderData: any = {
-        items: cartItems.map((item) => ({
-          productId: item.id,
-          quantity: item.quantity,
-          unitPrice: adjustments.priceAdjustments[item.id] || item.price,
-          ...(item.selectedVariant && { variantId: item.selectedVariant.id }),
-        })),
+        items: cartItems.map((item) => {
+          const discount = adjustments.discountAdjustments[item.id] || {
+            type: (item.discountType as "percentage" | "amount") || null,
+            value: Number(item.discountAmount || 0),
+          };
+          const finalPrice = calculateItemFinalPrice(item);
+
+          return {
+            productId: item.id,
+            quantity: item.quantity,
+            unitPrice: finalPrice,
+            discountType: discount?.type || null,
+            discountAmount: discount?.value || 0,
+            ...(item.selectedVariant && { variantId: item.selectedVariant.id }),
+          };
+        }),
         customerName: customerInfo.name || "Walk-in Customer",
         phone: customerInfo.phone || "",
         address: "",
@@ -780,6 +831,8 @@ const POS: React.FC = () => {
         tax: { type: "percentage", value: 0 },
         discount: { type: "percentage", value: 0 },
         priceAdjustments: {},
+        salesPriceAdjustments: {},
+        discountAdjustments: {},
       });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stock-alerts"] });
@@ -894,12 +947,6 @@ const POS: React.FC = () => {
     return product.stock;
   };
 
-  // Currency formatting helpers
-  const formatCurrency = (value: number | string): number => {
-    const numValue = typeof value === "string" ? parseFloat(value) || 0 : value;
-    return Math.round(numValue * 100) / 100; // Round to 2 decimal places
-  };
-
   const parseCurrencyInput = (value: string): number => {
     // Remove any non-numeric characters except decimal point
     const cleaned = value.replace(/[^\d.]/g, "");
@@ -926,6 +973,37 @@ const POS: React.FC = () => {
       priceAdjustments: {
         ...prev.priceAdjustments,
         [itemId]: formattedPrice,
+      },
+    }));
+  };
+
+  // Update item sales price
+  const updateItemSalesPrice = (itemId: string, newSalesPrice: number) => {
+    const formattedPrice = formatCurrency(newSalesPrice);
+    setAdjustments((prev) => ({
+      ...prev,
+      salesPriceAdjustments: {
+        ...prev.salesPriceAdjustments,
+        [itemId]: formattedPrice,
+      },
+    }));
+  };
+
+  // Update item discount
+  const updateItemDiscount = (
+    itemId: string,
+    discountType: "percentage" | "amount",
+    discountValue: number
+  ) => {
+    const formattedValue = formatCurrency(discountValue);
+    setAdjustments((prev) => ({
+      ...prev,
+      discountAdjustments: {
+        ...prev.discountAdjustments,
+        [itemId]: {
+          type: discountType,
+          value: formattedValue,
+        },
       },
     }));
   };
@@ -1451,80 +1529,177 @@ const POS: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {cart.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg"
-                >
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    className="w-12 h-12 rounded object-cover"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-medium">{item.name}</h4>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs sm:text-sm text-gray-500">
-                        $
+              {cart.map((item) => {
+                const salesPrice =
+                  adjustments.salesPriceAdjustments[item.id] ||
+                  item.salesPrice ||
+                  item.price;
+                const discount = adjustments.discountAdjustments[item.id] || {
+                  type:
+                    (item.discountType as "percentage" | "amount") ||
+                    "percentage",
+                  value: Number(item.discountAmount || 0),
+                };
+                const finalPrice = calculateItemFinalPrice(item);
+
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200"
+                  >
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className="w-12 h-12 rounded object-cover flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm">{item.name}</h4>
+
+                      {/* Sales Price Input */}
+                      <div className="mt-2 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs text-gray-500 whitespace-nowrap">
+                            Sales Price:
+                          </label>
+                          <div className="flex items-center gap-1 flex-1">
+                            <span className="text-xs text-gray-500">$</span>
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              min="0"
+                              step="0.01"
+                              value={getNumericValue(salesPrice)}
+                              onChange={(e) => {
+                                const parsed = parseCurrencyInput(
+                                  e.target.value
+                                );
+                                updateItemSalesPrice(
+                                  item.id?.toString() || "",
+                                  parsed
+                                );
+                              }}
+                              onBlur={(e) => {
+                                const parsed = parseCurrencyInput(
+                                  e.target.value
+                                );
+                                updateItemSalesPrice(
+                                  item.id?.toString() || "",
+                                  formatCurrency(parsed)
+                                );
+                              }}
+                              className="flex-1 min-w-0 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Discount Input */}
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs text-gray-500 whitespace-nowrap">
+                            Discount:
+                          </label>
+                          <div className="flex items-center gap-1 flex-1">
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              min="0"
+                              step={
+                                discount.type === "percentage" ? "0.01" : "0.01"
+                              }
+                              max={
+                                discount.type === "percentage"
+                                  ? "100"
+                                  : undefined
+                              }
+                              value={getNumericValue(discount.value)}
+                              onChange={(e) => {
+                                const parsed = parseCurrencyInput(
+                                  e.target.value
+                                );
+                                updateItemDiscount(
+                                  item.id?.toString() || "",
+                                  discount.type,
+                                  parsed
+                                );
+                              }}
+                              onBlur={(e) => {
+                                const parsed = parseCurrencyInput(
+                                  e.target.value
+                                );
+                                updateItemDiscount(
+                                  item.id?.toString() || "",
+                                  discount.type,
+                                  formatCurrency(parsed)
+                                );
+                              }}
+                              className="flex-1 min-w-0 px-2 py-1 text-xs border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                            />
+                            <select
+                              value={discount.type}
+                              onChange={(e) => {
+                                updateItemDiscount(
+                                  item.id?.toString() || "",
+                                  e.target.value as "percentage" | "amount",
+                                  discount.value
+                                );
+                              }}
+                              className="text-xs border-y border-r rounded-r bg-gray-50 px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                            >
+                              <option value="percentage">%</option>
+                              <option value="amount">$</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Final Price Display */}
+                        <div className="flex items-center justify-between pt-1 border-t border-gray-300">
+                          <span className="text-xs font-semibold text-gray-700">
+                            Final Price:
+                          </span>
+                          <span className="text-sm font-bold text-brand-primary">
+                            {money.format(finalPrice)}
+                          </span>
+                        </div>
+
+                        {/* Quantity and Total */}
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-xs text-gray-500">
+                            Qty: {item.quantity}
+                          </span>
+                          <span className="text-xs font-medium text-gray-700">
+                            Total: {money.format(finalPrice * item.quantity)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => updateQuantity(item?.cartItemId, -1)}
+                        className="p-2 sm:p-1 active:bg-gray-200 hover:bg-gray-200 rounded touch-manipulation"
+                        aria-label="Decrease quantity"
+                      >
+                        <FaMinus className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                      </button>
+                      <span className="w-8 sm:w-8 text-center text-sm sm:text-base font-medium">
+                        {item.quantity}
                       </span>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        min="0"
-                        step="0.01"
-                        value={
-                          adjustments.priceAdjustments[item.id]
-                            ? getNumericValue(
-                                adjustments.priceAdjustments[item.id]
-                              )
-                            : getNumericValue(item.price)
-                        }
-                        onChange={(e) => {
-                          const parsed = parseCurrencyInput(e.target.value);
-                          updateItemPrice(item.id?.toString() || "", parsed);
-                        }}
-                        onBlur={(e) => {
-                          const parsed = parseCurrencyInput(e.target.value);
-                          updateItemPrice(
-                            item.id?.toString() || "",
-                            formatCurrency(parsed)
-                          );
-                        }}
-                        className="w-20 sm:w-24 px-2 py-1.5 sm:py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                      />
-                      <span className="text-xs sm:text-sm text-gray-500">
-                        × {item.quantity}
-                      </span>
+                      <button
+                        onClick={() => updateQuantity(item?.cartItemId, 1)}
+                        className="p-2 sm:p-1 active:bg-gray-200 hover:bg-gray-200 rounded touch-manipulation"
+                        aria-label="Increase quantity"
+                      >
+                        <FaPlus className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                      </button>
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="p-2 sm:p-1 text-red-500 active:bg-red-50 hover:bg-red-50 rounded touch-manipulation mt-1"
+                        aria-label="Remove item"
+                      >
+                        <FaTrash className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <button
-                      onClick={() => updateQuantity(item?.cartItemId, -1)}
-                      className="p-2 sm:p-1 active:bg-gray-200 hover:bg-gray-200 rounded touch-manipulation"
-                      aria-label="Decrease quantity"
-                    >
-                      <FaMinus className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    </button>
-                    <span className="w-8 sm:w-8 text-center text-sm sm:text-base font-medium">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() => updateQuantity(item?.cartItemId, 1)}
-                      className="p-2 sm:p-1 active:bg-gray-200 hover:bg-gray-200 rounded touch-manipulation"
-                      aria-label="Increase quantity"
-                    >
-                      <FaPlus className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    </button>
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      className="p-2 sm:p-1 text-red-500 active:bg-red-50 hover:bg-red-50 rounded touch-manipulation"
-                      aria-label="Remove item"
-                    >
-                      <FaTrash className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

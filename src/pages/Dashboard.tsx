@@ -23,6 +23,7 @@ import AXIOS from "@/api/network/Axios";
 import Spinner from "@/components/Spinner";
 import InventoryFilters from "@/components/shared/InventoryFilters";
 import { useAuth } from "@/context/AuthContext";
+import money from "@/utils/money";
 
 interface DashboardStats {
   totalSales: number;
@@ -114,16 +115,13 @@ const Dashboard: React.FC = () => {
     useQuery<ChartDataArray>({
       queryKey: ["chart-stats", dateRange, shopId],
       queryFn: async () => {
-        const response = await AXIOS.get(
-          `${ORDERS_URL}/report/chart/sales`,
-          {
-            params: {
-              startDate: dateRange.startDate,
-              endDate: dateRange.endDate,
-              ...(shopId ? { shopId } : {}),
-            },
-          }
-        );
+        const response = await AXIOS.get(`${ORDERS_URL}/report/chart/sales`, {
+          params: {
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate,
+            ...(shopId ? { shopId } : {}),
+          },
+        });
         return response.data?.chartData;
       },
     });
@@ -204,7 +202,7 @@ const Dashboard: React.FC = () => {
             <div>
               <p className="text-sm text-gray-500">Total Sales</p>
               <p className="text-2xl font-semibold text-gray-800">
-                ${(stats?.totalSales || 0).toFixed(2)}
+                {money.format(Number(stats?.totalSales || 0))}
               </p>
             </div>
             <div className="p-3 bg-green-100 rounded-full">
@@ -232,7 +230,7 @@ const Dashboard: React.FC = () => {
             <div>
               <p className="text-sm text-gray-500">Total Profit</p>
               <p className="text-2xl font-semibold text-gray-800">
-                ${(stats?.totalProfit || 0).toFixed(2)}
+                {money.format(Number(stats?.totalProfit || 0))}
               </p>
             </div>
             <div className="p-3 bg-purple-100 rounded-full">
@@ -246,7 +244,7 @@ const Dashboard: React.FC = () => {
             <div>
               <p className="text-sm text-gray-500">Total Loss</p>
               <p className="text-2xl font-semibold text-red-600">
-                ${(stats?.totalLoss || 0).toFixed(2)}
+                {money.format(Number(stats?.totalLoss || 0))}
               </p>
             </div>
             <div className="p-3 bg-red-100 rounded-full">
@@ -260,7 +258,7 @@ const Dashboard: React.FC = () => {
             <div>
               <p className="text-sm text-gray-500">Total Discount</p>
               <p className="text-2xl font-semibold text-orange-600">
-                ${(stats?.totalDiscount || 0).toFixed(2)}
+                {money.format(Number(stats?.totalDiscount || 0))}
               </p>
             </div>
             <div className="p-3 bg-orange-100 rounded-full">
@@ -274,7 +272,7 @@ const Dashboard: React.FC = () => {
             <div>
               <p className="text-sm text-gray-500">Total Tax</p>
               <p className="text-2xl font-semibold text-indigo-600">
-                ${(stats?.totalTax || 0).toFixed(2)}
+                {money.format(Number(stats?.totalTax || 0))}
               </p>
             </div>
             <div className="p-3 bg-indigo-100 rounded-full">
@@ -384,12 +382,12 @@ const Dashboard: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      ${product.totalRevenue.toFixed(2)}
+                      {money.format(Number(product.totalRevenue))}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      ${product.averagePrice}
+                      {money.format(Number(product.averagePrice))}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -398,7 +396,7 @@ const Dashboard: React.FC = () => {
                         product.profit >= 0 ? "text-green-600" : "text-red-600"
                       }`}
                     >
-                      ${product.profit.toFixed(2)}
+                      {money.format(product.profit)}
                     </div>
                   </td>
                 </tr>

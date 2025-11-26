@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import ProductStatement from "@/components/ProductStatement";
 import Spinner from "@/components/Spinner";
 import { useAuth } from "@/context/AuthContext";
+import money from "@/utils/money";
 
 interface StatementItem {
   id: number;
@@ -351,7 +352,7 @@ const ProductStatementPage: React.FC = () => {
               Total Sales
             </h3>
             <p className="text-2xl font-bold text-blue-800">
-              ${summary.totalSales.toFixed(2)}
+              {money.format(summary.totalSales)}
             </p>
           </div>
           <div className="bg-green-50 p-4 rounded-lg border border-green-200">
@@ -359,7 +360,7 @@ const ProductStatementPage: React.FC = () => {
               Total Profit
             </h3>
             <p className="text-2xl font-bold text-green-800">
-              ${summary.totalProfit.toFixed(2)}
+              {money.format(summary.totalProfit)}
             </p>
           </div>
           <div className="bg-red-50 p-4 rounded-lg border border-red-200">
@@ -367,7 +368,7 @@ const ProductStatementPage: React.FC = () => {
               Total Loss
             </h3>
             <p className="text-2xl font-bold text-red-800">
-              ${summary.totalLoss.toFixed(2)}
+              {money.format(summary.totalLoss)}
             </p>
           </div>
           <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
@@ -375,7 +376,7 @@ const ProductStatementPage: React.FC = () => {
               Total Tax
             </h3>
             <p className="text-2xl font-bold text-purple-800">
-              ${summary.totalTax.toFixed(2)}
+              {money.format(summary.totalTax)}
             </p>
           </div>
         </div>
@@ -687,9 +688,8 @@ const ProductStatementPage: React.FC = () => {
                                   </span>
                                 </div>
                                 <div className="text-gray-500">
-                                  $
-                                  {Number(commission?.commissionAmount).toFixed(
-                                    2
+                                  {money.format(
+                                    Number(commission?.commissionAmount)
                                   )}{" "}
                                   ({commission?.commissionPercentage}%)
                                 </div>
@@ -706,13 +706,13 @@ const ProductStatementPage: React.FC = () => {
                         {item?.quantity}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                        ${Number(item?.unitPrice).toFixed(2)}
+                        {money.format(Number(item?.unitPrice))}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                        ${cost?.toFixed(2)}
+                        {money.format(cost)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                        ${sales?.toFixed(2)}
+                        {money.format(sales)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                         <span
@@ -720,7 +720,7 @@ const ProductStatementPage: React.FC = () => {
                             profit >= 0 ? "text-green-600" : "text-red-600"
                           }`}
                         >
-                          ${profit?.toFixed(2)}
+                          {money.format(profit)}
                         </span>
                       </td>
                     </tr>
@@ -742,10 +742,10 @@ const ProductStatementPage: React.FC = () => {
                   </td>
                   <td className="px-6 py-3"></td>
                   <td className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                    ${totals?.cost?.toFixed(2)}
+                    {money.format(totals?.cost)}
                   </td>
                   <td className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                    ${totals?.sales?.toFixed(2)}
+                    {money.format(totals?.sales)}
                   </td>
                   <td className="px-6 py-3 text-right text-sm font-semibold">
                     <span
@@ -755,7 +755,7 @@ const ProductStatementPage: React.FC = () => {
                           : "text-red-600"
                       }
                     >
-                      ${(totals?.sales - totals?.cost).toFixed(2)}
+                      {money.format(totals?.sales - totals?.cost)}
                     </span>
                   </td>
                 </tr>

@@ -14,6 +14,7 @@ import Pagination from "@/components/Pagination";
 import { toast } from "react-toastify";
 import Spinner from "@/components/Spinner";
 import { useAuth } from "@/context/AuthContext";
+import money from "@/utils/money";
 
 interface CommissionItem {
   id: number;
@@ -291,7 +292,7 @@ const StaffCommissionsPage: React.FC = () => {
                   Total Commission
                 </h3>
                 <p className="text-3xl font-bold text-blue-900">
-                  ${summary.totalCommission.toFixed(2)}
+                  {money.format(summary.totalCommission)}
                 </p>
               </div>
               <div className="bg-blue-200 p-3 rounded-lg">
@@ -321,7 +322,7 @@ const StaffCommissionsPage: React.FC = () => {
                   Average Commission
                 </h3>
                 <p className="text-3xl font-bold text-purple-900">
-                  ${Number(summary.averageCommission).toFixed(2)}
+                  {money.format(Number(summary.averageCommission))}
                 </p>
               </div>
               <div className="bg-purple-200 p-3 rounded-lg">
@@ -654,14 +655,14 @@ const StaffCommissionsPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                        ${baseAmount.toFixed(2)}
+                        {money.format(baseAmount)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
                         {Number(item.commissionPercentage).toFixed(2)}%
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                         <span className="font-semibold text-green-600">
-                          ${commissionAmount.toFixed(2)}
+                          {money.format(commissionAmount)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -695,11 +696,11 @@ const StaffCommissionsPage: React.FC = () => {
                     Totals:
                   </td>
                   <td className="px-6 py-4 text-right text-sm font-bold text-gray-900">
-                    ${totals.baseAmount.toFixed(2)}
+                    {money.format(totals.baseAmount)}
                   </td>
                   <td className="px-6 py-4"></td>
                   <td className="px-6 py-4 text-right text-sm font-bold text-green-600">
-                    ${totals.commissionAmount.toFixed(2)}
+                    {money.format(totals.commissionAmount)}
                   </td>
                   <td colSpan={2} className="px-6 py-4"></td>
                 </tr>
