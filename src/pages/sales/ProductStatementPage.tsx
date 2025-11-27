@@ -287,14 +287,14 @@ const ProductStatementPage: React.FC = () => {
           item.Order?.User?.businessName ||
           item.Order?.User?.fullName ||
           "Unknown Shop"
-        } (Self)`,
+        }`,
       };
     }
     return {
       type: "Shop",
-      name: `Taken from - ${
-        item.Product?.User?.businessName ||
-        item.Product?.User?.fullName ||
+      name: `${
+        item.Order?.User?.businessName ||
+        item.Order?.User?.fullName ||
         "Unknown Shop"
       }`,
     };
@@ -581,13 +581,13 @@ const ProductStatementPage: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Order #
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 w-[300px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Product
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Shop/Self
+                <th className="px-6 py-3 w-[200px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Sold By
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 w-[200px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Commission
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -696,23 +696,39 @@ const ProductStatementPage: React.FC = () => {
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded font-mono">
                                 SKU:{" "}
                                 {item?.ProductVariant?.sku ||
                                   item?.Product?.sku}
                               </span>
+                              {item?.Product?.User && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm">
+                                  <svg
+                                    className="w-3 h-3 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                    />
+                                  </svg>
+                                  {item?.Product?.User?.businessName ||
+                                    item?.Product?.User?.fullName ||
+                                    "Unknown Owner"}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            saleType.type === "Self"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-purple-100 text-purple-800"
-                          }`}
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium`}
                         >
                           {saleType?.name}
                         </span>
