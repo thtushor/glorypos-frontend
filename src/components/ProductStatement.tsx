@@ -23,6 +23,7 @@ interface StatementItem {
     id: number;
     name: string;
     sku: string;
+    productImage?: string;
     UserId: number;
     User?: {
       id: number;
@@ -32,6 +33,7 @@ interface StatementItem {
   };
   ProductVariant?: {
     sku: string;
+    imageUrl?: string;
     Color: {
       name: string;
     };
@@ -219,14 +221,14 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
           item.Order?.User?.businessName ||
           item.Order?.User?.fullName ||
           "Unknown Shop"
-        } (Self)`,
+        }`,
       };
     }
     return {
       type: "Shop",
-      name: `Taken from - ${
-        item.Product?.User?.businessName ||
-        item.Product?.User?.fullName ||
+      name: `${
+        item.Order?.User?.businessName ||
+        item.Order?.User?.fullName ||
         "Unknown Shop"
       }`,
     };
@@ -326,20 +328,20 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                         Product
                       </th>
                       <th className="px-2 py-1.5 text-left print:px-1">
-                        Shop/Self
+                        Sold By
                       </th>
                       <th className="px-2 py-1.5 text-left print:px-1">
                         Commission
                       </th>
                       <th className="px-2 py-1.5 text-right print:px-1">Qty</th>
                       <th className="px-2 py-1.5 text-right print:px-1">
+                        Cost Price
+                      </th>
+                      <th className="px-2 py-1.5 text-right print:px-1">
                         Unit Price
                       </th>
                       <th className="px-2 py-1.5 text-right print:px-1">
-                        Cost
-                      </th>
-                      <th className="px-2 py-1.5 text-right print:px-1">
-                        Sales
+                        Sales Price
                       </th>
                       <th className="px-2 py-1.5 text-right print:px-1">
                         Profit
@@ -387,19 +389,24 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                                   )}
                                 </span>
                                 <br />
-                                <span className="text-gray-500">
-                                  {item.ProductVariant?.sku || item.Product.sku}
-                                </span>
+                                <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                  <span className="text-gray-500 text-[10px] print:text-[7pt]">
+                                    SKU:{" "}
+                                    {item.ProductVariant?.sku ||
+                                      item.Product.sku}
+                                  </span>
+                                  {item.Product?.User && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] print:text-[6pt] font-semibold bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                                      {item.Product?.User?.businessName ||
+                                        item.Product?.User?.fullName ||
+                                        "Unknown Owner"}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </td>
                             <td className="px-2 py-1.5">
-                              <span
-                                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium print:text-[7pt] ${
-                                  saleType.type === "Self"
-                                    ? "bg-blue-100 text-blue-800"
-                                    : "bg-purple-100 text-purple-800"
-                                }`}
-                              >
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] print:text-[7pt] font-semibold bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700 border border-indigo-200">
                                 {saleType.name}
                               </span>
                             </td>
@@ -446,10 +453,10 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                               {item.quantity}
                             </td>
                             <td className="px-2 py-1.5 text-right whitespace-nowrap">
-                              {money.format(Number(item.unitPrice))}
+                              {money.format(cost)}
                             </td>
                             <td className="px-2 py-1.5 text-right whitespace-nowrap">
-                              {money.format(cost)}
+                              {money.format(Number(item.unitPrice))}
                             </td>
                             <td className="px-2 py-1.5 text-right whitespace-nowrap">
                               {money.format(sales)}
@@ -478,10 +485,10 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                       <td className="pl-4 pr-2 py-2 text-right">
                         {totals?.quantity || 0}
                       </td>
-                      <td className="px-4 py-2"></td>
                       <td className="pl-4 pr-2 py-2 text-right">
                         {money.format(totals?.cost || 0)}
                       </td>
+                      <td className="px-4 py-2"></td>
                       <td className="pl-4 pr-2 py-2 text-right">
                         {money.format(totals?.sales || 0)}
                       </td>

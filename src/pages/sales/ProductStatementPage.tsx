@@ -727,11 +727,24 @@ const ProductStatementPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium`}
-                        >
-                          {saleType?.name}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm">
+                            <svg
+                              className="w-3.5 h-3.5 mr-1.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                              />
+                            </svg>
+                            {saleType?.name}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm">
                         {commissions?.length > 0 ? (
