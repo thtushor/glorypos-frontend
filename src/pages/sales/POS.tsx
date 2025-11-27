@@ -2621,7 +2621,7 @@ const POS: React.FC = () => {
               </label>
               <div className="relative">
                 <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm sm:text-base">
-                  $
+                  ฿
                 </span>
                 <input
                   type="number"
@@ -2701,7 +2701,7 @@ const POS: React.FC = () => {
               </label>
               <div className="relative">
                 <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm sm:text-base">
-                  $
+                  ฿
                 </span>
                 <input
                   type="number"
@@ -2784,7 +2784,7 @@ const POS: React.FC = () => {
               </label>
               <div className="relative">
                 <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm sm:text-base">
-                  $
+                  ฿
                 </span>
                 <input
                   type="number"

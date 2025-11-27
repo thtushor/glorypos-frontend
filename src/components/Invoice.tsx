@@ -18,8 +18,17 @@ interface InvoiceItem {
   sku: string;
   details: string;
   quantity: number;
-  unitPrice: string;
-  subtotal: string;
+  unitPrice: number;
+  originalUnitPrice?: number;
+  subtotal: number;
+  originalSubtotal?: number;
+  discount?: {
+    type: "percentage" | "amount";
+    unitDiscount: number;
+    totalDiscount: number;
+    hasDiscount: boolean;
+    discountAmount: number;
+  };
 }
 
 interface InvoiceData {
@@ -166,25 +175,67 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                 </tr>
               </thead>
               <tbody>
-                {invoiceData.items.map((item, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="py-2">
-                      <div>
-                        <p className="font-medium">{item.productName}</p>
-                        <p className="text-xs text-gray-500">
-                          SKU: {item.sku} | {item.details}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="text-center py-2">{item.quantity}</td>
-                    <td className="text-right py-2">
-                      {money.format(Number(item.unitPrice))}
-                    </td>
-                    <td className="text-right py-2">
-                      {money.format(Number(item.subtotal))}
-                    </td>
-                  </tr>
-                ))}
+                {invoiceData.items.map((item, index) => {
+                  const hasDiscount = item.discount?.hasDiscount || false;
+                  const originalPrice =
+                    item.unitPrice + (item.discount?.unitDiscount || 0);
+                  const showOriginalPrice = hasDiscount;
+
+                  return (
+                    <tr key={index} className="border-b">
+                      <td className="py-2">
+                        <div>
+                          <p className="font-medium">{item.productName}</p>
+                          <p className="text-xs text-gray-500">
+                            SKU: {item.sku} | {item.details}
+                          </p>
+                          {/* {hasDiscount && item.discount && (
+                            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded">
+                              {item.discount.type === "percentage"
+                                ? `-${item.discount.unitDiscount}%`
+                                : `-${money.format(
+                                    item.discount.unitDiscount
+                                  )}`}
+                            </span>
+                          )} */}
+                        </div>
+                      </td>
+                      <td className="text-center py-2">{item.quantity}</td>
+                      <td className="text-right py-2">
+                        <div className="flex flex-col items-end">
+                          {showOriginalPrice && (
+                            <span className="text-xs text-gray-400 line-through mb-0.5">
+                              {money.format(originalPrice)}
+                            </span>
+                          )}
+                          <span
+                            className={`font-medium ${
+                              showOriginalPrice ? "text-red-600" : ""
+                            }`}
+                          >
+                            {money.format(item.unitPrice)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="text-right py-2">
+                        <div className="flex flex-col items-end">
+                          {showOriginalPrice && originalPrice && (
+                            <span className="text-xs text-gray-400 line-through mb-0.5">
+                              {money.format(originalPrice * item.quantity || 0)}
+                            </span>
+                          )}
+                          <span
+                            className={`font-medium ${
+                              showOriginalPrice ? "text-red-600" : ""
+                            }`}
+                          >
+                            {money.format(item.subtotal)}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
