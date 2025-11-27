@@ -144,6 +144,39 @@ const Orders: React.FC = () => {
     setFilters((prev) => ({ ...prev, page: 1, [name]: value }));
   };
 
+  // Helper function to calculate order totals
+  const calculateOrderTotals = (order: Order) => {
+    // Calculate total commission
+    const totalCommission =
+      order.commissions?.reduce((sum, commission) => {
+        return sum + Number(commission.commissionAmount || 0);
+      }, 0) || 0;
+
+    // Calculate total cost (sum of purchasePrice * quantity for all items)
+    const totalCost =
+      order.OrderItems?.reduce((sum, item) => {
+        return sum + Number(item.purchasePrice || 0) * item.quantity;
+      }, 0) || 0;
+
+    // Calculate total sales (order total)
+    const totalSales = Number(order.total || 0);
+
+    // Calculate profit/loss
+    const profit = totalSales - totalCost;
+    const isProfit = profit >= 0;
+    const totalProfit = isProfit ? profit : 0;
+    const totalLoss = isProfit ? 0 : Math.abs(profit);
+
+    return {
+      totalCommission,
+      totalCost,
+      totalSales,
+      totalProfit,
+      totalLoss,
+      profit, // net profit (can be negative)
+    };
+  };
+
   return (
     <div className="space-y-6">
       {/* Header and Search */}
@@ -251,13 +284,10 @@ const Orders: React.FC = () => {
                   Customer
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Seller
-                </th>
-                {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Seller from
-                </th> */}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Seller
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
@@ -265,8 +295,17 @@ const Orders: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Payment
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Total
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  Total Sales
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  Total Cost
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  Commission
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  Profit/Loss
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Actions
@@ -276,116 +315,157 @@ const Orders: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading || isFetching ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center">
+                  <td colSpan={11} className="px-6 py-4 text-center">
                     <div className="flex justify-center items-center w-full">
                       <Spinner color="#32cd32" size="40px" />
                     </div>
-                    {/* <Spinner color="#32cd32" size="15px" /> */}
                   </td>
                 </tr>
               ) : ordersData?.orders.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={11}
                     className="px-6 py-4 text-center text-gray-500"
                   >
                     No orders found
                   </td>
                 </tr>
               ) : (
-                ordersData?.orders.map((order: Order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-medium text-gray-900">
-                        {order.orderNumber}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {order.customerName}
-                    </td>
-                    {/* stuff commission */}
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      <div className="flex flex-col gap-0.5">
-                        {order.commissions?.[0]?.staff?.fullName && (
-                          <span className="text-sm font-medium text-gray-800">
-                            {order.commissions?.[0]?.staff?.fullName}
-                          </span>
-                        )}
-                        {order.commissions?.[0]?.staff?.role && (
-                          <div>
-                            <span className="text-xs text-gray-500 px-2 py-1 rounded-md bg-gray-100 inline-block">
-                              {order.commissions?.[0]?.staff?.role}
-                            </span>
-                          </div>
-                        )}
-                        {order?.commissions?.[0]?.staff?.parent
-                          ?.businessName && (
-                          <strong className="text-xs text-gray-500">
-                            shop:{" "}
-                            {order.commissions[0].staff.parent.businessName}
-                          </strong>
-                        )}
-                        {order?.commissions?.[0]?.commissionAmount > 0 && (
-                          <span className="text-xs text-green-700">
-                            commission:{" "}
-                            {money.format(
-                              Number(order?.commissions?.[0]?.commissionAmount)
+                ordersData?.orders.map((order: Order) => {
+                  const totals = calculateOrderTotals(order);
+                  return (
+                    <tr key={order.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-medium text-gray-900">
+                          {order.orderNumber || "---"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {order.customerName || "---"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {order.orderDate
+                          ? new Date(order.orderDate).toLocaleDateString()
+                          : "---"}
+                      </td>
+                      {/* Seller Info */}
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        {order.commissions?.[0]?.staff?.fullName ||
+                        order.commissions?.[0]?.staff?.role ||
+                        order?.commissions?.[0]?.staff?.parent?.businessName ? (
+                          <div className="flex flex-col gap-0.5">
+                            {order.commissions?.[0]?.staff?.fullName && (
+                              <span className="text-sm font-medium text-gray-800">
+                                {order.commissions?.[0]?.staff?.fullName}
+                              </span>
                             )}
-                          </span>
+                            {order.commissions?.[0]?.staff?.role && (
+                              <div>
+                                <span className="text-xs text-gray-500 px-2 py-1 rounded-md bg-gray-100 inline-block">
+                                  {order.commissions?.[0]?.staff?.role}
+                                </span>
+                              </div>
+                            )}
+                            {order?.commissions?.[0]?.staff?.parent
+                              ?.businessName && (
+                              <strong className="text-xs text-gray-500">
+                                shop:{" "}
+                                {order.commissions[0].staff.parent.businessName}
+                              </strong>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">---</span>
                         )}
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {new Date(order.orderDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                          order.orderStatus
-                        )}`}
-                      >
-                        {order.orderStatus}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                          order.paymentStatus
-                        )}`}
-                      >
-                        {order.paymentMethod}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap font-medium">
-                      {money.format(Number(order.total))}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setShowInvoice(true);
-                          }}
-                          className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full"
-                          title="View Order"
-                        >
-                          <FaEye className="w-4 h-4" />
-                        </button>
-                        {/* <button
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setShowInvoice(true);
-                          }}
-                          className="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-full"
-                          title="Print Invoice"
-                        >
-                          <FaFileInvoice className="w-4 h-4" />
-                        </button> */}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {order.orderStatus ? (
+                          <span
+                            className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                              order.orderStatus
+                            )}`}
+                          >
+                            {order.orderStatus}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">---</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {order.paymentMethod ? (
+                          <span
+                            className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                              order.paymentStatus
+                            )}`}
+                          >
+                            {order.paymentMethod}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">---</span>
+                        )}
+                      </td>
+                      {/* Total Sales */}
+                      <td className="px-6 py-4 whitespace-nowrap text-right font-medium text-gray-900">
+                        {totals.totalSales > 0
+                          ? money.format(totals.totalSales)
+                          : "---"}
+                      </td>
+                      {/* Total Cost */}
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-gray-700">
+                        {totals.totalCost > 0
+                          ? money.format(totals.totalCost)
+                          : "---"}
+                      </td>
+                      {/* Total Commission */}
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        {totals.totalCommission > 0 ? (
+                          <span className="text-green-700 font-medium">
+                            {money.format(totals.totalCommission)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">---</span>
+                        )}
+                      </td>
+                      {/* Profit/Loss */}
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        {totals.totalSales > 0 || totals.totalCost > 0 ? (
+                          totals.profit >= 0 ? (
+                            <span className="font-semibold text-green-600">
+                              {money.format(
+                                totals.totalProfit -
+                                  Number(totals.totalCommission || 0)
+                              )}
+                            </span>
+                          ) : (
+                            <span className="font-semibold text-red-600">
+                              -
+                              {money.format(
+                                totals.totalLoss +
+                                  Number(totals.totalCommission || 0)
+                              )}
+                            </span>
+                          )
+                        ) : (
+                          <span className="text-gray-400">---</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setShowInvoice(true);
+                            }}
+                            className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full"
+                            title="View Order"
+                          >
+                            <FaEye className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
