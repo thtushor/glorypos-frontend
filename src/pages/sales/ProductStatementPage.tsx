@@ -24,6 +24,7 @@ interface StatementItem {
     id: number;
     name: string;
     sku: string;
+    productImage?: string;
     UserId: number;
     User?: {
       id: number;
@@ -33,6 +34,7 @@ interface StatementItem {
   };
   ProductVariant?: {
     sku: string;
+    imageUrl?: string;
     Color: {
       name: string;
     };
@@ -640,21 +642,68 @@ const ProductStatementPage: React.FC = () => {
                         {item?.Order?.orderNumber}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <div>
-                          <span className="font-medium text-gray-900">
-                            {item?.Product?.name}
-                            {item?.ProductVariant && (
-                              <span className="text-gray-500 ml-1">
-                                - {item?.ProductVariant?.Color?.name},{" "}
-                                {item?.ProductVariant?.Size?.name}
+                        <div className="flex items-center gap-3">
+                          {/* Product Image */}
+                          <div className="relative flex-shrink-0 group">
+                            <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 shadow-sm">
+                              <img
+                                src={
+                                  item?.ProductVariant?.imageUrl ||
+                                  item?.Product?.productImage ||
+                                  "https://via.placeholder.com/64?text=No+Image"
+                                }
+                                alt={item?.Product?.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src =
+                                    "https://via.placeholder.com/64?text=No+Image";
+                                }}
+                              />
+                            </div>
+                            {/* Hover overlay for full image view */}
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center z-10">
+                              <a
+                                href={
+                                  item?.ProductVariant?.imageUrl ||
+                                  item?.Product?.productImage ||
+                                  "#"
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-white text-xs font-medium px-2 py-1 bg-white/20 rounded backdrop-blur-sm hover:bg-white/30 transition-colors"
+                                onClick={(e) => {
+                                  if (
+                                    !item?.ProductVariant?.imageUrl &&
+                                    !item?.Product?.productImage
+                                  ) {
+                                    e.preventDefault();
+                                  }
+                                }}
+                              >
+                                View
+                              </a>
+                            </div>
+                          </div>
+                          {/* Product Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-gray-900 mb-1">
+                              {item?.Product?.name}
+                              {item?.ProductVariant && (
+                                <span className="text-gray-500 ml-1 font-normal">
+                                  - {item?.ProductVariant?.Color?.name},{" "}
+                                  {item?.ProductVariant?.Size?.name}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded font-mono">
+                                SKU:{" "}
+                                {item?.ProductVariant?.sku ||
+                                  item?.Product?.sku}
                               </span>
-                            )}
-                          </span>
-                          <br />
-                          <span className="text-xs text-gray-500">
-                            SKU:{" "}
-                            {item?.ProductVariant?.sku || item?.Product?.sku}
-                          </span>
+                            </div>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm">
