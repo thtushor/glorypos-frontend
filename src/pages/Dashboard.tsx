@@ -32,6 +32,8 @@ interface DashboardStats {
   totalLoss: number;
   totalDiscount: number;
   totalTax: number;
+  totalCommissions: number;
+  totalProducts: number;
 }
 
 type ChartData = {
@@ -196,7 +198,7 @@ const Dashboard: React.FC = () => {
 
       {/* Stats Grid */}
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -228,6 +230,20 @@ const Dashboard: React.FC = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
+              <p className="text-sm text-gray-500">Total Products</p>
+              <p className="text-2xl font-semibold text-gray-800">
+                {stats?.totalProducts || 0}
+              </p>
+            </div>
+            <div className="p-3 bg-blue-100 rounded-full">
+              <FaBoxOpen className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
               <p className="text-sm text-gray-500">Total Profit</p>
               <p className="text-2xl font-semibold text-gray-800">
                 {money.format(Number(stats?.totalProfit || 0))}
@@ -235,6 +251,20 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="p-3 bg-purple-100 rounded-full">
               <FaChartLine className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Commissions</p>
+              <p className="text-2xl font-semibold text-red-600">
+                {money.format(Number(stats?.totalCommissions || 0))}
+              </p>
+            </div>
+            <div className="p-3 bg-red-100 rounded-full">
+              <FaChartLine className="w-6 h-6 text-red-600" />
             </div>
           </div>
         </div>
