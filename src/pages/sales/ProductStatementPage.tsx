@@ -594,13 +594,13 @@ const ProductStatementPage: React.FC = () => {
                   Qty
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Cost Price
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Unit Price
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cost
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Sales
+                  Sales Price
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Profit
@@ -755,10 +755,10 @@ const ProductStatementPage: React.FC = () => {
                         {item?.quantity}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                        {money.format(Number(item?.unitPrice))}
+                        {money.format(cost)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                        {money.format(cost)}
+                        {money.format(Number(item?.unitPrice))}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
                         {money.format(sales)}
@@ -789,10 +789,10 @@ const ProductStatementPage: React.FC = () => {
                   <td className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
                     {totals?.quantity}
                   </td>
-                  <td className="px-6 py-3"></td>
                   <td className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
                     {money.format(totals?.cost)}
                   </td>
+                  <td className="px-6 py-3"></td>
                   <td className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
                     {money.format(totals?.sales)}
                   </td>
