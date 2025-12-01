@@ -113,7 +113,7 @@ const Products: React.FC = () => {
 
     // Add price range filters
     if (
-      .min !== undefined &&
+      priceRange?.min !== undefined &&
       priceRange?.min !== null &&
       priceRange?.min > 0
     ) {
