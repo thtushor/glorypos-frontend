@@ -64,9 +64,9 @@ const Products: React.FC = () => {
   }, [currentShopId]);
 
   // Price range filter for API
-  const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
-    min: 0,
-    max: 1000,
+  const [priceRange, setPriceRange] = useState<{ min?: number; max?: number }>({
+    min: undefined,
+    max: undefined,
   });
 
   // Form state
@@ -112,19 +112,20 @@ const Products: React.FC = () => {
     if (selectedUnit !== "all") params.unitId = selectedUnit;
 
     // Add price range filters
-    if (
-      priceRange.min !== undefined &&
-      priceRange.min !== null &&
-      priceRange.min > 0
+    if (priceRange?.min &&
+      priceRange?.min !== undefined &&
+      priceRange?.min !== null &&
+      priceRange?.min > 0
     ) {
-      params.minPrice = priceRange.min;
+      params.minPrice = priceRange?.min;
     }
     if (
-      priceRange.max !== undefined &&
-      priceRange.max !== null &&
-      priceRange.max > 0
+      priceRange?.max &&
+      priceRange?.max !== undefined &&
+      priceRange?.max !== null &&
+      priceRange?.max > 0
     ) {
-      params.maxPrice = priceRange.max;
+      params.maxPrice = priceRange?.max;
     }
 
     return params;
@@ -347,22 +348,22 @@ const Products: React.FC = () => {
         {/* Price Range */}
         <div className="flex items-center gap-2">
           <input
-            type="number"
+            type="text"
             placeholder="Min"
-            value={priceRange.min}
+            value={priceRange?.min}
             onChange={(e) => {
-              setPriceRange({ ...priceRange, min: Number(e.target.value) });
+              setPriceRange({ ...priceRange, min: Number(e.target.value)||undefined });
               handleFilterChange();
             }}
             className="border rounded-lg px-3 py-2 w-24"
           />
           <span>-</span>
           <input
-            type="number"
+            type="text"
             placeholder="Max"
-            value={priceRange.max}
+            value={priceRange?.max}
             onChange={(e) => {
-              setPriceRange({ ...priceRange, max: Number(e.target.value) });
+              setPriceRange({ ...priceRange, max: Number(e.target.value)||undefined });
               handleFilterChange();
             }}
             className="border rounded-lg px-3 py-2 w-24"

@@ -301,9 +301,9 @@ const POS: React.FC = () => {
   );
   const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
   const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
-  const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
-    min: 0,
-    max: 1000,
+  const [priceRange, setPriceRange] = useState<{ min?: number; max?: number }>({
+    min: undefined,
+    max: undefined,
   });
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
@@ -357,17 +357,17 @@ const POS: React.FC = () => {
     if (selectedUnit !== "all") params.unitId = selectedUnit;
 
     // Add price range filters
-    if (
-      priceRange.min !== undefined &&
-      priceRange.min !== null &&
-      priceRange.min > 0
+    if (priceRange?.min && 
+      priceRange?.min !== undefined &&
+      priceRange?.min !== null &&
+      priceRange?.min > 0
     ) {
-      params.minPrice = priceRange.min;
+      params.minPrice = priceRange?.min;
     }
-    if (
-      priceRange.max !== undefined &&
-      priceRange.max !== null &&
-      priceRange.max > 0
+    if (priceRange?.max &&
+      priceRange?.max !== undefined &&
+      priceRange?.max !== null &&
+      priceRange?.max > 0
     ) {
       params.maxPrice = priceRange.max;
     }
@@ -1179,8 +1179,8 @@ const POS: React.FC = () => {
                   selectedBrand !== "all" ||
                   selectedUnit !== "all" ||
                   shopId !== "" ||
-                  priceRange.min > 0 ||
-                  priceRange.max > 0) && (
+                  priceRange?.min && priceRange?.min > 0 || priceRange?.max &&
+                  priceRange?.max > 0) && (
                   <span className="px-2 py-0.5 bg-brand-primary text-white text-xs rounded-full">
                     Active
                   </span>
@@ -1321,11 +1321,11 @@ const POS: React.FC = () => {
                     <input
                       type="number"
                       placeholder="Min Price"
-                      value={priceRange.min || ""}
+                      value={priceRange?.min || ""}
                       onChange={(e) => {
                         setPriceRange({
                           ...priceRange,
-                          min: Number(e.target.value) || 0,
+                          min: Number(e.target.value) || undefined,
                         });
                         handleFilterChange();
                       }}
@@ -1341,7 +1341,7 @@ const POS: React.FC = () => {
                       onChange={(e) => {
                         setPriceRange({
                           ...priceRange,
-                          max: Number(e.target.value) || 0,
+                          max: Number(e.target.value) || undefined,
                         });
                         handleFilterChange();
                       }}
