@@ -301,9 +301,9 @@ const POS: React.FC = () => {
   );
   const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
   const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
-  const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
-    min: 0,
-    max: 1000,
+  const [priceRange, setPriceRange] = useState<{ min?: number; max?: number }>({
+    min: undefined,
+    max: undefined,
   });
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
@@ -1325,7 +1325,7 @@ const POS: React.FC = () => {
                       onChange={(e) => {
                         setPriceRange({
                           ...priceRange,
-                          min: Number(e.target.value) || 0,
+                          min: Number(e.target.value) || undefined,
                         });
                         handleFilterChange();
                       }}
@@ -1341,7 +1341,7 @@ const POS: React.FC = () => {
                       onChange={(e) => {
                         setPriceRange({
                           ...priceRange,
-                          max: Number(e.target.value) || 0,
+                          max: Number(e.target.value) || undefined,
                         });
                         handleFilterChange();
                       }}
