@@ -113,18 +113,18 @@ const Products: React.FC = () => {
 
     // Add price range filters
     if (
-      priceRange.min !== undefined &&
-      priceRange.min !== null &&
-      priceRange.min > 0
+      .min !== undefined &&
+      priceRange?.min !== null &&
+      priceRange?.min > 0
     ) {
-      params.minPrice = priceRange.min;
+      params.minPrice = priceRange?.min;
     }
     if (
-      priceRange.max !== undefined &&
-      priceRange.max !== null &&
-      priceRange.max > 0
+      priceRange?.max !== undefined &&
+      priceRange?.max !== null &&
+      priceRange?.max > 0
     ) {
-      params.maxPrice = priceRange.max;
+      params.maxPrice = priceRange?.max;
     }
 
     return params;
@@ -349,7 +349,7 @@ const Products: React.FC = () => {
           <input
             type="text"
             placeholder="Min"
-            value={priceRange.min}
+            value={priceRange?.min}
             onChange={(e) => {
               setPriceRange({ ...priceRange, min: Number(e.target.value)||undefined });
               handleFilterChange();
@@ -360,7 +360,7 @@ const Products: React.FC = () => {
           <input
             type="text"
             placeholder="Max"
-            value={priceRange.max}
+            value={priceRange?.max}
             onChange={(e) => {
               setPriceRange({ ...priceRange, max: Number(e.target.value)||undefined });
               handleFilterChange();
