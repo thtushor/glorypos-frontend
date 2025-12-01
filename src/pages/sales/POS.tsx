@@ -358,16 +358,16 @@ const POS: React.FC = () => {
 
     // Add price range filters
     if (
-      priceRange.min !== undefined &&
-      priceRange.min !== null &&
-      priceRange.min > 0
+      priceRange?.min !== undefined &&
+      priceRange?.min !== null &&
+      priceRange?.min > 0
     ) {
-      params.minPrice = priceRange.min;
+      params.minPrice = priceRange?.min;
     }
     if (
-      priceRange.max !== undefined &&
-      priceRange.max !== null &&
-      priceRange.max > 0
+      priceRange?.max !== undefined &&
+      priceRange?.max !== null &&
+      priceRange?.max > 0
     ) {
       params.maxPrice = priceRange.max;
     }
@@ -1179,8 +1179,8 @@ const POS: React.FC = () => {
                   selectedBrand !== "all" ||
                   selectedUnit !== "all" ||
                   shopId !== "" ||
-                  priceRange.min > 0 ||
-                  priceRange.max > 0) && (
+                  priceRange?.min > 0 ||
+                  priceRange?.max > 0) && (
                   <span className="px-2 py-0.5 bg-brand-primary text-white text-xs rounded-full">
                     Active
                   </span>
@@ -1321,7 +1321,7 @@ const POS: React.FC = () => {
                     <input
                       type="number"
                       placeholder="Min Price"
-                      value={priceRange.min || ""}
+                      value={priceRange?.min || ""}
                       onChange={(e) => {
                         setPriceRange({
                           ...priceRange,
