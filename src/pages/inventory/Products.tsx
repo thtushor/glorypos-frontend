@@ -64,9 +64,9 @@ const Products: React.FC = () => {
   }, [currentShopId]);
 
   // Price range filter for API
-  const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
-    min: 0,
-    max: 1000,
+  const [priceRange, setPriceRange] = useState<{ min?: number; max?: number }>({
+    min: undefined,
+    max: undefined,
   });
 
   // Form state
@@ -347,22 +347,22 @@ const Products: React.FC = () => {
         {/* Price Range */}
         <div className="flex items-center gap-2">
           <input
-            type="number"
+            type="text"
             placeholder="Min"
             value={priceRange.min}
             onChange={(e) => {
-              setPriceRange({ ...priceRange, min: Number(e.target.value) });
+              setPriceRange({ ...priceRange, min: Number(e.target.value)||undefined });
               handleFilterChange();
             }}
             className="border rounded-lg px-3 py-2 w-24"
           />
           <span>-</span>
           <input
-            type="number"
+            type="text"
             placeholder="Max"
             value={priceRange.max}
             onChange={(e) => {
-              setPriceRange({ ...priceRange, max: Number(e.target.value) });
+              setPriceRange({ ...priceRange, max: Number(e.target.value)||undefined });
               handleFilterChange();
             }}
             className="border rounded-lg px-3 py-2 w-24"
