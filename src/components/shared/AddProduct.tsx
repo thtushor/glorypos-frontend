@@ -55,9 +55,27 @@ function AddProduct({
   );
 
   // Form state
-  const [formData, setFormData] = useState<ProductFormData>(productData);
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [formData, setFormData] = useState<ProductFormData>({
+    ...productData,
+    images: productData.images || [],
+    imageFiles: [],
+  });
+
+  const [imagePreviews, setImagePreviews] = useState<string[]>(
+    productData.images || []
+  );
   const [isLoadingImage, setIsLoadingImage] = useState(false);
+
+  console.log({ productData, imagePreviews, formData });
+  // Update previews when productData changes
+  useEffect(() => {
+    const images = productData.images || [];
+    setImagePreviews(images);
+    setFormData((prev) => ({
+      ...prev,
+      images: images,
+    }));
+  }, [productData.id, productData.images]);
 
   const resetForm = () => {
     setFormData({
@@ -73,6 +91,8 @@ function AddProduct({
       ColorId: 0,
       alertQuantity: 0,
       productImage: "",
+      images: [],
+      productImages: [],
       discountType: null,
       discountAmount: null,
       purchasePrice: 0,
@@ -81,7 +101,9 @@ function AddProduct({
       price: 0,
       stock: 0,
       status: "active",
+      imageFiles: [],
     });
+    setImagePreviews([]);
   };
 
   // Fetch colors and sizes
@@ -162,13 +184,14 @@ function AddProduct({
     setIsLoadingImage(true);
     try {
       let imageUrl = formData.productImage;
+      let productImages: string[] = formData.images || [];
 
       if (Number(formData?.salesPrice) < Number(formData?.purchasePrice)) {
         successToast("Sales price cannot be less than purchase price", "error");
         return;
       }
 
-      // Upload image if new file is selected
+      // Upload single image if new file is selected (backward compatibility)
       if (formData.imageFile) {
         imageUrl = await uploadFile(formData.imageFile);
         if (!imageUrl) {
@@ -177,11 +200,39 @@ function AddProduct({
         }
       }
 
+      // Upload multiple images if new files are selected
+      if (formData.imageFiles && formData.imageFiles.length > 0) {
+        const uploadedImages = await uploadFile(formData.imageFiles);
+        if (uploadedImages) {
+          const imageArray = Array.isArray(uploadedImages)
+            ? uploadedImages.map((item) => item.original)
+            : [uploadedImages.original];
+          productImages = [...(formData.productImages || []), ...imageArray];
+        }
+      }
+
+      // If no new uploads, use existing previews as productImages
+      if (productImages.length === 0 && imagePreviews.length > 0) {
+        // Filter out data URLs (previews) and keep only actual URLs
+        productImages = imagePreviews.filter((url) => !url.startsWith("data:"));
+      }
+
+      // Set primary image from first image in array or existing
+      if (productImages.length > 0 && !imageUrl) {
+        imageUrl = productImages[0];
+      }
+
       const submitData = {
         ...formData,
-        ColorId: Number(formData?.ColorId) >0 ? Number(formData?.ColorId): undefined,
-        SizeId: Number(formData?.SizeId) >0 ? Number(formData?.SizeId): undefined,
+        ColorId:
+          Number(formData?.ColorId) > 0 ? Number(formData?.ColorId) : undefined,
+        SizeId:
+          Number(formData?.SizeId) > 0 ? Number(formData?.SizeId) : undefined,
         productImage: imageUrl,
+        images:
+          productImages.length > 0
+            ? productImages.map((item) => item)
+            : undefined,
       };
 
       if (formData.id || productId) {
@@ -233,7 +284,7 @@ function AddProduct({
         // Apply VAT
         const finalPrice = discountedPrice + (discountedPrice * vat) / 100;
 
-        updatedData.price = Math.max(Number((finalPrice).toFixed(2)), 0); // Ensure price is not negative
+        updatedData.price = Math.max(Number(finalPrice.toFixed(2)), 0); // Ensure price is not negative
       }
 
       return updatedData;
@@ -271,7 +322,7 @@ function AddProduct({
         // Apply VAT
         const finalPrice = discountedPrice + (discountedPrice * vat) / 100;
 
-        updatedData.price = Math.max(Number((finalPrice).toFixed(2)), 0); // Ensure price is not negative
+        updatedData.price = Math.max(Number(finalPrice.toFixed(2)), 0); // Ensure price is not negative
       }
 
       return updatedData;
@@ -309,15 +360,48 @@ function AddProduct({
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData((prev) => ({ ...prev, imageFile: file }));
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const fileArray = Array.from(files);
+      setFormData((prev) => ({
+        ...prev,
+        imageFiles: [...(prev.imageFiles || []), ...fileArray],
+      }));
+
+      // Create previews for all selected images immediately
+      fileArray.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreviews((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
+    // Reset input to allow selecting same files again
+    e.target.value = "";
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    const newImages =
+      formData.productImages?.filter((_, i) => i !== index) || [];
+    const newImageFiles =
+      formData.imageFiles?.filter((_, i) => {
+        // Remove corresponding file if it's a new upload
+        const previewIndex = imagePreviews.length - formData.imageFiles!.length;
+        return (
+          i < previewIndex ||
+          i >= previewIndex + (imagePreviews.length - newPreviews.length)
+        );
+      }) || [];
+
+    setImagePreviews(newPreviews);
+    setFormData((prev) => ({
+      ...prev,
+      productImages: newImages,
+      productImage: newImages[0] || prev.productImage,
+      imageFiles: newImageFiles,
+    }));
   };
 
   useEffect(() => {
@@ -344,14 +428,13 @@ function AddProduct({
         {/* SKU */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            SKU*
+            SKU
           </label>
           <InputWithIcon
             icon={FaBox}
             name="sku"
             type="text"
-            required
-            placeholder="Enter SKU"
+            placeholder="Enter SKU (optional)"
             value={formData.sku}
             onChange={handleInputChange}
           />
@@ -684,38 +767,45 @@ function AddProduct({
           </select>
         </div>
       </div>
-      {/* Image */}
+      {/* Images */}
       <div className="col-span-full">
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Product Image
+          Product Images
         </label>
-        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md relative hover:border-brand-primary transition-colors">
-          <div className="space-y-1 text-center">
-            {(imagePreview || formData.productImage) && !isLoadingImage ? (
-              <div className="relative group">
+
+        {/* Image Previews Grid */}
+        {imagePreviews.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+            {imagePreviews.map((preview, index) => (
+              <div key={index} className="relative group">
                 <img
-                  src={imagePreview || formData.productImage}
-                  alt="Preview"
-                  className="mx-auto h-64 w-auto rounded-md object-cover"
+                  src={preview}
+                  alt={`Preview ${index + 1}`}
+                  className="w-full h-48 object-cover rounded-md border border-gray-200"
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
                   <button
                     type="button"
-                    onClick={() => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        imageFile: null,
-                        productImage: "",
-                      }));
-                      setImagePreview("");
-                    }}
+                    onClick={() => handleRemoveImage(index)}
                     className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                   >
                     <FaTimes className="w-5 h-5" />
                   </button>
                 </div>
+                {index === 0 && (
+                  <div className="absolute top-2 left-2 bg-brand-primary text-white text-xs px-2 py-1 rounded">
+                    Primary
+                  </div>
+                )}
               </div>
-            ) : isLoadingImage ? (
+            ))}
+          </div>
+        )}
+
+        {/* Upload Area */}
+        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md relative hover:border-brand-primary transition-colors">
+          <div className="space-y-1 text-center">
+            {isLoadingImage ? (
               <div className="flex items-center justify-center h-64 w-auto rounded-md object-cover">
                 <Spinner size="32px" color="#32cd32" className="mx-4 my-1" />
               </div>
@@ -724,23 +814,24 @@ function AddProduct({
                 <FaCloudUploadAlt className="mx-auto h-12 w-12 text-gray-400" />
                 <div className="flex text-sm text-gray-600">
                   <label
-                    htmlFor="product-image"
+                    htmlFor="product-images"
                     className="relative cursor-pointer rounded-md font-medium text-brand-primary hover:text-brand-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-primary"
                   >
-                    <span>Upload a file</span>
+                    <span>Upload files</span>
                     <input
-                      id="product-image"
-                      name="product-image"
+                      id="product-images"
+                      name="product-images"
                       type="file"
                       className="sr-only"
                       accept="image/*"
+                      multiple
                       onChange={handleImageChange}
                     />
                   </label>
                   <p className="pl-1">or drag and drop</p>
                 </div>
                 <p className="text-xs text-gray-500">
-                  PNG, JPG, GIF up to 10MB
+                  PNG, JPG, GIF up to 10MB (Multiple images supported)
                 </p>
               </>
             )}

@@ -112,7 +112,8 @@ const Products: React.FC = () => {
     if (selectedUnit !== "all") params.unitId = selectedUnit;
 
     // Add price range filters
-    if (priceRange?.min &&
+    if (
+      priceRange?.min &&
       priceRange?.min !== undefined &&
       priceRange?.min !== null &&
       priceRange?.min > 0
@@ -212,6 +213,10 @@ const Products: React.FC = () => {
       ColorId: product.ColorId,
       alertQuantity: product.alertQuantity,
       productImage: product.productImage || "",
+      productImages:
+        (product as any).productImages ||
+        (product.productImage ? [product.productImage] : []),
+      images: product.images || (product.images ? [product.images] : []),
       discountType: product.discountType,
       discountAmount: product.discountAmount,
       purchasePrice: product.purchasePrice,
@@ -352,7 +357,10 @@ const Products: React.FC = () => {
             placeholder="Min"
             value={priceRange?.min}
             onChange={(e) => {
-              setPriceRange({ ...priceRange, min: Number(e.target.value)||undefined });
+              setPriceRange({
+                ...priceRange,
+                min: Number(e.target.value) || undefined,
+              });
               handleFilterChange();
             }}
             className="border rounded-lg px-3 py-2 w-24"
@@ -363,7 +371,10 @@ const Products: React.FC = () => {
             placeholder="Max"
             value={priceRange?.max}
             onChange={(e) => {
-              setPriceRange({ ...priceRange, max: Number(e.target.value)||undefined });
+              setPriceRange({
+                ...priceRange,
+                max: Number(e.target.value) || undefined,
+              });
               handleFilterChange();
             }}
             className="border rounded-lg px-3 py-2 w-24"

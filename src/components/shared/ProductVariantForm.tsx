@@ -28,6 +28,8 @@ interface VariantFormData {
   SizeId: number;
   quantity: number;
   imageUrl: string | null;
+  imageUrls?: string[]; // Multiple images support
+  imageFiles?: File[]; // Multiple image files support
 }
 
 const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
@@ -90,6 +92,8 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
           SizeId: variant.SizeId,
           quantity: variant.quantity,
           imageUrl: variant.imageUrl,
+          imageUrls: variant.imageUrls || (variant.imageUrl ? [variant.imageUrl] : []),
+          imageFiles: [],
         }))
       );
     }
@@ -152,6 +156,8 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
         SizeId: 0,
         quantity: 0,
         imageUrl: null,
+        imageUrls: [],
+        imageFiles: [],
       },
     ]);
   };
@@ -177,18 +183,37 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
     setVariants(newVariants);
   };
 
-  const handleImageUpload = async (index: number, file: File) => {
+  const handleImageUpload = async (index: number, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
     try {
       setIsUplaodingImage((prev) => ({ ...prev, [index]: true }));
-      const imageUrl = await uploadFile(file);
-      if (imageUrl) {
-        handleVariantChange(index, "imageUrl", imageUrl);
+      const fileArray = Array.from(files);
+      const uploadedImages = await uploadFile(fileArray);
+      
+      if (uploadedImages) {
+        const imageArray = Array.isArray(uploadedImages) ? uploadedImages : [uploadedImages];
+        const currentVariant = variants[index];
+        const existingImages = currentVariant.imageUrls || (currentVariant.imageUrl ? [currentVariant.imageUrl] : []);
+        const newImages = [...existingImages, ...imageArray];
+        
+        handleVariantChange(index, "imageUrls", newImages);
+        handleVariantChange(index, "imageUrl", newImages[0] || null);
       }
     } catch (error) {
-      toast.error("Error uploading image");
+      toast.error("Error uploading images");
     } finally {
       setIsUplaodingImage((prev) => ({ ...prev, [index]: false }));
     }
+  };
+
+  const handleRemoveVariantImage = (variantIndex: number, imageIndex: number) => {
+    const variant = variants[variantIndex];
+    const imageUrls = variant.imageUrls || (variant.imageUrl ? [variant.imageUrl] : []);
+    const newImages = imageUrls.filter((_, i) => i !== imageIndex);
+    
+    handleVariantChange(variantIndex, "imageUrls", newImages);
+    handleVariantChange(variantIndex, "imageUrl", newImages[0] || null);
   };
 
   const handleSaveVariant = (variant: VariantFormData) => {
@@ -253,25 +278,46 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
                 </button>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Variant Image */}
+                  {/* Variant Images */}
                   <div className="lg:col-span-3">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Variant Image
+                      Variant Images
                     </label>
+                    
+                    {/* Image Previews Grid */}
+                    {(variant.imageUrls && variant.imageUrls.length > 0) || variant.imageUrl ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+                        {(variant.imageUrls || (variant.imageUrl ? [variant.imageUrl] : [])).map((imgUrl, imgIndex) => (
+                          <div key={imgIndex} className="relative group">
+                            <img
+                              src={imgUrl}
+                              alt={`Variant preview ${imgIndex + 1}`}
+                              className="w-full h-48 object-cover rounded-md border border-gray-200"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveVariantImage(index, imgIndex)}
+                                className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                              >
+                                <FaTimes className="w-5 h-5" />
+                              </button>
+                            </div>
+                            {imgIndex === 0 && (
+                              <div className="absolute top-2 left-2 bg-brand-primary text-white text-xs px-2 py-1 rounded">
+                                Primary
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    {/* Upload Area */}
                     <div className="flex items-center justify-center w-full">
                       <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                      {isUplaodingImage[index] ? <Spinner size="32px" color="#32cd32" /> :  <>
-                      {variant.imageUrl ? (
-                          <div className="relative group w-full h-full">
-                            <img
-                              src={variant.imageUrl || ""}
-                              alt="Variant preview"
-                              className="mx-auto h-64 w-auto rounded-md object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <FaTimes className="h-8 w-8 text-white" />
-                            </div>
-                          </div>
+                        {isUplaodingImage[index] ? (
+                          <Spinner size="32px" color="#32cd32" />
                         ) : (
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <FaImage className="w-8 h-8 mb-4 text-gray-500" />
@@ -282,18 +328,16 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
                               or drag and drop
                             </p>
                             <p className="text-xs text-gray-500">
-                              PNG, JPG, GIF up to 10MB
+                              PNG, JPG, GIF up to 10MB (Multiple images supported)
                             </p>
                           </div>
                         )}
-                      </>}
                         <input
                           type="file"
                           className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleImageUpload(index, file);
-                          }}
+                          multiple
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(index, e.target.files)}
                         />
                       </label>
                     </div>
@@ -311,7 +355,7 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
                         handleVariantChange(index, "sku", e.target.value)
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary"
-                      placeholder="Enter SKU"
+                      placeholder="Enter SKU (optional)"
                     />
                   </div>
 

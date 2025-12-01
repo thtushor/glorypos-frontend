@@ -19,7 +19,7 @@ export const successToast = (
   });
 };
 
-export const uploadFile = async (file: File) => {
+export const uploadFile = async (file: File | File[]) => {
   // /api/images/upload this is route need to upload file to server as image form data multipart/form-data
   try {
     let accessToken = null;
@@ -28,15 +28,34 @@ export const uploadFile = async (file: File) => {
       const { access_token } = getCookiesAsObject();
       accessToken = access_token || null;
     }
+    const isMultiple = Array.isArray(file);
     const formData = new FormData();
-    formData.append("image", file);
-    const response = await axios.post(BASE_URL + "/images/upload", formData, {
+
+    // Append file(s) with correct key name
+    if (isMultiple) {
+      file.forEach((f) => {
+        formData.append("images", f);
+      });
+    } else {
+      formData.append("image", file);
+    }
+
+    const pathSingle = "/images/upload";
+    const pathMultiple = "/images/upload-multiple";
+    const path = isMultiple ? pathMultiple : pathSingle;
+
+    const response = await axios.post(BASE_URL + path, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
         Authorization: `Bearer ${accessToken}`,
       },
     });
-    return response?.data?.data?.original;
+
+    // Return array if multiple files, single value if single file
+    if (isMultiple) {
+      return response?.data?.data?.original || response?.data?.data || [];
+    }
+    return response?.data?.data?.original || response?.data?.data;
   } catch (error: unknown) {
     console.error(error);
     if (error instanceof Error) {

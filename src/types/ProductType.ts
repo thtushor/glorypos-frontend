@@ -18,10 +18,11 @@ export interface ProductFormData {
   CategoryId: number;
   BrandId: number;
   UnitId: number;
-  ColorId?:number;
-  SizeId?:number;
+  ColorId?: number;
+  SizeId?: number;
   alertQuantity: number;
   productImage: string;
+  productImages?: string[]; // Multiple images support
   discountType: string | null;
   discountAmount: number | null;
   purchasePrice: number;
@@ -30,7 +31,9 @@ export interface ProductFormData {
   price: number;
   stock: number;
   status: "active" | "inactive";
+  images?: string[];
   imageFile?: File | null;
+  imageFiles?: File[]; // Multiple image files support
 }
 
 export interface ProductVariant {
@@ -56,12 +59,13 @@ export interface Product {
   CategoryId: number;
   BrandId: number;
   UnitId: number;
-  ColorId:number;
+  ColorId: number;
   SizeId: number;
-  Size:Size;
-  Color:Color;
+  Size: Size;
+  Color: Color;
   alertQuantity: number;
   productImage: string;
+  images: string[];
   discountType: string | null;
   discountAmount: number | null;
   purchasePrice: number;
