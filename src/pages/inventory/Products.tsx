@@ -112,7 +112,7 @@ const Products: React.FC = () => {
     if (selectedUnit !== "all") params.unitId = selectedUnit;
 
     // Add price range filters
-    if (
+    if (priceRange?.min &&
       priceRange?.min !== undefined &&
       priceRange?.min !== null &&
       priceRange?.min > 0
@@ -120,6 +120,7 @@ const Products: React.FC = () => {
       params.minPrice = priceRange?.min;
     }
     if (
+      priceRange?.max &&
       priceRange?.max !== undefined &&
       priceRange?.max !== null &&
       priceRange?.max > 0
