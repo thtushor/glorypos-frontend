@@ -1,0 +1,8 @@
+.thumbnail-slider .slick-slide {
+  padding: 0 5px;
+}
+
+.thumbnail-slider .slick-current img {
+  border-color: #32cd32; /* Using brand-primary color for active border */
+  border-radius: 8px;
+}

@@ -25,6 +25,7 @@ import BarcodeModal from "@/components/BarcodeModal";
 import InventoryFilters from "@/components/shared/InventoryFilters";
 import { useAuth } from "@/context/AuthContext";
 import money from "@/utils/money";
+import ProductImageSlider from "@/components/shared/ProductImageSlider";
 
 // Add this interface at the top
 
@@ -400,7 +401,7 @@ const Products: React.FC = () => {
             >
               {/* Product Image Section */}
               <div className="relative aspect-square overflow-hidden">
-                <img
+                {/* <img
                   src={
                     selectedVariants[product.id]
                       ? product.ProductVariants.find(
@@ -412,7 +413,9 @@ const Products: React.FC = () => {
                   }
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+                /> */}
+
+                <ProductImageSlider images={product?.images || []} />
 
                 {/* Action Buttons Overlay */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
