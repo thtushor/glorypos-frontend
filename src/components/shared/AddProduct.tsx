@@ -182,69 +182,44 @@ function AddProduct({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoadingImage(true);
+
     try {
-      let imageUrl = formData.productImage;
-      let productImages: string[] = formData.images || [];
+      let finalPrimaryImage = formData.productImage;
+      let finalImages: string[] = [...(formData.images || [])]; // existing only
 
-      if (Number(formData?.salesPrice) < Number(formData?.purchasePrice)) {
-        successToast("Sales price cannot be less than purchase price", "error");
-        return;
+      // Upload new Files
+      if (formData?.imageFiles?.length && formData?.imageFiles?.length > 0) {
+        const uploads = await uploadFile(formData.imageFiles || []);
+
+        const uploadedUrls = Array.isArray(uploads)
+          ? uploads.map((u) => u.original)
+          : [uploads.original];
+
+        finalImages = [...finalImages, ...uploadedUrls];
       }
 
-      // Upload single image if new file is selected (backward compatibility)
-      if (formData.imageFile) {
-        imageUrl = await uploadFile(formData.imageFile);
-        if (!imageUrl) {
-          successToast("Failed to upload image", "error");
-          return;
-        }
-      }
-
-      // Upload multiple images if new files are selected
-      if (formData.imageFiles && formData.imageFiles.length > 0) {
-        const uploadedImages = await uploadFile(formData.imageFiles);
-        if (uploadedImages) {
-          const imageArray = Array.isArray(uploadedImages)
-            ? uploadedImages.map((item) => item.original)
-            : [uploadedImages.original];
-          productImages = [...(formData.productImages || []), ...imageArray];
-        }
-      }
-
-      // If no new uploads, use existing previews as productImages
-      if (productImages.length === 0 && imagePreviews.length > 0) {
-        // Filter out data URLs (previews) and keep only actual URLs
-        productImages = imagePreviews.filter((url) => !url.startsWith("data:"));
-      }
-
-      // Set primary image from first image in array or existing
-      if (productImages.length > 0 && !imageUrl) {
-        imageUrl = productImages[0];
+      // If primary empty but images exist
+      if (!finalPrimaryImage && finalImages.length > 0) {
+        finalPrimaryImage = finalImages[0];
       }
 
       const submitData = {
         ...formData,
-        ColorId:
-          Number(formData?.ColorId) > 0 ? Number(formData?.ColorId) : undefined,
-        SizeId:
-          Number(formData?.SizeId) > 0 ? Number(formData?.SizeId) : undefined,
-        productImage: imageUrl,
-        images:
-          productImages.length > 0
-            ? productImages.map((item) => item)
-            : undefined,
+        productImage: finalPrimaryImage,
+        images: finalImages,
+        imageFiles: undefined, // prevent file object send
       };
 
       if (formData.id || productId) {
         updateMutation.mutate({
-          id: formData.id ?? productId!, // Use nullish coalescing and non-null assertion since we know one exists
+          id: formData.id ?? productId!,
           updates: submitData,
         });
       } else {
         createMutation.mutate(submitData);
       }
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      console.log(err);
       successToast("Failed to upload image", "error");
     } finally {
       setIsLoadingImage(false);
@@ -382,26 +357,33 @@ function AddProduct({
   };
 
   const handleRemoveImage = (index: number) => {
-    const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    const newImages =
-      formData.productImages?.filter((_, i) => i !== index) || [];
-    const newImageFiles =
-      formData.imageFiles?.filter((_, i) => {
-        // Remove corresponding file if it's a new upload
-        const previewIndex = imagePreviews.length - formData.imageFiles!.length;
-        return (
-          i < previewIndex ||
-          i >= previewIndex + (imagePreviews.length - newPreviews.length)
-        );
-      }) || [];
+    const preview = imagePreviews[index];
 
-    setImagePreviews(newPreviews);
-    setFormData((prev) => ({
-      ...prev,
-      productImages: newImages,
-      productImage: newImages[0] || prev.productImage,
-      imageFiles: newImageFiles,
-    }));
+    const isNewUpload = preview.startsWith("data:");
+
+    if (isNewUpload) {
+      // remove new file
+      const newImageFiles = [...(formData.imageFiles || [])];
+      newImageFiles.splice(
+        index - (imagePreviews.length - (formData.imageFiles?.length || 0)),
+        1
+      );
+
+      setFormData((prev) => ({
+        ...prev,
+        imageFiles: newImageFiles,
+      }));
+    } else {
+      // remove existing url
+      const newOldImages = formData?.images?.filter((img) => img !== preview);
+      setFormData((prev) => ({
+        ...prev,
+        images: newOldImages,
+      }));
+    }
+
+    // remove preview always
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   useEffect(() => {
