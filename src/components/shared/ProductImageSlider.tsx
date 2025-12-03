@@ -99,7 +99,7 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
     touchMove: draggable,
     pauseOnHover: pauseOnHover,
     pauseOnFocus: pauseOnFocus,
-    customPaging: (i: number) => (
+    customPaging: () => (
       <div className="w-2 h-2 rounded-full bg-gray-300 mt-2" />
     ),
   };
@@ -151,7 +151,9 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
         <img
           src={images[0]}
           alt="Product Image"
-          className={`w-full ${aspectRatio} object-cover ${imageClassName}`}
+          className={`w-full ${
+            aspectRatio || ""
+          } object-cover ${imageClassName}`}
         />
       </div>
     );
@@ -175,7 +177,9 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
               <img
                 src={image}
                 alt={`Product ${index + 1}`}
-                className={`w-full ${aspectRatio} object-cover ${imageClassName}`}
+                className={`w-full ${
+                  aspectRatio || ""
+                } object-cover ${imageClassName}`}
                 draggable={false}
               />
             </div>

@@ -401,21 +401,25 @@ const Products: React.FC = () => {
             >
               {/* Product Image Section */}
               <div className="relative aspect-square overflow-hidden">
-                {/* <img
-                  src={
-                    selectedVariants[product.id]
-                      ? product.ProductVariants.find(
-                          (v) => v.id === selectedVariants[product.id]
-                        )?.imageUrl
-                      : product.ProductVariants?.length > 0
-                      ? product.ProductVariants[0]?.imageUrl
+                <ProductImageSlider
+                  images={
+                    product?.images && product.images.length > 0
+                      ? product.images
                       : product.productImage
+                      ? [product.productImage]
+                      : []
                   }
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                /> */}
-
-                <ProductImageSlider images={product?.images || []} />
+                  variant="simple"
+                  showDots={true}
+                  autoplay={true}
+                  autoplaySpeed={3000}
+                  pauseOnHover={true}
+                  pauseOnFocus={true}
+                  draggable={true}
+                  fade={true}
+                  className="w-full h-full"
+                  imageClassName="group-hover:scale-105 transition-transform duration-300"
+                />
 
                 {/* Action Buttons Overlay */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
@@ -631,17 +635,34 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
         {/* Image Section */}
         <div className="w-full md:w-1/3">
           <div className="relative group">
-            <img
-              src={product.productImage}
-              alt={product.name}
-              className="w-full aspect-square object-cover rounded-lg shadow-md transition-transform duration-300 group-hover:scale-105"
+            <ProductImageSlider
+              images={
+                product?.images && product.images.length > 0
+                  ? product.images
+                  : product.productImage
+                  ? [product.productImage]
+                  : []
+              }
+              variant="with-thumbnails"
+              showDots={true}
+              autoplay={true}
+              autoplaySpeed={4000}
+              pauseOnHover={true}
+              pauseOnFocus={true}
+              draggable={true}
+              fade={true}
+              className="rounded-lg shadow-md"
             />
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center pointer-events-none z-10">
               <a
-                href={product.productImage}
+                href={
+                  product?.images && product.images.length > 0
+                    ? product.images[0]
+                    : product.productImage
+                }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
+                className="p-2 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors pointer-events-auto"
               >
                 <FaEye className="w-5 h-5" />
               </a>
@@ -773,18 +794,24 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
               className="bg-white  border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow"
             >
               <div className="flex gap-4">
-                <div className="relative group w-20 h-20 cursor-pointer">
-                  <img
-                    src={variant?.imageUrl || ""}
-                    alt={`Variant ${variant.sku}`}
-                    className="w-full h-full object-cover rounded-md transition-transform duration-300 group-hover:scale-105"
+                <div className="relative group w-20 h-20 cursor-pointer flex-shrink-0 overflow-hidden rounded-md">
+                  <ProductImageSlider
+                    images={variant?.imageUrl ? [variant.imageUrl] : []}
+                    variant="simple"
+                    showDots={false}
+                    autoplay={false}
+                    draggable={true}
+                    fade={false}
+                    className="w-full h-full"
+                    aspectRatio=""
+                    imageClassName="rounded-md transition-transform duration-300 group-hover:scale-105 h-full"
                   />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center pointer-events-none z-10">
                     <a
                       href={variant?.imageUrl || ""}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
+                      className="p-1.5 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors pointer-events-auto"
                     >
                       <FaEye className="w-4 h-4" />
                     </a>

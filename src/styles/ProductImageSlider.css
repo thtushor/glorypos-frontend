@@ -6,3 +6,49 @@
   border-color: #32cd32; /* Using brand-primary color for active border */
   border-radius: 8px;
 }
+
+/* Custom dots styling */
+.slick-dots {
+  bottom: -35px !important;
+  position: absolute;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.slick-dots li {
+  margin: 0;
+  width: auto;
+  height: auto;
+}
+
+.slick-dots li button {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border-radius: 50%;
+  background-color: #d1d5db;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0;
+  line-height: 0;
+}
+
+.slick-dots li button:hover {
+  background-color: #9ca3af;
+}
+
+.slick-dots li.slick-active button {
+  background-color: #32cd32;
+  width: 24px;
+  border-radius: 4px;
+}
+
+.slick-dots li button:before {
+  display: none;
+}
