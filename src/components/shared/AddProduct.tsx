@@ -102,6 +102,8 @@ function AddProduct({
       stock: 0,
       status: "active",
       imageFiles: [],
+      gender: null,
+      modelNo: null,
     });
     setImagePreviews([]);
   };
@@ -572,6 +574,45 @@ function AddProduct({
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Gender */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Gender
+          </label>
+          <select
+            value={formData.gender || ""}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                gender: e.target.value
+                  ? (e.target.value as "men" | "women" | "others")
+                  : null,
+              })
+            }
+            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
+          >
+            <option value="">Select Gender</option>
+            <option value="men">Men</option>
+            <option value="women">Women</option>
+            <option value="others">Others</option>
+          </select>
+        </div>
+
+        {/* Model Number */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Model Number
+          </label>
+          <InputWithIcon
+            icon={FaBox}
+            name="modelNo"
+            type="text"
+            placeholder="Enter model number (optional)"
+            value={formData.modelNo || ""}
+            onChange={handleInputChange}
+          />
         </div>
 
         {/* Prices */}

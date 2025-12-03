@@ -56,6 +56,10 @@ const Products: React.FC = () => {
   );
   const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
   const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
+  const [selectedGender, setSelectedGender] = useState<
+    "men" | "women" | "others" | "all"
+  >("all");
+  const [modelNo, setModelNo] = useState("");
 
   useEffect(() => {
     if (!hasAppliedDefaultShop.current && currentShopId) {
@@ -111,6 +115,8 @@ const Products: React.FC = () => {
     if (selectedCategory !== "all") params.categoryId = selectedCategory;
     if (selectedBrand !== "all") params.brandId = selectedBrand;
     if (selectedUnit !== "all") params.unitId = selectedUnit;
+    if (selectedGender !== "all") params.gender = selectedGender;
+    if (modelNo) params.modelNo = modelNo;
 
     // Add price range filters
     if (
@@ -139,6 +145,8 @@ const Products: React.FC = () => {
     selectedCategory,
     selectedBrand,
     selectedUnit,
+    selectedGender,
+    modelNo,
     priceRange,
   ]);
 
@@ -226,6 +234,8 @@ const Products: React.FC = () => {
       price: product.price,
       stock: product.stock,
       status: product.status,
+      gender: product.gender || null,
+      modelNo: product.modelNo || null,
     });
     setIsModalOpen(true);
   };
@@ -258,6 +268,8 @@ const Products: React.FC = () => {
       price: 0,
       stock: 0,
       status: "active",
+      gender: null,
+      modelNo: null,
     });
   };
 
@@ -299,7 +311,7 @@ const Products: React.FC = () => {
       />
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
         <select
           value={selectedCategory}
           onChange={(e) => {
@@ -351,36 +363,66 @@ const Products: React.FC = () => {
           ))}
         </select>
 
-        {/* Price Range */}
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Min"
-            value={priceRange?.min}
-            onChange={(e) => {
-              setPriceRange({
-                ...priceRange,
-                min: Number(e.target.value) || undefined,
-              });
-              handleFilterChange();
-            }}
-            className="border rounded-lg px-3 py-2 w-24"
-          />
-          <span>-</span>
-          <input
-            type="text"
-            placeholder="Max"
-            value={priceRange?.max}
-            onChange={(e) => {
-              setPriceRange({
-                ...priceRange,
-                max: Number(e.target.value) || undefined,
-              });
-              handleFilterChange();
-            }}
-            className="border rounded-lg px-3 py-2 w-24"
-          />
-        </div>
+        {/* Gender Filter */}
+        <select
+          value={selectedGender}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSelectedGender(
+              value === "all" ? "all" : (value as "men" | "women" | "others")
+            );
+            handleFilterChange();
+          }}
+          className="border rounded-lg px-3 py-2"
+        >
+          <option value="all">All Genders</option>
+          <option value="men">Men</option>
+          <option value="women">Women</option>
+          <option value="others">Others</option>
+        </select>
+
+        {/* Model Number Filter */}
+        <input
+          type="text"
+          placeholder="Model Number"
+          value={modelNo}
+          onChange={(e) => {
+            setModelNo(e.target.value);
+            handleFilterChange();
+          }}
+          className="border rounded-lg px-3 py-2"
+        />
+      </div>
+
+      {/* Price Range */}
+      <div className="flex items-center gap-2 mb-6">
+        <input
+          type="text"
+          placeholder="Min Price"
+          value={priceRange?.min || ""}
+          onChange={(e) => {
+            setPriceRange({
+              ...priceRange,
+              min: Number(e.target.value) || undefined,
+            });
+            handleFilterChange();
+          }}
+          className="border rounded-lg px-3 py-2 w-32"
+        />
+        <span>-</span>
+        <input
+          type="text"
+          placeholder="Max Price"
+          value={priceRange?.max || ""}
+          onChange={(e) => {
+            setPriceRange({
+              ...priceRange,
+              max: Number(e.target.value) || undefined,
+            });
+            handleFilterChange();
+          }}
+          className="border rounded-lg px-3 py-2 w-32"
+        />
       </div>
 
       {/* Products Grid */}

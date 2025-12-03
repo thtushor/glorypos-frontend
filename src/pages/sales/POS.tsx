@@ -339,6 +339,10 @@ const POS: React.FC = () => {
   );
   const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
   const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
+  const [selectedGender, setSelectedGender] = useState<
+    "men" | "women" | "others" | "all"
+  >("all");
+  const [modelNo, setModelNo] = useState("");
   const [priceRange, setPriceRange] = useState<{ min?: number; max?: number }>({
     min: undefined,
     max: undefined,
@@ -393,6 +397,8 @@ const POS: React.FC = () => {
     if (selectedCategory !== "all") params.categoryId = selectedCategory;
     if (selectedBrand !== "all") params.brandId = selectedBrand;
     if (selectedUnit !== "all") params.unitId = selectedUnit;
+    if (selectedGender !== "all") params.gender = selectedGender;
+    if (modelNo) params.modelNo = modelNo;
 
     // Add price range filters
     if (
@@ -426,6 +432,8 @@ const POS: React.FC = () => {
     selectedCategory,
     selectedBrand,
     selectedUnit,
+    selectedGender,
+    modelNo,
     priceRange,
   ]);
 
@@ -1234,6 +1242,8 @@ const POS: React.FC = () => {
                 {(selectedCategory !== "all" ||
                   selectedBrand !== "all" ||
                   selectedUnit !== "all" ||
+                  selectedGender !== "all" ||
+                  modelNo !== "" ||
                   shopId !== "" ||
                   (priceRange?.min && priceRange?.min > 0) ||
                   (priceRange?.max && priceRange?.max > 0)) && (
@@ -1365,6 +1375,48 @@ const POS: React.FC = () => {
                           ))
                       )}
                     </select>
+                  </div>
+
+                  {/* Gender Filter */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                      Gender
+                    </label>
+                    <select
+                      value={selectedGender}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSelectedGender(
+                          value === "all"
+                            ? "all"
+                            : (value as "men" | "women" | "others")
+                        );
+                        handleFilterChange();
+                      }}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors"
+                    >
+                      <option value="all">All Genders</option>
+                      <option value="men">Men</option>
+                      <option value="women">Women</option>
+                      <option value="others">Others</option>
+                    </select>
+                  </div>
+
+                  {/* Model Number Filter */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                      Model Number
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter model number"
+                      value={modelNo}
+                      onChange={(e) => {
+                        setModelNo(e.target.value);
+                        handleFilterChange();
+                      }}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors"
+                    />
                   </div>
                 </div>
 
@@ -1650,6 +1702,7 @@ const POS: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {cart.map((item) => {
+                console.log({ item });
                 // Use the helper function to get sales price (reactive)
                 const salesPrice = getItemSalesPrice(item);
                 const discount = adjustments.discountAdjustments[item.id] || {

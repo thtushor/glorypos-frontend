@@ -34,6 +34,8 @@ export interface ProductFormData {
   images?: string[];
   imageFile?: File | null;
   imageFiles?: File[]; // Multiple image files support
+  gender?: "men" | "women" | "others" | null;
+  modelNo?: string | null;
 }
 
 export interface ProductVariant {
@@ -81,6 +83,8 @@ export interface Product {
   Brand: Brand;
   Unit: Unit;
   ProductVariants: ProductVariant[];
+  gender?: "men" | "women" | "others" | null;
+  modelNo?: string | null;
 }
 
 export interface ProductPaginationData {
@@ -107,5 +111,7 @@ export interface ProductQueryParams {
   searchKey?: string;
   minPrice?: number;
   maxPrice?: number;
+  gender?: "men" | "women" | "others";
+  modelNo?: string;
   [key: string]: any; // For otherFilters
 }
