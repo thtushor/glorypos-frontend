@@ -95,11 +95,11 @@ interface PartialPayment {
 interface CartAdjustments {
   tax: {
     type: "fixed" | "percentage";
-    value: number;
+    value?: number;
   };
   discount: {
     type: "fixed" | "percentage";
-    value: number;
+    value?: number;
   };
   priceAdjustments: { [key: string]: number };
   salesPriceAdjustments: { [key: string]: number }; // Per-item sales price adjustments
@@ -258,8 +258,7 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
                       pauseOnFocus={true}
                       draggable={true}
                       fade={true}
-                      disaleOnClick
-                      // className="rounded-lg shadow-md"
+                      className="rounded-lg shadow-md"
                       aspectRatio="aspect-square"
                       imageClassName={`transition-transform duration-300 ${
                         selectedVariant?.id === variant.id
@@ -804,18 +803,18 @@ const POS: React.FC = () => {
 
   const taxAmount = useMemo(() => {
     if (adjustments.tax.type === "percentage") {
-      const tax = (subtotal * adjustments.tax.value) / 100;
+      const tax = (subtotal * (adjustments?.tax?.value || 0)) / 100;
       return Math.round(tax * 100) / 100; // Round to 2 decimal places
     }
-    return Math.round(adjustments.tax.value * 100) / 100; // Round to 2 decimal places
+    return Math.round((adjustments?.tax?.value || 0) * 100) / 100; // Round to 2 decimal places
   }, [subtotal, adjustments.tax]);
 
   const discountAmount = useMemo(() => {
     if (adjustments.discount.type === "percentage") {
-      const discount = (subtotal * adjustments.discount.value) / 100;
+      const discount = (subtotal * (adjustments?.discount?.value || 0)) / 100;
       return Math.round(discount * 100) / 100; // Round to 2 decimal places
     }
-    return Math.round(adjustments.discount.value * 100) / 100; // Round to 2 decimal places
+    return Math.round((adjustments?.discount?.value || 0) * 100) / 100; // Round to 2 decimal places
   }, [subtotal, adjustments.discount]);
 
   const total = useMemo(() => {
@@ -1053,17 +1052,31 @@ const POS: React.FC = () => {
     // Handle multiple decimal points
     const parts = cleaned.split(".");
     if (parts.length > 2) {
-      return parseFloat(parts[0] + "." + parts.slice(1).join("")) || 0;
+      return Number(parts[0] + "." + parts.slice(1).join("")) || 0;
     }
-    const numValue = parseFloat(cleaned) || 0;
+    const numValue = Number(cleaned) || 0;
     // Round to 2 decimal places
     return Math.round(numValue * 100) / 100;
   };
 
   // Helper to extract numeric value from formatted currency string for input fields
-  const getNumericValue = (value: number | string): string => {
+  const getNumericValue = (value: number | string | undefined): string => {
+    if (value === undefined || value === null) return "";
     const numValue = typeof value === "string" ? parseFloat(value) || 0 : value;
-    return numValue.toFixed(2);
+    if (numValue === 0) return "";
+    return numValue.toString();
+  };
+
+  // Helper to filter input to only allow numeric characters and one decimal point
+  const filterNumericInput = (value: string): string => {
+    // Remove any non-numeric characters except decimal point
+    let cleaned = value.replace(/[^\d.]/g, "");
+    // Handle multiple decimal points - keep only the first one
+    const parts = cleaned.split(".");
+    if (parts.length > 2) {
+      cleaned = parts[0] + "." + parts.slice(1).join("");
+    }
+    return cleaned;
   };
 
   const updateItemPrice = (itemId: string, newPrice: number) => {
@@ -1113,30 +1126,32 @@ const POS: React.FC = () => {
     }));
   };
 
-  const updateTax = (newTax: number) => {
-    const formattedTax = formatCurrency(newTax);
+  const updateTax = (newTax?: number) => {
+    const formattedTax = newTax ? formatCurrency(newTax) : undefined;
     setAdjustments((prev) => ({
       ...prev,
       tax: {
         type: prev.tax.type,
         value:
           prev.tax.type === "percentage"
-            ? Math.max(0, Math.min(100, formattedTax))
-            : Math.max(0, formattedTax),
+            ? Math.max(0, Math.min(100, formattedTax ?? 0))
+            : Math.max(0, formattedTax ?? 0),
       },
     }));
   };
 
-  const updateDiscount = (newDiscount: number) => {
-    const formattedDiscount = formatCurrency(newDiscount);
+  const updateDiscount = (newDiscount?: number) => {
+    const formattedDiscount = newDiscount
+      ? formatCurrency(newDiscount)
+      : undefined;
     setAdjustments((prev) => ({
       ...prev,
       discount: {
         type: prev.discount.type,
         value:
           prev.discount.type === "percentage"
-            ? Math.max(0, Math.min(100, formattedDiscount))
-            : Math.max(0, formattedDiscount),
+            ? Math.max(0, Math.min(100, formattedDiscount ?? 0))
+            : Math.max(0, formattedDiscount ?? 0),
       },
     }));
   };
@@ -1667,21 +1682,27 @@ const POS: React.FC = () => {
                           <div className="flex items-center gap-1 flex-1">
                             <span className="text-xs text-gray-500">$</span>
                             <input
-                              type="number"
+                              type="text"
                               inputMode="decimal"
-                              min="0"
-                              step="0.01"
                               value={getNumericValue(salesPrice)}
                               onChange={(e) => {
-                                const parsed = parseCurrencyInput(
+                                const filtered = filterNumericInput(
                                   e.target.value
                                 );
+                                const parsed =
+                                  filtered === ""
+                                    ? 0
+                                    : parseCurrencyInput(filtered);
                                 updateItemSalesPrice(item.id || 0, parsed);
                               }}
                               onBlur={(e) => {
-                                const parsed = parseCurrencyInput(
+                                const filtered = filterNumericInput(
                                   e.target.value
                                 );
+                                const parsed =
+                                  filtered === ""
+                                    ? 0
+                                    : parseCurrencyInput(filtered);
                                 updateItemSalesPrice(
                                   item.id || 0,
                                   formatCurrency(parsed)
@@ -1699,36 +1720,53 @@ const POS: React.FC = () => {
                           </label>
                           <div className="flex items-center gap-1 flex-1">
                             <input
-                              type="number"
+                              type="text"
                               inputMode="decimal"
-                              min="0"
-                              step={
-                                discount.type === "percentage" ? "0.01" : "0.01"
-                              }
-                              max={
-                                discount.type === "percentage"
-                                  ? "100"
-                                  : undefined
-                              }
                               value={getNumericValue(discount.value)}
                               onChange={(e) => {
-                                const parsed = parseCurrencyInput(
+                                const filtered = filterNumericInput(
                                   e.target.value
                                 );
+                                const parsed =
+                                  filtered === ""
+                                    ? 0
+                                    : parseCurrencyInput(filtered);
+                                // Validate max for percentage
+                                const maxValue =
+                                  discount.type === "percentage"
+                                    ? 100
+                                    : undefined;
+                                const finalValue =
+                                  maxValue && parsed > maxValue
+                                    ? maxValue
+                                    : parsed;
                                 updateItemDiscount(
                                   item.id || 0,
                                   discount.type,
-                                  parsed
+                                  finalValue
                                 );
                               }}
                               onBlur={(e) => {
-                                const parsed = parseCurrencyInput(
+                                const filtered = filterNumericInput(
                                   e.target.value
                                 );
+                                const parsed =
+                                  filtered === ""
+                                    ? 0
+                                    : parseCurrencyInput(filtered);
+                                // Validate max for percentage
+                                const maxValue =
+                                  discount.type === "percentage"
+                                    ? 100
+                                    : undefined;
+                                const finalValue =
+                                  maxValue && parsed > maxValue
+                                    ? maxValue
+                                    : parsed;
                                 updateItemDiscount(
                                   item.id || 0,
                                   discount.type,
-                                  formatCurrency(parsed)
+                                  formatCurrency(finalValue)
                                 );
                               }}
                               className="flex-1 min-w-0 px-2 py-1 text-xs border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
@@ -1815,26 +1853,37 @@ const POS: React.FC = () => {
             {/* Tax Input */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-xs sm:text-sm">
               <div className="flex items-center gap-2 flex-1">
-                <span>Tax</span>
+                <span>VAT</span>
                 <div className="flex items-center flex-1 sm:flex-initial">
                   <input
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    min="0"
-                    step={
-                      adjustments.tax.type === "percentage" ? "0.01" : "0.01"
-                    }
-                    max={
-                      adjustments.tax.type === "percentage" ? "100" : undefined
-                    }
-                    value={getNumericValue(adjustments.tax.value)}
+                    value={getNumericValue(adjustments?.tax?.value ?? 0)}
                     onChange={(e) => {
-                      const parsed = parseCurrencyInput(e.target.value);
-                      updateTax(parsed);
+                      const filtered = filterNumericInput(e.target.value);
+                      const parsed =
+                        filtered === ""
+                          ? undefined
+                          : parseCurrencyInput(filtered);
+                      // Validate max for percentage
+                      const maxValue =
+                        adjustments.tax.type === "percentage" ? 100 : undefined;
+                      const finalValue =
+                        maxValue && parsed !== undefined && parsed > maxValue
+                          ? maxValue
+                          : parsed;
+                      updateTax(finalValue);
                     }}
                     onBlur={(e) => {
-                      const parsed = parseCurrencyInput(e.target.value);
-                      updateTax(parsed);
+                      const filtered = filterNumericInput(e.target.value);
+                      const parsed =
+                        filtered === "" ? 0 : parseCurrencyInput(filtered);
+                      // Validate max for percentage
+                      const maxValue =
+                        adjustments.tax.type === "percentage" ? 100 : undefined;
+                      const finalValue =
+                        maxValue && parsed > maxValue ? maxValue : parsed;
+                      updateTax(finalValue);
                     }}
                     className="w-full sm:w-20 px-2 py-1.5 sm:py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
                   />
@@ -1867,27 +1916,38 @@ const POS: React.FC = () => {
                 <span>Discount</span>
                 <div className="flex items-center flex-1 sm:flex-initial">
                   <input
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    min="0"
-                    step={
-                      adjustments.discount.type === "percentage"
-                        ? "0.01"
-                        : "0.01"
-                    }
-                    max={
-                      adjustments.discount.type === "percentage"
-                        ? "100"
-                        : undefined
-                    }
-                    value={getNumericValue(adjustments.discount.value)}
+                    value={getNumericValue(adjustments?.discount?.value || 0)}
                     onChange={(e) => {
-                      const parsed = parseCurrencyInput(e.target.value);
-                      updateDiscount(parsed);
+                      const filtered = filterNumericInput(e.target.value);
+                      const parsed =
+                        filtered === ""
+                          ? undefined
+                          : parseCurrencyInput(filtered);
+                      // Validate max for percentage
+                      const maxValue =
+                        adjustments.discount.type === "percentage"
+                          ? 100
+                          : undefined;
+                      const finalValue =
+                        maxValue && parsed !== undefined && parsed > maxValue
+                          ? maxValue
+                          : parsed;
+                      updateDiscount(finalValue);
                     }}
                     onBlur={(e) => {
-                      const parsed = parseCurrencyInput(e.target.value);
-                      updateDiscount(parsed);
+                      const filtered = filterNumericInput(e.target.value);
+                      const parsed =
+                        filtered === "" ? 0 : parseCurrencyInput(filtered);
+                      // Validate max for percentage
+                      const maxValue =
+                        adjustments.discount.type === "percentage"
+                          ? 100
+                          : undefined;
+                      const finalValue =
+                        maxValue && parsed > maxValue ? maxValue : parsed;
+                      updateDiscount(finalValue);
                     }}
                     className="w-full sm:w-20 px-2 py-1.5 sm:py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
                   />
@@ -2665,24 +2725,26 @@ const POS: React.FC = () => {
                   ฿
                 </span>
                 <input
-                  type="number"
+                  type="text"
                   inputMode="decimal"
-                  min="0"
-                  step="0.01"
                   value={
                     partialPayment.cashAmount > 0
                       ? getNumericValue(partialPayment.cashAmount)
                       : ""
                   }
                   onChange={(e) => {
-                    const parsed = parseCurrencyInput(e.target.value);
+                    const filtered = filterNumericInput(e.target.value);
+                    const parsed =
+                      filtered === "" ? 0 : parseCurrencyInput(filtered);
                     setPartialPayment((prev) => ({
                       ...prev,
                       cashAmount: parsed,
                     }));
                   }}
                   onBlur={(e) => {
-                    const parsed = parseCurrencyInput(e.target.value);
+                    const filtered = filterNumericInput(e.target.value);
+                    const parsed =
+                      filtered === "" ? 0 : parseCurrencyInput(filtered);
                     const formatted = formatCurrency(parsed);
                     setPartialPayment((prev) => ({
                       ...prev,
@@ -2745,24 +2807,26 @@ const POS: React.FC = () => {
                   ฿
                 </span>
                 <input
-                  type="number"
+                  type="text"
                   inputMode="decimal"
-                  min="0"
-                  step="0.01"
                   value={
                     partialPayment.cardAmount > 0
                       ? getNumericValue(partialPayment.cardAmount)
                       : ""
                   }
                   onChange={(e) => {
-                    const parsed = parseCurrencyInput(e.target.value);
+                    const filtered = filterNumericInput(e.target.value);
+                    const parsed =
+                      filtered === "" ? 0 : parseCurrencyInput(filtered);
                     setPartialPayment((prev) => ({
                       ...prev,
                       cardAmount: parsed,
                     }));
                   }}
                   onBlur={(e) => {
-                    const parsed = parseCurrencyInput(e.target.value);
+                    const filtered = filterNumericInput(e.target.value);
+                    const parsed =
+                      filtered === "" ? 0 : parseCurrencyInput(filtered);
                     const formatted = formatCurrency(parsed);
                     setPartialPayment((prev) => ({
                       ...prev,
@@ -2828,24 +2892,26 @@ const POS: React.FC = () => {
                   ฿
                 </span>
                 <input
-                  type="number"
+                  type="text"
                   inputMode="decimal"
-                  min="0"
-                  step="0.01"
                   value={
                     partialPayment.walletAmount > 0
                       ? getNumericValue(partialPayment.walletAmount)
                       : ""
                   }
                   onChange={(e) => {
-                    const parsed = parseCurrencyInput(e.target.value);
+                    const filtered = filterNumericInput(e.target.value);
+                    const parsed =
+                      filtered === "" ? 0 : parseCurrencyInput(filtered);
                     setPartialPayment((prev) => ({
                       ...prev,
                       walletAmount: parsed,
                     }));
                   }}
                   onBlur={(e) => {
-                    const parsed = parseCurrencyInput(e.target.value);
+                    const filtered = filterNumericInput(e.target.value);
+                    const parsed =
+                      filtered === "" ? 0 : parseCurrencyInput(filtered);
                     const formatted = formatCurrency(parsed);
                     setPartialPayment((prev) => ({
                       ...prev,
