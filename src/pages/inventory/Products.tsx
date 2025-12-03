@@ -634,40 +634,24 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
       <div className="flex flex-col md:flex-row gap-6">
         {/* Image Section */}
         <div className="w-full md:w-1/3">
-          <div className="relative group">
-            <ProductImageSlider
-              images={
-                product?.images && product.images.length > 0
-                  ? product.images
-                  : product.productImage
-                  ? [product.productImage]
-                  : []
-              }
-              variant="with-thumbnails"
-              showDots={true}
-              autoplay={true}
-              autoplaySpeed={4000}
-              pauseOnHover={true}
-              pauseOnFocus={true}
-              draggable={true}
-              fade={true}
-              className="rounded-lg shadow-md"
-            />
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center pointer-events-none z-10">
-              <a
-                href={
-                  product?.images && product.images.length > 0
-                    ? product.images[0]
-                    : product.productImage
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors pointer-events-auto"
-              >
-                <FaEye className="w-5 h-5" />
-              </a>
-            </div>
-          </div>
+          <ProductImageSlider
+            images={
+              product?.images && product.images.length > 0
+                ? product.images
+                : product.productImage
+                ? [product.productImage]
+                : []
+            }
+            variant="with-thumbnails"
+            showDots={true}
+            autoplay={true}
+            autoplaySpeed={4000}
+            pauseOnHover={true}
+            pauseOnFocus={true}
+            draggable={true}
+            fade={true}
+            className="rounded-lg shadow-md"
+          />
         </div>
 
         {/* Product Info Section */}

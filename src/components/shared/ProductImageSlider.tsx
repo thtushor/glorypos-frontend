@@ -148,13 +148,24 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
   if (images.length === 1) {
     return (
       <div className={`rounded-lg overflow-hidden shadow-md ${className}`}>
-        <img
-          src={images[0]}
-          alt="Product Image"
-          className={`w-full ${
-            aspectRatio || ""
-          } object-cover ${imageClassName}`}
-        />
+        <a
+          href={images[0]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block cursor-pointer hover:opacity-90 transition-opacity"
+          onClick={(e) => {
+            e.preventDefault();
+            window.open(images[0], "_blank", "noopener,noreferrer");
+          }}
+        >
+          <img
+            src={images[0]}
+            alt="Product Image"
+            className={`w-full ${
+              aspectRatio || ""
+            } object-cover ${imageClassName}`}
+          />
+        </a>
       </div>
     );
   }
@@ -174,14 +185,26 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
         >
           {images.map((image, index) => (
             <div key={index}>
-              <img
-                src={image}
-                alt={`Product ${index + 1}`}
-                className={`w-full ${
-                  aspectRatio || ""
-                } object-cover ${imageClassName}`}
-                draggable={false}
-              />
+              <a
+                href={image}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={(e) => {
+                  // Allow slider to work, but open image on click
+                  e.preventDefault();
+                  window.open(image, "_blank", "noopener,noreferrer");
+                }}
+              >
+                <img
+                  src={image}
+                  alt={`Product ${index + 1}`}
+                  className={`w-full ${
+                    aspectRatio || ""
+                  } object-cover ${imageClassName}`}
+                  draggable={false}
+                />
+              </a>
             </div>
           ))}
         </Slider>
