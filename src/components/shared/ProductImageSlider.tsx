@@ -20,10 +20,12 @@ export interface ProductImageSliderProps {
   aspectRatio?: string;
   arrows?: boolean;
   compactThumbnails?: boolean;
+  disaleOnClick?: boolean;
 }
 
 const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
   images,
+  disaleOnClick = false,
   variant = "simple",
   showDots = false,
   showThumbnails = false,
@@ -166,8 +168,13 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
           rel="noopener noreferrer"
           className="block cursor-pointer hover:opacity-90 transition-opacity"
           onClick={(e) => {
-            e.preventDefault();
-            window.open(images[0], "_blank", "noopener,noreferrer");
+            if (disaleOnClick) {
+              e.preventDefault();
+              return;
+            } else {
+              e.preventDefault();
+              window.open(images[0], "_blank", "noopener,noreferrer");
+            }
           }}
         >
           <img
@@ -203,9 +210,13 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
                 rel="noopener noreferrer"
                 className="block cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={(e) => {
-                  // Allow slider to work, but open image on click
-                  e.preventDefault();
-                  window.open(image, "_blank", "noopener,noreferrer");
+                  if (disaleOnClick) {
+                    e.preventDefault();
+                    return;
+                  } else {
+                    e.preventDefault();
+                    window.open(image, "_blank", "noopener,noreferrer");
+                  }
                 }}
               >
                 <img

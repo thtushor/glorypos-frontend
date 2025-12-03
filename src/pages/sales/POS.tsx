@@ -229,7 +229,11 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
               {group.variants.map((variant) => (
                 <button
                   key={variant.id}
-                  onClick={() => setSelectedVariant(variant)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setSelectedVariant(variant);
+                    // window.open(variant.imageUrl, "_blank", "noopener,noreferrer");
+                  }}
                   disabled={variant.quantity === 0}
                   className={`relative group rounded-lg overflow-hidden transition-all ${
                     variant.quantity === 0
@@ -246,12 +250,16 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
                           ? [variant.imageUrl]
                           : []
                       }
-                      variant="simple"
+                      // variant="with-thumbnails"
                       showDots={true}
-                      autoplay={false}
+                      autoplay={true}
+                      autoplaySpeed={4000}
+                      pauseOnHover={true}
+                      pauseOnFocus={true}
                       draggable={true}
-                      fade={false}
-                      className="w-full h-full"
+                      fade={true}
+                      disaleOnClick
+                      // className="rounded-lg shadow-md"
                       aspectRatio="aspect-square"
                       imageClassName={`transition-transform duration-300 ${
                         selectedVariant?.id === variant.id
