@@ -778,28 +778,28 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
               className="bg-white  border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow"
             >
               <div className="flex gap-4">
-                <div className="relative group w-20 h-20 cursor-pointer flex-shrink-0 overflow-hidden rounded-md">
+                <div className="relative group w-32 flex-shrink-0">
                   <ProductImageSlider
-                    images={variant?.imageUrl ? [variant.imageUrl] : []}
-                    variant="simple"
-                    showDots={false}
-                    autoplay={false}
+                    images={
+                      variant?.images && variant.images.length > 0
+                        ? variant.images
+                        : variant?.imageUrl
+                        ? [variant.imageUrl]
+                        : []
+                    }
+                    variant="with-thumbnails"
+                    showDots={true}
+                    autoplay={true}
+                    autoplaySpeed={4000}
+                    pauseOnHover={true}
+                    pauseOnFocus={true}
                     draggable={true}
-                    fade={false}
-                    className="w-full h-full"
-                    aspectRatio=""
-                    imageClassName="rounded-md transition-transform duration-300 group-hover:scale-105 h-full"
+                    fade={true}
+                    compactThumbnails={true}
+                    className="w-full"
+                    aspectRatio="aspect-square"
+                    imageClassName="rounded-md transition-transform duration-300 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center pointer-events-none z-10">
-                    <a
-                      href={variant?.imageUrl || ""}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-1.5 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors pointer-events-auto"
-                    >
-                      <FaEye className="w-4 h-4" />
-                    </a>
-                  </div>
                 </div>
                 <div className="flex-1 space-y-2">
                   <div className="flex justify-between items-start">

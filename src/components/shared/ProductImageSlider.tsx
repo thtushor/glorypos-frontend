@@ -19,6 +19,7 @@ export interface ProductImageSliderProps {
   imageClassName?: string;
   aspectRatio?: string;
   arrows?: boolean;
+  compactThumbnails?: boolean;
 }
 
 const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
@@ -36,6 +37,7 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
   imageClassName = "",
   aspectRatio = "aspect-square",
   arrows = false,
+  compactThumbnails = false,
 }) => {
   const [nav1, setNav1] = useState<Slider | null>(null);
   const [nav2, setNav2] = useState<Slider | null>(null);
@@ -54,11 +56,21 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
       : false;
 
   useEffect(() => {
-    if (effectiveShowThumbnails && slider1.current && slider2.current) {
-      setNav1(slider1.current);
-      setNav2(slider2.current);
+    if (effectiveShowThumbnails && images.length > 1) {
+      // Initialize sliders after they're mounted
+      const initSliders = () => {
+        if (slider1.current && slider2.current) {
+          setNav1(slider1.current);
+          setNav2(slider2.current);
+        }
+      };
+
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        initSliders();
+      });
     }
-  }, [effectiveShowThumbnails]);
+  }, [effectiveShowThumbnails, images.length]);
 
   const handleMouseEnter = () => {
     if (pauseOnHover) {
@@ -85,7 +97,7 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
   };
 
   const mainSliderSettings = {
-    ...(effectiveShowThumbnails && { asNavFor: nav2 as Slider }),
+    ...(effectiveShowThumbnails && nav2 && { asNavFor: nav2 as Slider }),
     ref: slider1 as React.Ref<Slider>,
     slidesToShow: 1,
     fade: fade,
@@ -105,9 +117,9 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
   };
 
   const thumbnailSliderSettings = {
-    asNavFor: nav1 as Slider,
+    ...(nav1 && { asNavFor: nav1 as Slider }),
     ref: slider2 as React.Ref<Slider>,
-    slidesToShow: Math.min(4, images.length),
+    slidesToShow: Math.min(3, images.length),
     swipeToSlide: true,
     focusOnSelect: true,
     infinite: images.length > 4,
@@ -118,7 +130,7 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
       {
         breakpoint: 1024,
         settings: {
-          slidesToShow: Math.min(3, images.length),
+          slidesToShow: Math.min(2, images.length),
         },
       },
       {
@@ -210,14 +222,16 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({
         </Slider>
       </div>
 
-      {effectiveShowThumbnails && (
-        <Slider {...thumbnailSliderSettings} className="thumbnail-slider mt-4">
+      {effectiveShowThumbnails && images.length > 1 && (
+        <Slider {...thumbnailSliderSettings} className="thumbnail-slider mt-2">
           {images.map((image, index) => (
-            <div key={index} className="p-1">
+            <div key={index} className="p-[2px]">
               <img
                 src={image}
                 alt={`Thumbnail ${index + 1}`}
-                className="w-full h-16 object-cover rounded-md cursor-pointer border-2 border-transparent transition-all duration-300 hover:border-brand-primary"
+                className={`w-full ${
+                  compactThumbnails ? "h-12" : "h-16"
+                } object-cover rounded-md cursor-pointer border-2 border-transparent transition-all duration-300 hover:border-brand-primary`}
                 draggable={false}
               />
             </div>

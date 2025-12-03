@@ -48,6 +48,7 @@ export interface ProductVariant {
   Size: Size;
   Color: Color;
   imageUrl: string;
+  images?: string[];
 }
 
 export interface Product {
