@@ -46,6 +46,7 @@ import { Color, Category } from "@/types/categoryType";
 import { useAuth } from "@/context/AuthContext";
 import { FaUserGear } from "react-icons/fa6";
 import money from "@/utils/money";
+import ProductImageSlider from "@/components/shared/ProductImageSlider";
 // import UserIcon from "@/components/icons/UserIcon";
 
 // Product interface is now imported from types
@@ -152,11 +153,29 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
     <div className="space-y-6">
       {/* Product Header */}
       <div className="flex gap-6">
-        <div className="w-1/3 aspect-square rounded-lg overflow-hidden">
-          <img
-            src={selectedVariant?.imageUrl || product.productImage}
-            alt={product.name}
-            className="w-full h-full object-cover transition-all duration-300"
+        <div className="w-1/3">
+          <ProductImageSlider
+            images={
+              selectedVariant?.images && selectedVariant.images.length > 0
+                ? selectedVariant.images
+                : selectedVariant?.imageUrl
+                ? [selectedVariant.imageUrl]
+                : product?.images && product.images.length > 0
+                ? product.images
+                : product.productImage
+                ? [product.productImage]
+                : []
+            }
+            variant="with-thumbnails"
+            showDots={true}
+            autoplay={true}
+            autoplaySpeed={4000}
+            pauseOnHover={true}
+            pauseOnFocus={true}
+            draggable={true}
+            fade={true}
+            className="rounded-lg shadow-md"
+            aspectRatio="aspect-square"
           />
         </div>
         <div className="flex-1">
@@ -218,18 +237,30 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
                       : ""
                   }`}
                 >
-                  <div className="aspect-square">
-                    <img
-                      src={variant.imageUrl}
-                      alt={`${variant.Color?.name} / ${variant.Size?.name}`}
-                      className={`w-full h-full object-cover transition-transform duration-300 ${
+                  <div className="aspect-square relative">
+                    <ProductImageSlider
+                      images={
+                        variant?.images && variant.images.length > 0
+                          ? variant.images
+                          : variant?.imageUrl
+                          ? [variant.imageUrl]
+                          : []
+                      }
+                      variant="simple"
+                      showDots={true}
+                      autoplay={false}
+                      draggable={true}
+                      fade={false}
+                      className="w-full h-full"
+                      aspectRatio="aspect-square"
+                      imageClassName={`transition-transform duration-300 ${
                         selectedVariant?.id === variant.id
                           ? "scale-110"
                           : "group-hover:scale-105"
                       }`}
                     />
                     <div
-                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 pointer-events-none ${
                         selectedVariant?.id === variant.id
                           ? "bg-black/40"
                           : "bg-black/0 group-hover:bg-black/20"
@@ -357,14 +388,16 @@ const POS: React.FC = () => {
     if (selectedUnit !== "all") params.unitId = selectedUnit;
 
     // Add price range filters
-    if (priceRange?.min && 
+    if (
+      priceRange?.min &&
       priceRange?.min !== undefined &&
       priceRange?.min !== null &&
       priceRange?.min > 0
     ) {
       params.minPrice = priceRange?.min;
     }
-    if (priceRange?.max &&
+    if (
+      priceRange?.max &&
       priceRange?.max !== undefined &&
       priceRange?.max !== null &&
       priceRange?.max > 0
@@ -1179,8 +1212,8 @@ const POS: React.FC = () => {
                   selectedBrand !== "all" ||
                   selectedUnit !== "all" ||
                   shopId !== "" ||
-                  priceRange?.min && priceRange?.min > 0 || priceRange?.max &&
-                  priceRange?.max > 0) && (
+                  (priceRange?.min && priceRange?.min > 0) ||
+                  (priceRange?.max && priceRange?.max > 0)) && (
                   <span className="px-2 py-0.5 bg-brand-primary text-white text-xs rounded-full">
                     Active
                   </span>
