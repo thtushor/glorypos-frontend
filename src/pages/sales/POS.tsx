@@ -47,6 +47,7 @@ import { useAuth } from "@/context/AuthContext";
 import { FaUserGear } from "react-icons/fa6";
 import money from "@/utils/money";
 import ProductImageSlider from "@/components/shared/ProductImageSlider";
+import { Size } from "recharts/types/util/types";
 // import UserIcon from "@/components/icons/UserIcon";
 
 // Product interface is now imported from types
@@ -55,6 +56,9 @@ interface CartItem extends Product {
   quantity: number;
   unit: Unit;
   selectedVariant?: {
+    Category: Category;
+    Color: Color;
+    Size: Size;
     id: number;
     sku: string;
     quantity: number;
@@ -1034,7 +1038,7 @@ const POS: React.FC = () => {
     addToCart({
       ...variantProduct,
       unit: variantProduct.Unit,
-      selectedVariant: variant,
+      selectedVariant: variant as any,
       cartItemId: `${variantProduct.id}-${variant.id}`,
       imageUrl: variant.imageUrl,
       quantity: 1,
@@ -1724,7 +1728,60 @@ const POS: React.FC = () => {
                       className="w-12 h-12 rounded object-cover flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm">{item.name}</h4>
+                      {/* <h4 className="font-medium text-sm">{item.name}</h4> */}
+
+                      {/* Product Title + Meta Info */}
+                      <div className="space-y-1">
+                        <h4 className="font-semibold text-sm text-gray-900 leading-tight">
+                          {item?.name}
+                        </h4>
+
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-500">
+                          {/* Category */}
+                          {item?.selectedVariant?.Category?.name
+                            ? item?.selectedVariant?.Category?.name
+                            : item?.Category?.name && (
+                                <span className="flex items-center gap-1">
+                                  <span className="font-medium text-gray-600">
+                                    Category:
+                                  </span>
+                                  {item?.selectedVariant?.Category?.name
+                                    ? item?.selectedVariant?.Category?.name
+                                    : item?.Category?.name}
+                                </span>
+                              )}
+
+                          {/* Brand */}
+                          {item?.Brand?.name && (
+                            <span className="flex items-center gap-1">
+                              <span className="font-medium text-gray-600">
+                                Brand:
+                              </span>
+                              {item.Brand.name}
+                            </span>
+                          )}
+
+                          {/* Color */}
+                          {item?.selectedVariant?.Color?.name
+                            ? item?.selectedVariant?.Color?.name
+                            : item?.Color?.name && (
+                                <span className="flex items-center gap-1">
+                                  <span className="font-medium text-gray-600">
+                                    Color:
+                                  </span>
+                                  <span
+                                    className="w-3 h-3 rounded-full border"
+                                    style={{
+                                      backgroundColor: item?.Color?.code,
+                                    }}
+                                  />
+                                  {item?.selectedVariant?.Color?.name
+                                    ? item?.selectedVariant?.Color?.name
+                                    : item?.Color?.name}
+                                </span>
+                              )}
+                        </div>
+                      </div>
 
                       {/* Sales Price Input */}
                       <div className="mt-2 space-y-1.5">
