@@ -22,6 +22,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
   const { user } = useAuth();
 
+  console.log({ user });
+
   // Fetch total shops count for shop users
   const { data: shopCountData } = useQuery({
     queryKey: ["sub-shops-count"],
@@ -57,11 +59,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   };
 
   return (
-    <div className="h-screen bg-white shadow-lg w-sidebar">
+    <div className="h-screen bg-white shadow-lg w-sidebar flex flex-col">
       <div
         className={`${
           isOpen ? "h-auto" : "h-20"
-        } flex flex-col items-center justify-center border-b border-gray-200/80 px-4 py-4 transition-all duration-300`}
+        } flex flex-col items-center justify-center border-b border-gray-200/80 px-4 py-4 transition-all duration-300 flex-shrink-0`}
       >
         {user?.accountType === "shop" ? (
           <div className="w-full flex flex-col items-center space-y-3">
@@ -118,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         )}
       </div>
 
-      <nav className="mt-4 h-[calc(100vh-4rem)] overflow-y-auto">
+      <nav className="mt-4 flex-1 min-h-0 overflow-y-auto pb-10">
         {(user?.accountType === "shop" ? menuItems : adminMenuItems).map(
           (item: {
             id: string;
