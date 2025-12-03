@@ -258,6 +258,7 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
                       showDots={true}
                       autoplay={true}
                       autoplaySpeed={4000}
+                      disaleOnClick
                       pauseOnHover={true}
                       pauseOnFocus={true}
                       draggable={true}
@@ -1772,7 +1773,10 @@ const POS: React.FC = () => {
                                   <span
                                     className="w-3 h-3 rounded-full border"
                                     style={{
-                                      backgroundColor: item?.Color?.code,
+                                      backgroundColor: item?.selectedVariant
+                                        ?.Color?.code
+                                        ? item?.selectedVariant?.Color?.code
+                                        : item?.Color?.code,
                                     }}
                                   />
                                   {item?.selectedVariant?.Color?.name

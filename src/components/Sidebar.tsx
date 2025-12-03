@@ -67,6 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       >
         {user?.accountType === "shop" ? (
           <div className="w-full flex flex-col items-center space-y-3">
+            {/* Avatar */}
             <div className="relative group">
               <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md hover:shadow-lg transition-shadow duration-300">
                 <FallbackAvatar
@@ -75,18 +76,49 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                   className="w-full h-full"
                 />
               </div>
+
+              {/* ✅ Parent / Child Badge */}
+              {user.parentShop ? (
+                <span className="absolute text-nowrap -bottom-2 left-1/2 -translate-x-1/2 text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full border border-orange-200 font-semibold">
+                  Child Shop
+                </span>
+              ) : (
+                <span className="absolute text-nowrap -bottom-2 left-1/2 -translate-x-1/2 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200 font-semibold">
+                  Parent Shop
+                </span>
+              )}
             </div>
+
+            {/* Info Section */}
             <div className="w-full text-center space-y-2">
               {isOpen ? (
                 <>
+                  {/* ✅ Shop Name */}
                   <h3 className="text-base font-bold text-gray-900 truncate px-2">
                     {user.businessName || "Shop Name"}
                   </h3>
-                  {totalShops > 0 && (
+
+                  {/* ✅ If Child Shop → Show Parent Shop Info */}
+                  {user.parentShop && (
+                    <div className="flex items-center justify-center gap-2 text-xs bg-orange-50 border border-orange-200 rounded-md px-3 py-1">
+                      <FallbackAvatar
+                        src={user.parentShop.image}
+                        alt={user.parentShop.businessName}
+                        className="w-5 h-5 rounded-full"
+                      />
+                      <span className="text-gray-600">
+                        Under:
+                        <span className="font-semibold text-orange-700 ml-1">
+                          {user.parentShop.businessName}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+
+                  {/* ✅ Sub Shops Button (Only For Parent Shop) */}
+                  {!user.parentShop && totalShops > 0 && (
                     <div
-                      onClick={() => {
-                        navigate("/other-shops");
-                      }}
+                      onClick={() => navigate("/other-shops")}
                       className="flex cursor-pointer items-center justify-center gap-2 text-sm text-gray-700 bg-gradient-to-r from-brand-primary/10 to-brand-primary/5 rounded-lg px-4 py-2 border border-brand-primary/20"
                     >
                       <FaStore className="w-4 h-4 text-brand-primary" />
@@ -100,15 +132,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                   )}
                 </>
               ) : (
+                /* ✅ Collapsed Sidebar View */
                 <div className="flex flex-col items-center gap-1">
                   <div className="w-8 h-8 rounded-full bg-brand-primary/10 flex items-center justify-center">
                     <FaStore className="w-4 h-4 text-brand-primary" />
                   </div>
-                  {totalShops > 0 && (
+
+                  {user.parentShop ? (
+                    <span className="text-[10px] font-bold text-orange-700 bg-orange-100 rounded-full px-2">
+                      Sub
+                    </span>
+                  ) : totalShops > 0 ? (
                     <span className="text-xs font-bold text-brand-primary bg-brand-primary/10 rounded-full w-6 h-6 flex items-center justify-center">
                       {totalShops}
                     </span>
-                  )}
+                  ) : null}
                 </div>
               )}
             </div>

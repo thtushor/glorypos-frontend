@@ -22,6 +22,7 @@ interface User {
     email: string;
     id?: number;
   } | null;
+  parentShop: any | null;
   // Add other user properties as needed
 }
 
