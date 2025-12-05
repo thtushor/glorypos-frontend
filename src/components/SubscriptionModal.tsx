@@ -115,7 +115,7 @@ const SubscriptionModal = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onCloseHandler} title="Subscribe to Plan">
-      <div className="p-6 space-y-6">
+      <div className=" space-y-6">
         <div className="space-y-4">
           <div className="flex justify-between text-lg font-medium">
             <span>Plan:</span>
@@ -153,7 +153,7 @@ const SubscriptionModal = ({
           </div>
 
           <div className="flex gap-2">
-            <div className="flex-1">
+            <div className="flex flex-col gap-1">
               <label className="block text-sm font-medium text-gray-700">
                 Coupon Code
               </label>
@@ -169,7 +169,7 @@ const SubscriptionModal = ({
             <button
               onClick={handleValidateCoupon}
               disabled={!couponCode || validateCouponMutation.isPending}
-              className="self-end flex px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover disabled:opacity-50"
+              className="self-end flex px-4 py-[10px] text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover disabled:opacity-50"
             >
               {validateCouponMutation.isPending ? (
                 <Spinner size="16px" color="#ffffff" className="my-2" />

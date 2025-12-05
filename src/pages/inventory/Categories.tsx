@@ -144,7 +144,7 @@ const Categories = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex sm:flex-row flex-col sm:justify-between gap-2 sm:items-center mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">Categories</h1>
           <p className="text-sm text-gray-600">
@@ -156,7 +156,7 @@ const Categories = () => {
             resetForm();
             setIsModalOpen(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
         >
           <FaPlus className="w-4 h-4" />
           <span>Add Category</span>
@@ -243,7 +243,9 @@ const Categories = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm">
                         <div className="font-medium text-gray-900">
-                          {category.User?.businessName || category.User?.fullName || "N/A"}
+                          {category.User?.businessName ||
+                            category.User?.fullName ||
+                            "N/A"}
                         </div>
                         <div className="text-gray-500">
                           ID: {category.User?.id || category.UserId || "N/A"}

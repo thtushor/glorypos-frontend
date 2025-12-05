@@ -20,7 +20,7 @@ const Pagination: React.FC<PaginationProps> = ({
   showingText = true,
 }) => {
   return (
-    <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow">
+    <div className="flex sm:flex-row flex-col sm:gap-0 gap-1 justify-between items-center bg-white p-4 rounded-lg shadow">
       {showingText && (
         <div className="text-sm text-gray-600">
           Showing {(currentPage - 1) * pageSize + 1} to{" "}

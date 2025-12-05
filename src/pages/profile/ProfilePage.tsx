@@ -147,7 +147,7 @@ const ProfilePage = () => {
                 onChange={handleImageChange}
               />
             </div>
-            <h1 className="text-white text-3xl font-bold mt-4">
+            <h1 className="text-white text-xl sm:text-3xl font-bold mt-4">
               {profile.fullName}
             </h1>
             <p className="text-white/80 mt-2 capitalize">{profile.role}</p>
@@ -175,7 +175,7 @@ const ProfilePage = () => {
                         fullName: e.target.value,
                       }))
                     }
-                    className="pl-10 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="pl-10 w-full py-[6px] rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                   />
                 </div>
               </div>
@@ -191,7 +191,7 @@ const ProfilePage = () => {
                     type="email"
                     disabled
                     value={profile?.email}
-                    className="pl-10 w-full rounded-lg border border-gray-300 bg-gray-50 text-gray-500"
+                    className="pl-10 w-full py-[6px] rounded-md border border-gray-300 bg-gray-50 text-gray-500"
                   />
                 </div>
               </div>
@@ -213,7 +213,7 @@ const ProfilePage = () => {
                         phoneNumber: e.target.value,
                       }))
                     }
-                    className="pl-10 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="pl-10 w-full py-[6px] rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                   />
                 </div>
               </div>
@@ -235,7 +235,7 @@ const ProfilePage = () => {
                         location: e.target.value,
                       }))
                     }
-                    className="pl-10 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="pl-10 w-full py-[6px] rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                   />
                 </div>
               </div>
@@ -259,7 +259,7 @@ const ProfilePage = () => {
                             businessName: e.target.value,
                           }))
                         }
-                        className="pl-10 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                        className="pl-10 w-full py-[6px] rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                       />
                     </div>
                   </div>
@@ -280,7 +280,7 @@ const ProfilePage = () => {
                             businessType: e.target.value,
                           }))
                         }
-                        className="pl-10 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                        className="pl-10 w-full py-[6px] rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                       />
                     </div>
                   </div>
@@ -289,7 +289,7 @@ const ProfilePage = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end gap-4 mt-8">
+            <div className="flex justify-center sm:justify-end gap-2 sm:gap-4 mt-8">
               {isEditing ? (
                 <>
                   <button
@@ -299,14 +299,14 @@ const ProfilePage = () => {
                       setFormData(profile);
                       setPreviewImage(null);
                     }}
-                    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    className="sm:px-6 px-4 py-2 text-xs whitespace-nowrap border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={updateProfileMutation.isPending}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                    className="sm:px-6 px-4 py-2 text-xs whitespace-nowrap bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
                   >
                     {updateProfileMutation.isPending ? (
                       <>

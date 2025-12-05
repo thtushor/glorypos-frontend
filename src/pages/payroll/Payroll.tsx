@@ -50,21 +50,21 @@ const Payroll = () => {
   return (
     <div className="bg-white rounded-lg shadow p-6 min-h-screen">
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-semibold text-gray-800">
+      <div className="flex flex-col md:flex-row gap-2 justify-between sm:items-center mb-4">
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">
           Payroll Management
         </h1>
-        <div className="flex gap-2">
+        <div className="flex md:flex-row flex-col gap-2">
           <button
             onClick={() => setShowReleaseSalaryModal(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
+            className="px-4 py-2 text-sm justify-center font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
           >
             <FaPlus className="w-4 h-4" />
             Release Salary
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover transition-colors flex items-center gap-2"
+            className="px-4 py-2 text-sm justify-center font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover transition-colors flex items-center gap-2"
           >
             <FaPlus className="w-4 h-4" />
             Add Employee
@@ -72,7 +72,7 @@ const Payroll = () => {
 
           <button
             onClick={() => setShowHolidayModal(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2"
+            className="px-4 py-2 text-sm justify-center font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2"
           >
             <FaCalendarAlt className="w-4 h-4" />
             Holidays
@@ -83,7 +83,10 @@ const Payroll = () => {
       {/* NAVIGATION TABS */}
       <div className="mb-6">
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8" aria-label="Payroll Navigation">
+          <nav
+            className="flex space-x-8 overflow-x-auto pb-1"
+            aria-label="Payroll Navigation"
+          >
             {navItems.map((tab) => {
               const Icon = tab.icon;
               const isActive = location.pathname === tab.path;
@@ -93,7 +96,7 @@ const Payroll = () => {
                   key={tab.name}
                   to={tab.path}
                   className={`
-                    group relative py-3 px-1 border-b-2 font-medium text-sm transition-all duration-200
+                    group relative py-3 px-1 whitespace-nowrap border-b-2 font-medium text-sm transition-all duration-200
                     flex items-center gap-2
                     ${
                       isActive

@@ -501,7 +501,7 @@ const PayrollMain = () => {
 
       {/* PAGINATION */}
       {data?.pagination && (
-        <div className="mt-6 flex items-center justify-between">
+        <div className="mt-6 flex items-center flex-col md:flex-row gap-1 sm:justify-between">
           <div className="text-sm text-gray-500">
             Showing {(page - 1) * data.pagination.pageSize + 1} to{" "}
             {Math.min(

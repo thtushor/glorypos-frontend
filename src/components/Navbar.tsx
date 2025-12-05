@@ -64,8 +64,10 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
         {/* console name */}
 
         <div className="flex items-center">
-          {user?.accountType === "shop" && <LogoSvg className={"!w-[80px]"} />}
-          <p className="text-base md:text-lg font-semibold">
+          {user?.accountType === "shop" && (
+            <LogoSvg className={"!w-[60px] sm:!w-[80px]"} />
+          )}
+          <p className="text-[14px] whitespace-nowrap md:text-lg font-semibold">
             {user?.accountType === "shop" ? "Shop Console" : "Admin Console"}
           </p>
         </div>
@@ -89,7 +91,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
 
             {/* Notifications Dropdown */}
             {showNotifications && stockAlerts && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 z-50 border">
+              <div className="absolute right-0 mt-2 w-[250px] sm:w-80 bg-white rounded-lg shadow-lg py-2 z-50 border">
                 <div className="px-4 py-2 border-b">
                   <h3 className="text-sm font-semibold">Stock Alerts</h3>
                   <div className="flex gap-3 mt-2 text-xs">

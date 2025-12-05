@@ -77,13 +77,13 @@ const SubscriptionLimits = () => {
       {/* Subscription Header */}
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 mb-8 text-white shadow-lg">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3 sm:space-x-4">
             <FaCrown className="text-4xl text-yellow-300" />
             <div>
               <h1 className="text-2xl font-bold">
                 {subscriptionData.subscription.plan}
               </h1>
-              <div className="flex items-center mt-2 space-x-2">
+              <div className="flex items-center mt-2 space-x-1 sm:space-x-2 text-[12px] sm:text-base">
                 <FaCheckCircle className="text-green-300" />
                 <span className="capitalize">
                   {subscriptionData.subscription.status}
@@ -91,7 +91,7 @@ const SubscriptionLimits = () => {
                 <span className="mx-2">•</span>
                 <FaCalendarAlt className="text-gray-300" />
                 <span>
-                  Expires{" "}
+                  Expire{" "}
                   {format(
                     new Date(subscriptionData.subscription.expiryDate),
                     "MMM dd, yyyy"

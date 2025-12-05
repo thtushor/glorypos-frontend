@@ -156,6 +156,8 @@ const Products: React.FC = () => {
     queryFn: () => fetchProducts(queryParams),
   });
 
+  console.log(productsResponse);
+
   const products = productsResponse?.products || [];
   const pagination = productsResponse?.pagination || {
     page: 1,
@@ -282,14 +284,14 @@ const Products: React.FC = () => {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex sm:flex-row flex-col sm:justify-between gap-2 sm:items-center mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">Products</h1>
           <p className="text-sm text-gray-600">Manage your products</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover flex items-center gap-2"
+          className="px-4 py-2 bg-brand-primary justify-center text-white rounded-md hover:bg-brand-hover flex items-center gap-2"
         >
           <FaPlus /> Add Product
         </button>
@@ -439,7 +441,7 @@ const Products: React.FC = () => {
           products.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden group"
+              className="bg-white border rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden group"
             >
               {/* Product Image Section */}
               <div className="relative aspect-square overflow-hidden">
@@ -653,12 +655,29 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
   const [selectedSku, setSelectedSku] = useState<{
     sku: string;
     name: string;
-    price: number;
+    categoryName: string;
+    brandName: string;
+    modelNo?: string;
+    shopName?: string;
   } | null>(null);
 
   // Add this function to handle barcode printing
-  const handlePrintBarcode = (sku: string, name: string, price: number) => {
-    setSelectedSku({ sku, name, price });
+  const handlePrintBarcode = (
+    sku: string,
+    name: string,
+    categoryName: string,
+    brandName: string,
+    modelNo?: string,
+    shopName?: string
+  ) => {
+    setSelectedSku({
+      sku,
+      name,
+      categoryName,
+      brandName,
+      modelNo,
+      shopName,
+    });
   };
 
   const calculateTotalStock = () => {
@@ -741,7 +760,10 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
                       handlePrintBarcode(
                         product.sku,
                         product.name,
-                        product.price
+                        product?.Category?.name,
+                        product?.Brand?.name,
+                        product?.modelNo || undefined,
+                        product.User?.fullName
                       )
                     }
                     className="p-1.5 text-gray-600 hover:text-brand-primary hover:bg-gray-100 rounded-full transition-colors"
@@ -853,8 +875,11 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
                         onClick={() =>
                           handlePrintBarcode(
                             variant.sku,
-                            `${product.name} - ${variant.Color?.name} ${variant.Size?.name}`,
-                            product.price
+                            product.name,
+                            product.Category?.name,
+                            product?.Brand?.name,
+                            product?.modelNo || undefined,
+                            product?.User?.fullName
                           )
                         }
                         className="p-1.5 text-gray-600 hover:text-brand-primary hover:bg-gray-100 rounded-full transition-colors"
@@ -909,9 +934,12 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
       >
         {selectedSku && (
           <BarcodeModal
-            sku={selectedSku.sku}
-            name={selectedSku.name}
-            price={selectedSku.price}
+            sku={selectedSku?.sku}
+            name={selectedSku?.name}
+            categoryName={selectedSku?.categoryName}
+            brandName={selectedSku?.brandName}
+            modelNo={selectedSku?.modelNo}
+            shopName={selectedSku?.shopName}
             onClose={() => setSelectedSku(null)}
           />
         )}

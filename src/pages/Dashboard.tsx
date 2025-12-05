@@ -173,7 +173,7 @@ const Dashboard: React.FC = () => {
         searchPlaceholder="Search products or SKU..."
       />
       {/* Date Filter */}
-      <div className="mb-6 flex items-center gap-4">
+      <div className="mb-6 flex items-center sm:justify-normal justify-center gap-4">
         <div className="flex items-center gap-2">
           <FaCalendar className="text-gray-500" />
           <input
@@ -182,7 +182,7 @@ const Dashboard: React.FC = () => {
             onChange={(e) =>
               setDateRange((prev) => ({ ...prev, startDate: e.target.value }))
             }
-            className="border rounded-md px-3 py-2 text-sm"
+            className="border rounded-md sm:w-auto w-[130px] px-2 sm:px-3 py-2 text-sm"
           />
           <span className="text-gray-500">to</span>
           <input
@@ -191,7 +191,7 @@ const Dashboard: React.FC = () => {
             onChange={(e) =>
               setDateRange((prev) => ({ ...prev, endDate: e.target.value }))
             }
-            className="border rounded-md px-3 py-2 text-sm"
+            className="border rounded-md sm:w-auto w-[130px] px-2 py-2 text-sm"
           />
         </div>
       </div>

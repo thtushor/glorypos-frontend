@@ -1,7 +1,6 @@
 import React, { useRef } from "react";
 import { FaPrint, FaMoneyBill, FaCreditCard, FaWallet } from "react-icons/fa";
 // import LogoSvg from "./icons/LogoSvg";
-import Barcode from "react-barcode";
 import { getExpiryDate } from "@/utils/utils";
 import { useQuery } from "@tanstack/react-query";
 import AXIOS from "@/api/network/Axios";
@@ -164,14 +163,14 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           </div>
 
           {/* Items */}
-          <div className="mb-6">
+          <div className="mb-6  overflow-x-auto border px-4 py-1 rounded-md">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-2">Item</th>
-                  <th className="text-center py-2">Qty</th>
-                  <th className="text-right py-2">Price</th>
-                  <th className="text-right py-2">Total</th>
+                  <th className="text-center py-2 min-w-[50px]">Qty</th>
+                  <th className="text-center py-2 min-w-[100px]">Price</th>
+                  <th className="text-right py-2 min-w-[100px] pr-5">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -185,7 +184,9 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                     <tr key={index} className="border-b">
                       <td className="py-2">
                         <div>
-                          <p className="font-medium">{item.productName}</p>
+                          <p className="font-medium">
+                            {item.productName || "Item"}
+                          </p>
                           <p className="text-xs text-gray-500">
                             SKU: {item.sku} | {item.details}
                           </p>
@@ -201,8 +202,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                         </div>
                       </td>
                       <td className="text-center py-2">{item.quantity}</td>
-                      <td className="text-right py-2">
-                        <div className="flex flex-col items-end">
+                      <td className="text-center py-2">
+                        <div className="flex flex-col items-center">
                           {showOriginalPrice && (
                             <span className="text-xs text-gray-400 line-through mb-0.5">
                               {money.format(originalPrice)}
@@ -217,7 +218,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                           </span>
                         </div>
                       </td>
-                      <td className="text-right py-2">
+                      <td className="text-right  pr-5 py-2">
                         <div className="flex flex-col items-end">
                           {showOriginalPrice && originalPrice && (
                             <span className="text-xs text-gray-400 line-through mb-0.5">
@@ -358,7 +359,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           </p>
 
           {/* Barcode */}
-          <div className="mt-6 flex flex-col items-center justify-center border-t pt-4">
+          {/* <div className="mt-6 flex flex-col items-center justify-center border-t pt-4">
             <Barcode
               value={invoiceData.invoiceNumber}
               width={1.5}
@@ -367,12 +368,12 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
               margin={0}
               displayValue={true}
             />
-          </div>
+          </div> */}
 
           {/* Business Details */}
           <div className="mt-4 text-center text-xs text-gray-500">
             <p>Tax ID: {invoiceData.businessInfo.taxId}</p>
-            <p>{invoiceData.businessInfo.website}</p>
+            <p className="text-xs text-black font-medium">Glory POS</p>
             <p className="mt-1">
               Valid until: {getExpiryDate(invoiceData.date)}
             </p>
@@ -383,7 +384,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         <div className="border-t px-6 py-4 flex justify-end gap-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
+            className="px-4 py-2 text-sm font-medium border text-gray-700 hover:bg-gray-100 rounded-md"
           >
             Close
           </button>

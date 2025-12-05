@@ -149,7 +149,7 @@ const ChildUsers = () => {
         </button>
       </div>
 
-      <div className="mb-6 grid grid-cols-5 gap-4">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-5 gap-4">
         <input
           type="text"
           placeholder="Search by name, email or phone..."
@@ -254,7 +254,7 @@ const ChildUsers = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {format(new Date(user.createdAt), "MMM dd, yyyy")}
                   </td>
-                  <td className="px-6 py-4 text-right space-x-2">
+                  <td className="px-6 py-4 text-right space-x-2 flex items-center">
                     <button
                       onClick={() => {
                         setSelectedUser(user);
@@ -288,7 +288,7 @@ const ChildUsers = () => {
 
       {/* Updated pagination controls */}
       {data?.pagination && (
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex items-center justify-center flex-col sm:flex-row gap-1 sm:justify-between">
           <div className="text-sm text-gray-500">
             Showing {(page - 1) * data.pagination.pageSize + 1} to{" "}
             {Math.min(

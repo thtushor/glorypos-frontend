@@ -163,38 +163,40 @@ const OtherShops = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex sm:flex-row flex-col sm:justify-between gap-2 sm:items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Other Shops</h1>
-        <div className="flex gap-2">
+        <div className="flex sm:flex-row flex-col sm:justify-between gap-2 sm:items-center">
           <button
             onClick={() => {
               setSelectedShop(null);
               setShowAddModal(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-hover transition-colors"
+            className="flex justify-center whitespace-nowrap items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-hover transition-colors"
           >
             <FaPlus className="w-4 h-4" />
             Add Sub Shop
           </button>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search by email..."
-              value={filters.searchKey}
-              onChange={handleFilterChange}
-              name="searchKey"
-              className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary"
-            />
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="flex gap-2">
+            <div className="relative w-full">
+              <input
+                type="text"
+                placeholder="Search by email..."
+                value={filters.searchKey}
+                onChange={handleFilterChange}
+                name="searchKey"
+                className="pl-10 w-full sm:w-fit pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="p-2 px-3 border rounded-lg hover:bg-gray-50"
+            >
+              <FaFilter className="text-gray-600" />
+            </button>
           </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="p-2 border rounded-lg hover:bg-gray-50"
-          >
-            <FaFilter className="text-gray-600" />
-          </button>
         </div>
       </div>
 
@@ -544,7 +546,7 @@ const OtherShops = () => {
                 </div>
               )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Full Name

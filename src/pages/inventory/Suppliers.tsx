@@ -63,14 +63,14 @@ const Suppliers: React.FC = () => {
     <div className="space-y-6">
       {/* Header Section */}
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center mb-6">
           <div>
             <h1 className="text-2xl font-semibold">Suppliers</h1>
             <p className="text-gray-500 text-sm mt-1">
               Manage your supplier relationships and orders
             </p>
           </div>
-          <button className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover">
+          <button className="px-4 py-2 bg-brand-primary justify-center text-white rounded-md hover:bg-brand-hover">
             Add New Supplier
           </button>
         </div>
@@ -185,8 +185,14 @@ const Suppliers: React.FC = () => {
                     {supplier.User && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <span className="font-medium">Shop:</span>
-                        <span>{supplier.User.businessName || supplier.User.fullName || "N/A"}</span>
-                        <span className="text-gray-400">(ID: {supplier.User.id || supplier.UserId || "N/A"})</span>
+                        <span>
+                          {supplier.User.businessName ||
+                            supplier.User.fullName ||
+                            "N/A"}
+                        </span>
+                        <span className="text-gray-400">
+                          (ID: {supplier.User.id || supplier.UserId || "N/A"})
+                        </span>
                       </div>
                     )}
                   </div>
