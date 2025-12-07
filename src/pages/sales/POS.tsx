@@ -765,9 +765,7 @@ const POS: React.FC = () => {
   const getItemSalesPrice = useCallback(
     (item: CartItem): number => {
       return (
-        adjustments.salesPriceAdjustments[item.id] ||
-        item.salesPrice ||
-        item.price
+        adjustments.salesPriceAdjustments[item.id]
       );
     },
     [adjustments.salesPriceAdjustments]
@@ -1076,7 +1074,7 @@ const POS: React.FC = () => {
   const getNumericValue = (value: number | string | undefined): string => {
     if (value === undefined || value === null) return "";
     const numValue = typeof value === "string" ? parseFloat(value) || 0 : value;
-    if (numValue === 0) return "";
+    if (numValue === 0) return "0";
     return numValue.toString();
   };
 
@@ -1106,15 +1104,17 @@ const POS: React.FC = () => {
   // Update item sales price
   const updateItemSalesPrice = (
     itemId: string | number,
-    newSalesPrice: number
+    newSalesPrice: number|string
   ) => {
     const formattedPrice = formatCurrency(newSalesPrice);
     const key = typeof itemId === "string" ? Number(itemId) : itemId;
+
+    console.log({formattedPrice})
     setAdjustments((prev) => ({
       ...prev,
       salesPriceAdjustments: {
         ...prev.salesPriceAdjustments,
-        [key]: formattedPrice,
+        [key]: newSalesPrice,
       },
     }));
   };
@@ -1805,9 +1805,10 @@ const POS: React.FC = () => {
                                 );
                                 const parsed =
                                   filtered === ""
-                                    ? 0
-                                    : parseCurrencyInput(filtered);
-                                updateItemSalesPrice(item.id || 0, parsed);
+                                    ? ""
+                                    : filtered
+                                    console.log({parsed,filtered})
+                                updateItemSalesPrice(item.id || 0, parsed as string);
                               }}
                               onBlur={(e) => {
                                 const filtered = filterNumericInput(
