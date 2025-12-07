@@ -59,7 +59,7 @@ const Payroll = () => {
         <div className="flex gap-2">
           <button
             onClick={() => setShowReleaseSalaryModal(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
+            className="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
           >
             <FaPlus className="w-4 h-4" />
             Release Salary
