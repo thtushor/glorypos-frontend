@@ -1,71 +1,69 @@
 // components/ReleaseSalaryForm.tsx
 import React, { useEffect, useRef, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { FiUser, FiCalendar, FiCheckCircle } from "react-icons/fi";
+import { useMutation } from "@tanstack/react-query";
+
+import { FiCalendar } from "react-icons/fi";
 import {
-  CHILD_USERS_URL,
   PAYROLL_RELEASE,
-  PAYROLL_SALARY_DETAILS,
 } from "@/api/api";
 import AXIOS from "@/api/network/Axios";
-import { toast } from "react-toastify";
+// import { toast } from "react-toastify";
 import { useAuth } from "@/context/AuthContext";
 
-interface Parent {
-  id: number;
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  location: string;
-  businessName: string;
-  businessType: string;
-  accountStatus: string;
-  accountType: string;
-}
+// interface Parent {
+//   id: number;
+//   fullName: string;
+//   email: string;
+//   phoneNumber: string;
+//   location: string;
+//   businessName: string;
+//   businessType: string;
+//   accountStatus: string;
+//   accountType: string;
+// }
 
-interface ChildUser {
-  id: number;
-  fullName: string;
-  email: string;
-  phone: string | null;
-  role: string;
-  status: "active" | "inactive";
+// interface ChildUser {
+//   id: number;
+//   fullName: string;
+//   email: string;
+//   phone: string | null;
+//   role: string;
+//   status: "active" | "inactive";
 
-  attendanceType?: "present" | "absent" | null;
-  attendanceDate?: string | null;
-  isHalfDay?: boolean;
-  reason?: string | null;
-  notes?: string | null;
-  lateMinutes?: number;
-  extraMinutes?: number;
+//   attendanceType?: "present" | "absent" | null;
+//   attendanceDate?: string | null;
+//   isHalfDay?: boolean;
+//   reason?: string | null;
+//   notes?: string | null;
+//   lateMinutes?: number;
+//   extraMinutes?: number;
 
-  permissions: {
-    canEdit: boolean;
-    canDelete: boolean;
-    canViewReports: boolean;
-  };
-  baseSalary: number | null;
-  requiredDailyHours: number | null;
-  createdAt: string;
-  updatedAt: string;
-  parentUserId: number;
-  userId: number | null;
-  parent: Parent;
-}
+//   permissions: {
+//     canEdit: boolean;
+//     canDelete: boolean;
+//     canViewReports: boolean;
+//   };
+//   baseSalary: number | null;
+//   requiredDailyHours: number | null;
+//   createdAt: string;
+//   updatedAt: string;
+//   parentUserId: number;
+//   userId: number | null;
+//   parent: Parent;
+// }
 
-interface ChildUsersResponse {
-  status: boolean;
-  message: string;
-  users: ChildUser[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    totalCount: number;
-    totalPages: number;
-    hasMore: boolean;
-  };
-}
+// interface ChildUsersResponse {
+//   status: boolean;
+//   message: string;
+//   users: ChildUser[];
+//   pagination: {
+//     page: number;
+//     pageSize: number;
+//     totalCount: number;
+//     totalPages: number;
+//     hasMore: boolean;
+//   };
+// }
 
 interface SalaryDetails {
   userId: number;
@@ -98,7 +96,7 @@ interface ReleaseSalaryFormProps {
 }
 
 const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
-  const [userId, setUserId] = useState<string>("");
+  const [_, setUserId] = useState<string>("");
   // const [startDate, setStartDate] = useState<Date | undefined>();
   // const [endDate, setEndDate] = useState<Date | undefined>();
   const [month, setMonth] = useState("")
