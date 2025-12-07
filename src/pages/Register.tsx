@@ -25,6 +25,7 @@ interface RegisterForm {
   location: string;
   businessName: string;
   businessType: string;
+  shopType: string; // Added shopType
   password: string;
   accountStatus: string;
   isVerified: boolean;
@@ -40,6 +41,7 @@ const Register: React.FC = () => {
     location: "",
     businessName: "",
     businessType: "",
+    shopType: "normal", // Default value
     password: "",
     accountStatus: "active",
     isVerified: false,
@@ -81,9 +83,9 @@ const Register: React.FC = () => {
     },
     onError: (error: Error) => {
       console.error("Registration failed:", error);
-      toast.error("An error occurred during registration.");
+      toast.error(error.message||"An error occurred during registration.");
       setSuccessMessage({
-        message: "An error occurred during registration.",
+        message: error?.message||"An error occurred during registration.",
         status: false,
       });
     },
@@ -95,7 +97,7 @@ const Register: React.FC = () => {
   };
 
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -236,6 +238,27 @@ const Register: React.FC = () => {
                 value={formData.businessType}
                 onChange={handleChange}
               />
+            </div>
+
+            {/* Shop Type Field */}
+            <div className="space-y-2">
+              <label
+                htmlFor="shopType"
+                className="block text-sm font-medium text-gray-700"
+              >
+                What type of shop do you have?*
+              </label>
+              <select
+                name="shopType"
+                id="shopType"
+                required
+                value={formData.shopType}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-colors duration-200"
+              >
+                <option value="normal">Normal Shop</option>
+                <option value="restaurant">Restaurant</option>
+              </select>
             </div>
 
             {/* Password Field */}

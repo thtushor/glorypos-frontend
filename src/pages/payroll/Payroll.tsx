@@ -15,10 +15,12 @@ import {
 } from "react-icons/fa";
 import { useQueryClient } from "@tanstack/react-query";
 import ReleaseSalaryForm from "./ReleaseSalaryForm";
+import AdvanceSalaryForm from "./AdvanceSalaryForm"; // Added this import
 
 const Payroll = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showReleaseSalaryModal, setShowReleaseSalaryModal] = useState(false);
+  const [showAdvanceSalaryModal, setShowAdvanceSalaryModal] = useState(false);
   const [showHolidayModal, setShowHolidayModal] = useState(false);
   const queryClient = useQueryClient();
   const location = useLocation();
@@ -57,11 +59,27 @@ const Payroll = () => {
         <div className="flex md:flex-row flex-col gap-2">
           <button
             onClick={() => setShowReleaseSalaryModal(true)}
-            className="px-4 py-2 text-sm justify-center font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
+            className="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
           >
             <FaPlus className="w-4 h-4" />
             Release Salary
           </button>
+
+          <button
+            onClick={() => setShowAdvanceSalaryModal(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
+          >
+            <FaPlus className="w-4 h-4" />
+            Advance Salary
+          </button>
+
+          {/* <button
+            onClick={() => setShowReleaseSalaryModal(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
+          >
+            <FaPlus className="w-4 h-4" />
+            Loan
+          </button> */}
           <button
             onClick={() => setShowCreateModal(true)}
             className="px-4 py-2 text-sm justify-center font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover transition-colors flex items-center gap-2"
@@ -168,6 +186,20 @@ const Payroll = () => {
           onSuccess={() => {
             setShowReleaseSalaryModal(false);
             toast.success("Salary released");
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showAdvanceSalaryModal}
+        onClose={() => setShowAdvanceSalaryModal(false)}
+        title="Request Advance Salary"
+        // useInnerModal={true}
+      >
+        <AdvanceSalaryForm
+          onSuccess={() => {
+            setShowAdvanceSalaryModal(false);
+            toast.success("Advance salary requested");
           }}
         />
       </Modal>
