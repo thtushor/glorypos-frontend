@@ -17,6 +17,7 @@ import {
   FaWallet,
   FaCheckCircle,
   FaExclamationCircle,
+  FaUtensils,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import {
@@ -163,12 +164,12 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
               selectedVariant?.images && selectedVariant.images.length > 0
                 ? selectedVariant.images
                 : selectedVariant?.imageUrl
-                ? [selectedVariant.imageUrl]
-                : product?.images && product.images.length > 0
-                ? product.images
-                : product.productImage
-                ? [product.productImage]
-                : []
+                  ? [selectedVariant.imageUrl]
+                  : product?.images && product.images.length > 0
+                    ? product.images
+                    : product.productImage
+                      ? [product.productImage]
+                      : []
             }
             variant="with-thumbnails"
             showDots={true}
@@ -239,11 +240,10 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
                     // window.open(variant.imageUrl, "_blank", "noopener,noreferrer");
                   }}
                   disabled={variant.quantity === 0}
-                  className={`relative group rounded-lg overflow-hidden transition-all ${
-                    variant.quantity === 0
+                  className={`relative group rounded-lg overflow-hidden transition-all ${variant.quantity === 0
                       ? "opacity-50 cursor-not-allowed"
                       : ""
-                  }`}
+                    }`}
                 >
                   <div className="aspect-square relative">
                     <ProductImageSlider
@@ -251,8 +251,8 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
                         variant?.images && variant.images.length > 0
                           ? variant.images
                           : variant?.imageUrl
-                          ? [variant.imageUrl]
-                          : []
+                            ? [variant.imageUrl]
+                            : []
                       }
                       // variant="with-thumbnails"
                       showDots={true}
@@ -265,25 +265,22 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
                       fade={true}
                       className="rounded-lg shadow-md"
                       aspectRatio="aspect-square"
-                      imageClassName={`transition-transform duration-300 ${
-                        selectedVariant?.id === variant.id
+                      imageClassName={`transition-transform duration-300 ${selectedVariant?.id === variant.id
                           ? "scale-110"
                           : "group-hover:scale-105"
-                      }`}
+                        }`}
                     />
                     <div
-                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 pointer-events-none ${
-                        selectedVariant?.id === variant.id
+                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 pointer-events-none ${selectedVariant?.id === variant.id
                           ? "bg-black/40"
                           : "bg-black/0 group-hover:bg-black/20"
-                      }`}
+                        }`}
                     >
                       <div
-                        className={`px-3 py-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg transform transition-all duration-300 ${
-                          selectedVariant?.id === variant.id
+                        className={`px-3 py-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg transform transition-all duration-300 ${selectedVariant?.id === variant.id
                             ? "scale-100 opacity-100"
                             : "scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100"
-                        }`}
+                          }`}
                       >
                         <span className="text-sm font-medium">
                           {variant.Size?.name}
@@ -356,6 +353,14 @@ const POS: React.FC = () => {
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
 
   const [cart, setCart] = useState<CartItem[]>([]);
+
+  const [kotData, setKotData] = useState({
+    tableNumber: '',
+    specialInstructions: '',
+    guestCount: 1
+  });
+
+
   const [customerInfo, setCustomerInfo] = useState({
     name: "",
     phone: "",
@@ -781,10 +786,10 @@ const POS: React.FC = () => {
         adjustments.discountAdjustments[item.id] ||
         (item.discountType && Number(item.discountAmount || 0) > 0
           ? {
-              type:
-                (item.discountType as "percentage" | "amount") || "percentage",
-              value: Number(item.discountAmount || 0),
-            }
+            type:
+              (item.discountType as "percentage" | "amount") || "percentage",
+            value: Number(item.discountAmount || 0),
+          }
           : null);
 
       if (discount && discount.value > 0) {
@@ -868,10 +873,10 @@ const POS: React.FC = () => {
       const paymentMethod = isMixed
         ? "mixed"
         : partialPayment.cashAmount > 0
-        ? "cash"
-        : partialPayment.cardAmount > 0
-        ? "card"
-        : "mobile_banking";
+          ? "cash"
+          : partialPayment.cardAmount > 0
+            ? "card"
+            : "mobile_banking";
 
       const orderData: any = {
         items: cartItems.map((item) => {
@@ -907,8 +912,8 @@ const POS: React.FC = () => {
         ...(selectedStaffId === "self-sell"
           ? { stuffId: undefined }
           : selectedStaffId
-          ? { stuffId: selectedStaffId }
-          : {}),
+            ? { stuffId: selectedStaffId }
+            : {}),
       };
 
       // Add partial payment amounts if mixed payment
@@ -965,7 +970,7 @@ const POS: React.FC = () => {
     }
     // Reset payment amounts and open payment modal
     setPartialPayment({
-      cashAmount: 0,
+      cashAmount: cart.length === 0 ? 0 : total,
       cardAmount: 0,
       walletAmount: 0,
     });
@@ -988,6 +993,25 @@ const POS: React.FC = () => {
       return;
     }
     createOrderMutation.mutate(cart);
+  };
+
+  const handleProcessPrintKOT = () => {
+    if (!isPaymentComplete) {
+      toast.error(
+        `Payment incomplete. Remaining: ${money.format(paymentRemaining)}`
+      );
+      return;
+    }
+    if (isPaymentOver) {
+      toast.error(
+        `Payment exceeds total. Overpayment: $${(paymentTotal - total).toFixed(
+          2
+        )}`
+      );
+      return;
+    }
+    console.log({ cart })
+    // createOrderMutation.mutate(cart);
   };
 
   const handleQuickPayment = (method: "cash" | "card" | "mobile_banking") => {
@@ -1073,7 +1097,7 @@ const POS: React.FC = () => {
   // Helper to extract numeric value from formatted currency string for input fields
   const getNumericValue = (value: number | string | undefined): string => {
     if (value === undefined || value === null) return "";
-    const numValue = typeof value === "string" ? parseFloat(value) || 0 : value;
+    const numValue = typeof value === "string" ? parseFloat(value) || "" : value;
     if (numValue === 0) return "0";
     return numValue.toString();
   };
@@ -1104,12 +1128,12 @@ const POS: React.FC = () => {
   // Update item sales price
   const updateItemSalesPrice = (
     itemId: string | number,
-    newSalesPrice: number|string
+    newSalesPrice: number | string
   ) => {
     const formattedPrice = formatCurrency(newSalesPrice);
     const key = typeof itemId === "string" ? Number(itemId) : itemId;
 
-    console.log({formattedPrice})
+    console.log({ formattedPrice })
     setAdjustments((prev) => ({
       ...prev,
       salesPriceAdjustments: {
@@ -1192,9 +1216,8 @@ const POS: React.FC = () => {
     <div className=" flex flex-col lg:flex-row gap-6 relative">
       {/* Products Section */}
       <div
-        className={`flex-1 flex flex-col  bg-white rounded-lg shadow overflow-hidden ${
-          showMobileCart ? "hidden xl:flex" : "flex"
-        }`}
+        className={`flex-1 flex flex-col  bg-white rounded-lg shadow overflow-hidden ${showMobileCart ? "hidden xl:flex" : "flex"
+          }`}
       >
         {/* Search and Filters */}
         <div className="border-b bg-white">
@@ -1252,10 +1275,10 @@ const POS: React.FC = () => {
                   shopId !== "" ||
                   (priceRange?.min && priceRange?.min > 0) ||
                   (priceRange?.max && priceRange?.max > 0)) && (
-                  <span className="px-2 py-0.5 bg-brand-primary text-white text-xs rounded-full">
-                    Active
-                  </span>
-                )}
+                    <span className="px-2 py-0.5 bg-brand-primary text-white text-xs rounded-full">
+                      Active
+                    </span>
+                  )}
               </div>
               {isFiltersExpanded ? (
                 <FaChevronUp className="text-gray-500" />
@@ -1266,9 +1289,8 @@ const POS: React.FC = () => {
 
             {/* Expandable Filter Content */}
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                isFiltersExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-              }`}
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${isFiltersExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                }`}
             >
               <div className="p-4 space-y-4 bg-gray-50">
                 {/* Filters Grid - 2 Columns */}
@@ -1469,11 +1491,10 @@ const POS: React.FC = () => {
 
         {/* Products Grid */}
         <div
-          className={`flex-1 p-4 overflow-y-auto ${
-            isLoadingProducts || isLoadingCategories || isLoadingShops
+          className={`flex-1 p-4 overflow-y-auto ${isLoadingProducts || isLoadingCategories || isLoadingShops
               ? "flex items-center justify-center"
               : ""
-          }`}
+            }`}
         >
           {isLoadingProducts || isLoadingCategories || isLoadingShops ? (
             <div className="flex justify-center items-center">
@@ -1493,11 +1514,11 @@ const POS: React.FC = () => {
                         src={
                           selectedVariants[product.id]
                             ? product.ProductVariants.find(
-                                (v) => v.id === selectedVariants[product.id]
-                              )?.imageUrl
+                              (v) => v.id === selectedVariants[product.id]
+                            )?.imageUrl
                             : product.ProductVariants?.length > 0
-                            ? product.ProductVariants[0]?.imageUrl
-                            : product.productImage
+                              ? product.ProductVariants[0]?.imageUrl
+                              : product.productImage
                         }
                         alt={product.name}
                         className="w-full h-full object-cover rounded-t-lg"
@@ -1516,8 +1537,8 @@ const POS: React.FC = () => {
                       {/* Price Section with Discount Info */}
                       <div className="mt-2 space-y-1">
                         {product.discountType &&
-                        Number(product.discountAmount || 0) > 0 &&
-                        Number(product.salesPrice || 0) >
+                          Number(product.discountAmount || 0) > 0 &&
+                          Number(product.salesPrice || 0) >
                           Number(product.price || 0) ? (
                           <div className="flex items-center gap-2 flex-wrap">
                             {/* Sales Price with Strikethrough */}
@@ -1529,8 +1550,8 @@ const POS: React.FC = () => {
                               {product.discountType === "percentage"
                                 ? `-${product.discountAmount}%`
                                 : `-${money.format(
-                                    Number(product.discountAmount || 0)
-                                  )}`}
+                                  Number(product.discountAmount || 0)
+                                )}`}
                             </span>
                           </div>
                         ) : null}
@@ -1554,12 +1575,11 @@ const POS: React.FC = () => {
                                 (variant, index) => (
                                   <div
                                     key={index}
-                                    className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${
-                                      selectedVariants[product.id] ===
-                                      variant.id
+                                    className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${selectedVariants[product.id] ===
+                                        variant.id
                                         ? "z-10 ring-2 rounded-full ring-brand-primary"
                                         : ""
-                                    }`}
+                                      }`}
                                   >
                                     <img
                                       src={variant.imageUrl}
@@ -1605,13 +1625,12 @@ const POS: React.FC = () => {
 
                       <div className="mt-2 flex items-center gap-2">
                         <span
-                          className={`w-2 h-2 rounded-full ${
-                            getTotalStock(product) > 10
+                          className={`w-2 h-2 rounded-full ${getTotalStock(product) > 10
                               ? "bg-green-500"
                               : getTotalStock(product) > 5
-                              ? "bg-yellow-500"
-                              : "bg-red-500"
-                          }`}
+                                ? "bg-yellow-500"
+                                : "bg-red-500"
+                            }`}
                         />
                         <span className="text-xs text-gray-500">
                           {getTotalStock(product)} in stock
@@ -1652,9 +1671,8 @@ const POS: React.FC = () => {
 
       {/* Cart Section - Desktop */}
       <div
-        className={` bg-white rounded-lg shadow flex flex-col xl:flex ${
-          showMobileCart ? "flex" : "hidden"
-        }`}
+        className={` bg-white max-w-[360px] rounded-lg shadow flex flex-col xl:flex ${showMobileCart ? "flex" : "hidden"
+          }`}
       >
         {/* Mobile Cart Header */}
         <div className="xl:hidden flex items-center justify-between p-4 border-b">
@@ -1707,7 +1725,6 @@ const POS: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {cart.map((item) => {
-                console.log({ item });
                 // Use the helper function to get sales price (reactive)
                 const salesPrice = getItemSalesPrice(item);
                 const discount = adjustments.discountAdjustments[item.id] || {
@@ -1737,20 +1754,20 @@ const POS: React.FC = () => {
                           {item?.name}
                         </h4>
 
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-500">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-500">
                           {/* Category */}
                           {item?.selectedVariant?.Category?.name
                             ? item?.selectedVariant?.Category?.name
                             : item?.Category?.name && (
-                                <span className="flex items-center gap-1">
-                                  <span className="font-medium text-gray-600">
-                                    Category:
-                                  </span>
-                                  {item?.selectedVariant?.Category?.name
-                                    ? item?.selectedVariant?.Category?.name
-                                    : item?.Category?.name}
+                              <span className="flex items-center gap-1">
+                                <span className="font-medium text-gray-600">
+                                  Category:
                                 </span>
-                              )}
+                                {item?.selectedVariant?.Category?.name
+                                  ? item?.selectedVariant?.Category?.name
+                                  : item?.Category?.name}
+                              </span>
+                            )}
 
                           {/* Brand */}
                           {item?.Brand?.name && (
@@ -1766,24 +1783,24 @@ const POS: React.FC = () => {
                           {item?.selectedVariant?.Color?.name
                             ? item?.selectedVariant?.Color?.name
                             : item?.Color?.name && (
-                                <span className="flex items-center gap-1">
-                                  <span className="font-medium text-gray-600">
-                                    Color:
-                                  </span>
-                                  <span
-                                    className="w-3 h-3 rounded-full border"
-                                    style={{
-                                      backgroundColor: item?.selectedVariant
-                                        ?.Color?.code
-                                        ? item?.selectedVariant?.Color?.code
-                                        : item?.Color?.code,
-                                    }}
-                                  />
-                                  {item?.selectedVariant?.Color?.name
-                                    ? item?.selectedVariant?.Color?.name
-                                    : item?.Color?.name}
+                              <span className="flex items-center gap-1">
+                                <span className="font-medium text-gray-600">
+                                  Color:
                                 </span>
-                              )}
+                                <span
+                                  className="w-3 h-3 rounded-full border"
+                                  style={{
+                                    backgroundColor: item?.selectedVariant
+                                      ?.Color?.code
+                                      ? item?.selectedVariant?.Color?.code
+                                      : item?.Color?.code,
+                                  }}
+                                />
+                                {item?.selectedVariant?.Color?.name
+                                  ? item?.selectedVariant?.Color?.name
+                                  : item?.Color?.name}
+                              </span>
+                            )}
                         </div>
                       </div>
 
@@ -1807,7 +1824,7 @@ const POS: React.FC = () => {
                                   filtered === ""
                                     ? ""
                                     : filtered
-                                    console.log({parsed,filtered})
+                                console.log({ parsed, filtered })
                                 updateItemSalesPrice(item.id || 0, parsed as string);
                               }}
                               onBlur={(e) => {
@@ -1830,7 +1847,7 @@ const POS: React.FC = () => {
 
                         {/* Discount Input */}
                         <div className="flex items-center gap-2">
-                          <label className="text-xs text-gray-500 whitespace-nowrap">
+                          <label className="text-xs text-gray-500 ">
                             Discount:
                           </label>
                           <div className="flex items-center gap-1 flex-1">
@@ -2237,9 +2254,8 @@ const POS: React.FC = () => {
       {/* Mobile Cart Toggle Button */}
       <button
         onClick={() => setShowMobileCart(true)}
-        className={`xl:hidden fixed bottom-4 right-4 bg-brand-primary text-white p-4 rounded-full shadow-lg ${
-          showMobileCart ? "hidden" : "flex"
-        } items-center justify-center`}
+        className={`xl:hidden fixed bottom-4 right-4 bg-brand-primary text-white p-4 rounded-full shadow-lg ${showMobileCart ? "hidden" : "flex"
+          } items-center justify-center`}
       >
         <div className="relative">
           <FaShoppingCart className="w-6 h-6" />
@@ -2299,11 +2315,10 @@ const POS: React.FC = () => {
           {/* Self Sell Option - Prominent */}
           <button
             onClick={() => handleStaffSelect("self-sell")}
-            className={`w-full text-left p-4 border-2 rounded-lg transition-all hover:shadow-md ${
-              selectedStaffId === "self-sell"
+            className={`w-full text-left p-4 border-2 rounded-lg transition-all hover:shadow-md ${selectedStaffId === "self-sell"
                 ? "border-brand-primary bg-brand-primary/5 shadow-sm"
                 : "border-gray-200 hover:border-gray-300 bg-white"
-            }`}
+              }`}
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
@@ -2427,11 +2442,10 @@ const POS: React.FC = () => {
                 <button
                   key={staff.id}
                   onClick={() => handleStaffSelect(staff.id)}
-                  className={`relative text-left p-3 border-2 rounded-lg transition-all hover:shadow-md hover:scale-[1.02] ${
-                    selectedStaffId === staff.id
+                  className={`relative text-left p-3 border-2 rounded-lg transition-all hover:shadow-md hover:scale-[1.02] ${selectedStaffId === staff.id
                       ? "border-brand-primary bg-brand-primary/10 shadow-md ring-2 ring-brand-primary/20"
                       : "border-gray-200 hover:border-gray-300 bg-white"
-                  }`}
+                    }`}
                 >
                   {selectedStaffId === staff.id && (
                     <div className="absolute top-1.5 right-1.5">
@@ -2513,6 +2527,71 @@ const POS: React.FC = () => {
         className="max-w-2xl w-full mx-2 sm:mx-4"
       >
         <div className="space-y-4 sm:space-y-6 max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
+
+        {user?.shopType ==="restaurant" && <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-4 border-2 border-orange-200">
+            <div className="flex items-center gap-2 mb-4">
+              <FaUtensils className="text-orange-600 text-xl" />
+              <h3 className="font-semibold text-orange-900">Kitchen Order Details</h3>
+            </div>
+
+            <div className="space-y-4">
+              {/* Table Number */}
+              <div>
+                <label className="block text-sm font-medium text-orange-900 mb-2">
+                  Table Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={kotData.tableNumber}
+                  onChange={(e) => setKotData(prev => ({
+                    ...prev,
+                    tableNumber: e.target.value
+                  }))}
+                  placeholder="e.g., T1, Table 5, A-12"
+                  className="w-full px-4 py-2.5 border-2 border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+                />
+              </div>
+
+              {/* Guest Count */}
+              <div>
+                <label className="block text-sm font-medium text-orange-900 mb-2">
+                  Number of Guests
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={kotData.guestCount}
+                  onChange={(e) => setKotData(prev => ({
+                    ...prev,
+                    guestCount: parseInt(e.target.value) || 1
+                  }))}
+                  className="w-full px-4 py-2.5 border-2 border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+                />
+              </div>
+
+              {/* Special Instructions */}
+              <div>
+                <label className="block text-sm font-medium text-orange-900 mb-2">
+                  Special Instructions / Notes
+                </label>
+                <textarea
+                  value={kotData.specialInstructions}
+                  onChange={(e) => setKotData(prev => ({
+                    ...prev,
+                    specialInstructions: e.target.value
+                  }))}
+                  placeholder="e.g., No onions, Extra spicy, Allergies: Peanuts, Serve hot..."
+                  rows={3}
+                  className="w-full px-4 py-2.5 border-2 border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white resize-none"
+                />
+                <p className="text-xs text-orange-700 mt-1">
+                  These notes will be printed on the Kitchen Order Ticket
+                </p>
+              </div>
+            </div>
+          </div>}
+
           {/* Order Total Display */}
           <div className="bg-gradient-to-r from-brand-primary to-brand-hover text-white rounded-lg p-4 sm:p-6 shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -2560,18 +2639,16 @@ const POS: React.FC = () => {
           <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
             <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
               <div
-                className={`p-2 sm:p-3 rounded-lg transition-all ${
-                  partialPayment.cashAmount > 0
+                className={`p-2 sm:p-3 rounded-lg transition-all ${partialPayment.cashAmount > 0
                     ? "bg-green-100 border-2 border-green-400 shadow-sm"
                     : "bg-transparent"
-                }`}
+                  }`}
               >
                 <p
-                  className={`text-xs mb-1 ${
-                    partialPayment.cashAmount > 0
+                  className={`text-xs mb-1 ${partialPayment.cashAmount > 0
                       ? "text-green-700 font-semibold"
                       : "text-gray-500"
-                  }`}
+                    }`}
                 >
                   Cash
                   {partialPayment.cashAmount > 0 && (
@@ -2579,28 +2656,25 @@ const POS: React.FC = () => {
                   )}
                 </p>
                 <p
-                  className={`text-base sm:text-lg font-semibold ${
-                    partialPayment.cashAmount > 0
+                  className={`text-base sm:text-lg font-semibold ${partialPayment.cashAmount > 0
                       ? "text-green-700"
                       : "text-gray-900"
-                  }`}
+                    }`}
                 >
                   {money.format(partialPayment.cashAmount)}
                 </p>
               </div>
               <div
-                className={`p-2 sm:p-3 rounded-lg transition-all ${
-                  partialPayment.cardAmount > 0
+                className={`p-2 sm:p-3 rounded-lg transition-all ${partialPayment.cardAmount > 0
                     ? "bg-blue-100 border-2 border-blue-400 shadow-sm"
                     : "bg-transparent"
-                }`}
+                  }`}
               >
                 <p
-                  className={`text-xs mb-1 ${
-                    partialPayment.cardAmount > 0
+                  className={`text-xs mb-1 ${partialPayment.cardAmount > 0
                       ? "text-blue-700 font-semibold"
                       : "text-gray-500"
-                  }`}
+                    }`}
                 >
                   Card
                   {partialPayment.cardAmount > 0 && (
@@ -2608,28 +2682,25 @@ const POS: React.FC = () => {
                   )}
                 </p>
                 <p
-                  className={`text-base sm:text-lg font-semibold ${
-                    partialPayment.cardAmount > 0
+                  className={`text-base sm:text-lg font-semibold ${partialPayment.cardAmount > 0
                       ? "text-blue-700"
                       : "text-gray-900"
-                  }`}
+                    }`}
                 >
                   {money.format(partialPayment.cardAmount)}
                 </p>
               </div>
               <div
-                className={`p-2 sm:p-3 rounded-lg transition-all ${
-                  partialPayment.walletAmount > 0
+                className={`p-2 sm:p-3 rounded-lg transition-all ${partialPayment.walletAmount > 0
                     ? "bg-purple-100 border-2 border-purple-400 shadow-sm"
                     : "bg-transparent"
-                }`}
+                  }`}
               >
                 <p
-                  className={`text-xs mb-1 ${
-                    partialPayment.walletAmount > 0
+                  className={`text-xs mb-1 ${partialPayment.walletAmount > 0
                       ? "text-purple-700 font-semibold"
                       : "text-gray-500"
-                  }`}
+                    }`}
                 >
                   Wallet
                   {partialPayment.walletAmount > 0 && (
@@ -2637,11 +2708,10 @@ const POS: React.FC = () => {
                   )}
                 </p>
                 <p
-                  className={`text-base sm:text-lg font-semibold ${
-                    partialPayment.walletAmount > 0
+                  className={`text-base sm:text-lg font-semibold ${partialPayment.walletAmount > 0
                       ? "text-purple-700"
                       : "text-gray-900"
-                  }`}
+                    }`}
                 >
                   {money.format(partialPayment.walletAmount)}
                 </p>
@@ -2653,13 +2723,12 @@ const POS: React.FC = () => {
                   Total Paid:
                 </span>
                 <span
-                  className={`text-lg sm:text-xl font-bold ${
-                    isPaymentComplete
+                  className={`text-lg sm:text-xl font-bold ${isPaymentComplete
                       ? "text-green-600"
                       : isPaymentOver
-                      ? "text-yellow-600"
-                      : "text-gray-900"
-                  }`}
+                        ? "text-yellow-600"
+                        : "text-gray-900"
+                    }`}
                 >
                   {money.format(paymentTotal)}
                 </span>
@@ -2670,9 +2739,8 @@ const POS: React.FC = () => {
                     Remaining:
                   </span>
                   <span
-                    className={`text-base sm:text-lg font-semibold ${
-                      isPaymentOver ? "text-yellow-600" : "text-red-600"
-                    }`}
+                    className={`text-base sm:text-lg font-semibold ${isPaymentOver ? "text-yellow-600" : "text-red-600"
+                      }`}
                   >
                     {isPaymentOver
                       ? `+${money.format(Math.abs(paymentRemaining))}`
@@ -2691,31 +2759,28 @@ const POS: React.FC = () => {
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <button
                 onClick={() => handleQuickPayment("cash")}
-                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${
-                  partialPayment.cashAmount > 0 &&
-                  partialPayment.cardAmount === 0 &&
-                  partialPayment.walletAmount === 0
+                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${partialPayment.cashAmount > 0 &&
+                    partialPayment.cardAmount === 0 &&
+                    partialPayment.walletAmount === 0
                     ? "bg-green-100 border-green-400 shadow-md"
                     : "bg-green-50 border-green-200 active:bg-green-100 hover:bg-green-100 hover:border-green-300"
-                }`}
+                  }`}
               >
                 <FaMoneyBill
-                  className={`text-xl sm:text-2xl ${
-                    partialPayment.cashAmount > 0 &&
-                    partialPayment.cardAmount === 0 &&
-                    partialPayment.walletAmount === 0
+                  className={`text-xl sm:text-2xl ${partialPayment.cashAmount > 0 &&
+                      partialPayment.cardAmount === 0 &&
+                      partialPayment.walletAmount === 0
                       ? "text-green-700"
                       : "text-green-600"
-                  }`}
+                    }`}
                 />
                 <span
-                  className={`text-xs sm:text-sm font-medium ${
-                    partialPayment.cashAmount > 0 &&
-                    partialPayment.cardAmount === 0 &&
-                    partialPayment.walletAmount === 0
+                  className={`text-xs sm:text-sm font-medium ${partialPayment.cashAmount > 0 &&
+                      partialPayment.cardAmount === 0 &&
+                      partialPayment.walletAmount === 0
                       ? "text-green-800"
                       : "text-green-700"
-                  }`}
+                    }`}
                 >
                   Cash
                   {partialPayment.cashAmount > 0 &&
@@ -2727,31 +2792,28 @@ const POS: React.FC = () => {
               </button>
               <button
                 onClick={() => handleQuickPayment("card")}
-                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${
-                  partialPayment.cardAmount > 0 &&
-                  partialPayment.cashAmount === 0 &&
-                  partialPayment.walletAmount === 0
+                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${partialPayment.cardAmount > 0 &&
+                    partialPayment.cashAmount === 0 &&
+                    partialPayment.walletAmount === 0
                     ? "bg-blue-100 border-blue-400 shadow-md"
                     : "bg-blue-50 border-blue-200 active:bg-blue-100 hover:bg-blue-100 hover:border-blue-300"
-                }`}
+                  }`}
               >
                 <FaCreditCard
-                  className={`text-xl sm:text-2xl ${
-                    partialPayment.cardAmount > 0 &&
-                    partialPayment.cashAmount === 0 &&
-                    partialPayment.walletAmount === 0
+                  className={`text-xl sm:text-2xl ${partialPayment.cardAmount > 0 &&
+                      partialPayment.cashAmount === 0 &&
+                      partialPayment.walletAmount === 0
                       ? "text-blue-700"
                       : "text-blue-600"
-                  }`}
+                    }`}
                 />
                 <span
-                  className={`text-xs sm:text-sm font-medium ${
-                    partialPayment.cardAmount > 0 &&
-                    partialPayment.cashAmount === 0 &&
-                    partialPayment.walletAmount === 0
+                  className={`text-xs sm:text-sm font-medium ${partialPayment.cardAmount > 0 &&
+                      partialPayment.cashAmount === 0 &&
+                      partialPayment.walletAmount === 0
                       ? "text-blue-800"
                       : "text-blue-700"
-                  }`}
+                    }`}
                 >
                   Card
                   {partialPayment.cardAmount > 0 &&
@@ -2763,31 +2825,28 @@ const POS: React.FC = () => {
               </button>
               <button
                 onClick={() => handleQuickPayment("mobile_banking")}
-                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${
-                  partialPayment.walletAmount > 0 &&
-                  partialPayment.cashAmount === 0 &&
-                  partialPayment.cardAmount === 0
+                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${partialPayment.walletAmount > 0 &&
+                    partialPayment.cashAmount === 0 &&
+                    partialPayment.cardAmount === 0
                     ? "bg-purple-100 border-purple-400 shadow-md"
                     : "bg-purple-50 border-purple-200 active:bg-purple-100 hover:bg-purple-100 hover:border-purple-300"
-                }`}
+                  }`}
               >
                 <FaWallet
-                  className={`text-xl sm:text-2xl ${
-                    partialPayment.walletAmount > 0 &&
-                    partialPayment.cashAmount === 0 &&
-                    partialPayment.cardAmount === 0
+                  className={`text-xl sm:text-2xl ${partialPayment.walletAmount > 0 &&
+                      partialPayment.cashAmount === 0 &&
+                      partialPayment.cardAmount === 0
                       ? "text-purple-700"
                       : "text-purple-600"
-                  }`}
+                    }`}
                 />
                 <span
-                  className={`text-xs sm:text-sm font-medium ${
-                    partialPayment.walletAmount > 0 &&
-                    partialPayment.cashAmount === 0 &&
-                    partialPayment.cardAmount === 0
+                  className={`text-xs sm:text-sm font-medium ${partialPayment.walletAmount > 0 &&
+                      partialPayment.cashAmount === 0 &&
+                      partialPayment.cardAmount === 0
                       ? "text-purple-800"
                       : "text-purple-700"
-                  }`}
+                    }`}
                 >
                   Wallet
                   {partialPayment.walletAmount > 0 &&
@@ -2808,25 +2867,22 @@ const POS: React.FC = () => {
 
             {/* Cash Payment */}
             <div
-              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${
-                partialPayment.cashAmount > 0
+              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${partialPayment.cashAmount > 0
                   ? "bg-green-50 border-green-300"
                   : "bg-transparent border-transparent"
-              }`}
+                }`}
             >
               <label
-                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${
-                  partialPayment.cashAmount > 0
+                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${partialPayment.cashAmount > 0
                     ? "text-green-700"
                     : "text-gray-700"
-                }`}
+                  }`}
               >
                 <FaMoneyBill
-                  className={`text-sm sm:text-base ${
-                    partialPayment.cashAmount > 0
+                  className={`text-sm sm:text-base ${partialPayment.cashAmount > 0
                       ? "text-green-600"
                       : "text-green-500"
-                  }`}
+                    }`}
                 />
                 Cash Amount
                 {partialPayment.cashAmount > 0 && (
@@ -2890,25 +2946,22 @@ const POS: React.FC = () => {
 
             {/* Card Payment */}
             <div
-              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${
-                partialPayment.cardAmount > 0
+              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${partialPayment.cardAmount > 0
                   ? "bg-blue-50 border-blue-300"
                   : "bg-transparent border-transparent"
-              }`}
+                }`}
             >
               <label
-                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${
-                  partialPayment.cardAmount > 0
+                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${partialPayment.cardAmount > 0
                     ? "text-blue-700"
                     : "text-gray-700"
-                }`}
+                  }`}
               >
                 <FaCreditCard
-                  className={`text-sm sm:text-base ${
-                    partialPayment.cardAmount > 0
+                  className={`text-sm sm:text-base ${partialPayment.cardAmount > 0
                       ? "text-blue-600"
                       : "text-blue-500"
-                  }`}
+                    }`}
                 />
                 Card Amount
                 {partialPayment.cardAmount > 0 && (
@@ -2972,25 +3025,22 @@ const POS: React.FC = () => {
 
             {/* Wallet Payment */}
             <div
-              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${
-                partialPayment.walletAmount > 0
+              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${partialPayment.walletAmount > 0
                   ? "bg-purple-50 border-purple-300"
                   : "bg-transparent border-transparent"
-              }`}
+                }`}
             >
               <label
-                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${
-                  partialPayment.walletAmount > 0
+                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${partialPayment.walletAmount > 0
                     ? "text-purple-700"
                     : "text-gray-700"
-                }`}
+                  }`}
               >
                 <FaWallet
-                  className={`text-sm sm:text-base ${
-                    partialPayment.walletAmount > 0
+                  className={`text-sm sm:text-base ${partialPayment.walletAmount > 0
                       ? "text-purple-600"
                       : "text-purple-500"
-                  }`}
+                    }`}
                 />
                 <span className="hidden sm:inline">
                   Wallet/Mobile Banking Amount
@@ -3060,19 +3110,21 @@ const POS: React.FC = () => {
           {(partialPayment.cashAmount > 0 ||
             partialPayment.cardAmount > 0 ||
             partialPayment.walletAmount > 0) && (
-            <button
-              onClick={() => {
-                setPartialPayment({
-                  cashAmount: 0,
-                  cardAmount: 0,
-                  walletAmount: 0,
-                });
-              }}
-              className="w-full py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              Clear All
-            </button>
-          )}
+              <button
+                onClick={() => {
+                  setPartialPayment({
+                    cashAmount: 0,
+                    cardAmount: 0,
+                    walletAmount: 0,
+                  });
+                }}
+                className="w-full py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Clear All
+              </button>
+            )}
+
+          {/* add a input number for  */}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 border-t sticky bottom-0 bg-white pb-2 sm:pb-0">
@@ -3089,14 +3141,37 @@ const POS: React.FC = () => {
             >
               Cancel
             </button>
+            {user?.shopType === "restaurant" && (
+              <button
+                onClick={handleProcessPrintKOT}
+                disabled={!isPaymentComplete || createOrderMutation.isPending}
+                className={`flex-1 px-4 py-3.5 sm:py-3 text-white rounded-lg font-medium transition-all text-base sm:text-sm touch-manipulation ${isPaymentComplete
+                    ? "bg-brand-primary active:bg-brand-hover hover:bg-brand-hover shadow-lg active:shadow-xl hover:shadow-xl"
+                    : "bg-gray-400 cursor-not-allowed"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {createOrderMutation.isPending ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Spinner size="16px" />
+                    <span>Processing...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    <FaCheckCircle />
+                    <span>
+                      Print KOT
+                    </span>
+                  </div>
+                )}
+              </button>
+            )}
             <button
               onClick={handleProcessPayment}
               disabled={!isPaymentComplete || createOrderMutation.isPending}
-              className={`flex-1 px-4 py-3.5 sm:py-3 text-white rounded-lg font-medium transition-all text-base sm:text-sm touch-manipulation ${
-                isPaymentComplete
+              className={`flex-1 px-4 py-3.5 sm:py-3 text-white rounded-lg font-medium transition-all text-base sm:text-sm touch-manipulation ${isPaymentComplete
                   ? "bg-brand-primary active:bg-brand-hover hover:bg-brand-hover shadow-lg active:shadow-xl hover:shadow-xl"
                   : "bg-gray-400 cursor-not-allowed"
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {createOrderMutation.isPending ? (
                 <div className="flex items-center justify-center gap-2">
@@ -3115,31 +3190,28 @@ const POS: React.FC = () => {
           {/* Validation Messages */}
           {!isPaymentComplete && paymentTotal > 0 && (
             <div
-              className={`p-3 rounded-lg ${
-                isPaymentOver
+              className={`p-3 rounded-lg ${isPaymentOver
                   ? "bg-yellow-50 border border-yellow-200"
                   : "bg-red-50 border border-red-200"
-              }`}
+                }`}
             >
               <div className="flex items-start gap-2">
                 <FaExclamationCircle
-                  className={`mt-0.5 ${
-                    isPaymentOver ? "text-yellow-600" : "text-red-600"
-                  }`}
+                  className={`mt-0.5 ${isPaymentOver ? "text-yellow-600" : "text-red-600"
+                    }`}
                 />
                 <div className="flex-1">
                   <p
-                    className={`text-sm font-medium ${
-                      isPaymentOver ? "text-yellow-800" : "text-red-800"
-                    }`}
+                    className={`text-sm font-medium ${isPaymentOver ? "text-yellow-800" : "text-red-800"
+                      }`}
                   >
                     {isPaymentOver
                       ? `Payment exceeds total by ${money.format(
-                          paymentTotal - total
-                        )}. Please adjust amounts.`
+                        paymentTotal - total
+                      )}. Please adjust amounts.`
                       : `Payment incomplete. Please add ${money.format(
-                          paymentRemaining
-                        )} more to complete the payment.`}
+                        paymentRemaining
+                      )} more to complete the payment.`}
                   </p>
                 </div>
               </div>

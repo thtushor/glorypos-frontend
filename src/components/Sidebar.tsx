@@ -98,6 +98,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                     {user.businessName || "Shop Name"}
                   </h3>
 
+                  {/* ✅ Shop Name */}
+                  <span className="text-xs capitalize font-bold text-gray-50 py-1 bg-green-500 rounded-md truncate px-2">
+                    {user.shopType || "Shop"}
+                  </span>
+
                   {/* ✅ If Child Shop → Show Parent Shop Info */}
                   {user.parentShop && (
                     <div className="flex items-center justify-center gap-2 text-xs bg-orange-50 border border-orange-200 rounded-md px-3 py-1">

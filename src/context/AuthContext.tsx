@@ -23,6 +23,7 @@ interface User {
     id?: number;
   } | null;
   parentShop: any | null;
+  shopType?: "normal" | "restaurant";
   // Add other user properties as needed
 }
 
