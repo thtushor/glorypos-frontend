@@ -24,7 +24,7 @@ import { CartAdjustments } from "./ShoppingCart";
 import Pagination from "../Pagination";
 import Modal from "../Modal";
 import { VariantSelectionModal } from "./VariantSelectionModal";
-import { CartItem } from "@/types/CartItemType";
+import { CartItem } from "@/types/cartItemType";
 
 function CartProductSection({
   showMobileCart,

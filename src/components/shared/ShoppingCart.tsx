@@ -35,7 +35,7 @@ import BarcodeScanner from "../BarcodeScanner";
 import { FaUserGear } from "react-icons/fa6";
 import { useAuth } from "@/context/AuthContext";
 import Invoice from "../Invoice";
-import { CartItem } from "@/types/CartItemType";
+import { CartItem } from "@/types/cartItemType";
 
 export interface CartAdjustments {
   tax: {

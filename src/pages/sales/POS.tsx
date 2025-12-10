@@ -12,7 +12,7 @@ import ProductImageSlider from "@/components/shared/ProductImageSlider";
 import MobileCartToggleButton from "@/components/shared/MobileCartToggleButton";
 import ShoppingCart from "@/components/shared/ShoppingCart";
 import CartProductSection from "@/components/shared/CartProductSection";
-import { CartItem } from "@/types/CartItemType";
+import { CartItem } from "@/types/cartItemType";
 // import UserIcon from "@/components/icons/UserIcon";
 
 // Product interface is now imported from types
