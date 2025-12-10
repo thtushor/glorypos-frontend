@@ -89,3 +89,40 @@ export const getExpiryDate = (date: string) => {
   purchaseDate.setDate(purchaseDate.getDate() + 30);
   return purchaseDate.toLocaleString();
 };
+
+export const formatCurrency = (value: number | string): number => {
+  const numValue = typeof value === "string" ? parseFloat(value) || 0 : value;
+  return Math.round(numValue * 100) / 100; // Round to 2 decimal places
+};
+
+export const getNumericValue = (value: number | string | undefined): string => {
+  if (value === undefined || value === null) return "";
+  const numValue = typeof value === "string" ? parseFloat(value) || "" : value;
+  if (numValue === 0) return "0";
+  return numValue.toString();
+};
+
+// Helper to filter input to only allow numeric characters and one decimal point
+export const filterNumericInput = (value: string): string => {
+  // Remove any non-numeric characters except decimal point
+  let cleaned = value.replace(/[^\d.]/g, "");
+  // Handle multiple decimal points - keep only the first one
+  const parts = cleaned.split(".");
+  if (parts.length > 2) {
+    cleaned = parts[0] + "." + parts.slice(1).join("");
+  }
+  return cleaned;
+};
+
+export const parseCurrencyInput = (value: string): number => {
+  // Remove any non-numeric characters except decimal point
+  const cleaned = value.replace(/[^\d.]/g, "");
+  // Handle multiple decimal points
+  const parts = cleaned.split(".");
+  if (parts.length > 2) {
+    return Number(parts[0] + "." + parts.slice(1).join("")) || 0;
+  }
+  const numValue = Number(cleaned) || 0;
+  // Round to 2 decimal places
+  return Math.round(numValue * 100) / 100;
+};
