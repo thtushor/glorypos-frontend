@@ -1,4 +1,3 @@
-import { CartItem } from "@/pages/sales/POS";
 import money from "@/utils/money";
 import {
   filterNumericInput,
@@ -36,6 +35,7 @@ import BarcodeScanner from "../BarcodeScanner";
 import { FaUserGear } from "react-icons/fa6";
 import { useAuth } from "@/context/AuthContext";
 import Invoice from "../Invoice";
+import { CartItem } from "@/types/CartItemType";
 
 export interface CartAdjustments {
   tax: {
@@ -384,6 +384,7 @@ function ShoppingCart({
         tableNumber: kotData.tableNumber,
         guestNumber: kotData?.guestCount,
         specialNotes: kotData.specialInstructions,
+        kotPaymentStatus: kotPaymentStatus,
         items: cartItems.map((item) => {
           // Get sales price (before discount) - this will be the unitPrice
           const salesPrice = getItemSalesPrice(item);
