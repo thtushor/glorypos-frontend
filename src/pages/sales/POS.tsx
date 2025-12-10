@@ -501,6 +501,8 @@ const POS: React.FC = () => {
         setCart={setCart}
         showMobileCart={showMobileCart}
         cart={cart}
+        sku={sku}
+        setSku={setSku}
         setAdjustments={setAdjustments}
         adjustments={adjustments}
       />

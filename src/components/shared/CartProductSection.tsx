@@ -30,6 +30,8 @@ function CartProductSection({
   showMobileCart,
   cart,
   setCart,
+  sku,
+  setSku,
   //   adjustments,
   setAdjustments,
 }: {
@@ -38,6 +40,8 @@ function CartProductSection({
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   adjustments: CartAdjustments;
   setAdjustments: React.Dispatch<React.SetStateAction<CartAdjustments>>;
+  sku: string;
+  setSku: React.Dispatch<React.SetStateAction<string>>;
 }) {
   // Pagination state
   const [page, setPage] = useState(1);
@@ -46,7 +50,7 @@ function CartProductSection({
   // Filter states for API
   const { user } = useAuth();
   const [searchKey, setSearchKey] = useState("");
-  const [sku, setSku] = useState("");
+  //   const [sku, setSku] = useState("");
   const [shopId, setShopId] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | "all">(
     "all"
