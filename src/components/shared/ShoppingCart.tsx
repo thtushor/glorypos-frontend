@@ -83,6 +83,7 @@ function ShoppingCart({
   showMobileCart,
   onClose,
   handleBarcodeScan,
+  variant = "dynamic",
 }: {
   cart: CartItem[];
   adjustments: CartAdjustments;
@@ -91,6 +92,7 @@ function ShoppingCart({
   showMobileCart: boolean;
   onClose: () => void;
   handleBarcodeScan: (value: string) => void;
+  variant?: "dynamic" | "mobile" | "desktop";
 }) {
   const { user } = useAuth();
 
@@ -550,7 +552,7 @@ function ShoppingCart({
   return (
     <>
       <div
-        className={` bg-white max-w-[360px] rounded-lg shadow flex flex-col xl:flex ${
+        className={` bg-white  rounded-lg shadow flex flex-col xl:flex ${
           showMobileCart ? "flex" : "hidden"
         }`}
       >

@@ -24,6 +24,9 @@ import Spinner from "@/components/Spinner";
 import InventoryFilters from "@/components/shared/InventoryFilters";
 import { useAuth } from "@/context/AuthContext";
 import money from "@/utils/money";
+import MobileCartToggleButton from "@/components/shared/MobileCartToggleButton";
+import Modal from "@/components/Modal";
+import DashBoardProduct from "./DashBoardProduct";
 
 interface DashboardStats {
   totalSales: number;
@@ -60,24 +63,11 @@ interface TopProduct {
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const defaultShopId = user?.child?.id ?? user?.id;
-  // Sample data for charts
-  // const salesData = [
-  //   { name: "Jan", sales: 4000 },
-  //   { name: "Feb", sales: 3000 },
-  //   { name: "Mar", sales: 5000 },
-  //   { name: "Apr", sales: 4500 },
-  //   { name: "May", sales: 6000 },
-  //   { name: "Jun", sales: 5500 },
-  // ];
 
-  // const productData = [
-  //   { name: "Electronics", value: 400 },
-  //   { name: "Clothing", value: 300 },
-  //   { name: "Books", value: 200 },
-  //   { name: "Food", value: 350 },
-  //   { name: "Sports", value: 250 },
-  // ];
+  const [showMobileCart, setShowMobileCart] = useState(false);
+  const [productModalOpen, setProductModalOpen] = useState(false);
+
+  const defaultShopId = user?.child?.id ?? user?.id;
 
   const [dateRange, setDateRange] = useState({
     startDate: new Date(new Date().setDate(new Date().getDate() - 7)) // Previous 7 days
@@ -435,6 +425,27 @@ const Dashboard: React.FC = () => {
           </table>
         </div>
       </div>
+
+      <MobileCartToggleButton
+        onClick={() => {
+          setShowMobileCart(true);
+          setProductModalOpen(true);
+        }}
+        open={showMobileCart}
+        cartItemsCount={10}
+        // cartItemsCount={cartItemsCount}
+      />
+
+      <Modal
+        isOpen={productModalOpen}
+        onClose={() => {
+          setProductModalOpen(false);
+          setShowMobileCart(false);
+        }}
+        className="!max-w-[80vw]"
+      >
+        <DashBoardProduct />
+      </Modal>
     </div>
   );
 };

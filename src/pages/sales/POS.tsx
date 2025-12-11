@@ -251,21 +251,7 @@ const POS: React.FC = () => {
 
   // Filter states for API
 
-  const [sku, setSku] = useState("");
-  const [shopId, setShopId] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<number | "all">(
-    "all"
-  );
-  const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
-  const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
-  const [selectedGender, setSelectedGender] = useState<
-    "men" | "women" | "others" | "all"
-  >("all");
-  const [modelNo, setModelNo] = useState("");
-  const [priceRange, setPriceRange] = useState<{ min?: number; max?: number }>({
-    min: undefined,
-    max: undefined,
-  });
+  const [sku, setSku] = useState("8941193078518");
 
   const [adjustments, setAdjustments] = useState<CartAdjustments>({
     tax: { type: "percentage", value: 0 },
@@ -275,15 +261,10 @@ const POS: React.FC = () => {
     discountAdjustments: {},
   });
 
-  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
-
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const [showMobileCart, setShowMobileCart] = useState(false);
 
-  const [selectedVariants, setSelectedVariants] = useState<
-    Record<number, number>
-  >({});
   const [variantProduct, setVariantProduct] = useState<Product | null>(null);
 
   // const queryClient = useQueryClient();
@@ -451,21 +432,6 @@ const POS: React.FC = () => {
   // Cart items count
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleAddToCart = (product: Product) => {
-    if (product.ProductVariants?.length > 0) {
-      setVariantProduct(product);
-    } else {
-      addToCart({
-        ...product,
-        cartItemId: `${product.id}-default`,
-        imageUrl: product.productImage,
-        quantity: 1,
-        sku: "", // Added missing 'sku' property
-        unit: product,
-      });
-    }
-  };
-
   // Add variant selection handler
   const handleVariantSelect = (variant: ProductVariant) => {
     if (!variantProduct) return;
@@ -480,17 +446,6 @@ const POS: React.FC = () => {
       sku: variant.sku, // Added missing 'sku' property
     });
     setVariantProduct(null);
-  };
-
-  // Add this helper function
-  const getTotalStock = (product: Product) => {
-    if (product.ProductVariants?.length > 0) {
-      return product.ProductVariants.reduce(
-        (total, variant) => total + variant.quantity,
-        0
-      );
-    }
-    return product.stock;
   };
 
   return (
