@@ -434,9 +434,7 @@ const Dashboard: React.FC = () => {
         }}
         open={showMobileCart}
         cartItemsCount={0}
-        icon={
-          <img src="/barcodescanner.gif" className="w-10 h-10 rounded-sm" />
-        }
+        icon={<img src="/barcodescanner.gif" className="w-8 h-8 rounded-sm" />}
         // icon={<BiBarcode className="w-8 h-8 animate-pulse" />}
         // cartItemsCount={cartItemsCount}
       />
