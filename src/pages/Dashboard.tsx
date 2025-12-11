@@ -432,7 +432,7 @@ const Dashboard: React.FC = () => {
           setProductModalOpen(true);
         }}
         open={showMobileCart}
-        cartItemsCount={10}
+        cartItemsCount={0}
         // cartItemsCount={cartItemsCount}
       />
 
@@ -443,6 +443,8 @@ const Dashboard: React.FC = () => {
           setShowMobileCart(false);
         }}
         className="!max-w-[80vw]"
+        titleContainerClassName="!mb-0"
+        // useInnerModal={true}
       >
         <DashBoardProduct />
       </Modal>

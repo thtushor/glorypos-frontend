@@ -7,6 +7,7 @@ import { VariantSelectionModal } from "@/components/shared/VariantSelectionModal
 import { CartItem } from "@/types/cartItemType";
 import { Product, ProductVariant } from "@/types/ProductType";
 import { formatCurrency, successToast } from "@/utils/utils";
+import { set } from "lodash";
 import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
 
@@ -22,22 +23,20 @@ function DashBoardProduct() {
   });
 
   const [cart, setCart] = useState<CartItem[]>([]);
-
-  const [showMobileCart, setShowMobileCart] = useState(false);
-
   const [variantProduct, setVariantProduct] = useState<Product | null>(null);
+
+  // 🔥 NEW — tab navigation state
+  const [activeTab, setActiveTab] = useState<"products" | "cart">("products");
 
   const handleBarcodeScan = useCallback((barcode: string) => {
     if (barcode && barcode.trim()) {
-      // setSearchKey(barcode.trim());
       setSku(barcode.trim());
-
-      // Optionally close scanner after scan
+      setActiveTab("products"); // switch to products tab on scan
       toast.success(`Searching for: ${barcode.trim()}`);
     }
   }, []);
 
-  // Cart operations
+  // Add to cart logic
   const addToCart = (product: CartItem) => {
     const existingItem = cart.find(
       (item) => item.cartItemId === product.cartItemId
@@ -51,6 +50,7 @@ function DashBoardProduct() {
         successToast("Stock limit reached", "warn");
         return;
       }
+
       setCart(
         cart.map((item) =>
           item.cartItemId === product.cartItemId
@@ -61,7 +61,7 @@ function DashBoardProduct() {
     } else {
       setCart([...cart, { ...product, quantity: 1 }]);
 
-      // Initialize discount adjustment if product has discount
+      // Add discount adjustments
       if (product.discountType && Number(product.discountAmount || 0) > 0) {
         setAdjustments((prev) => ({
           ...prev,
@@ -77,7 +77,7 @@ function DashBoardProduct() {
         }));
       }
 
-      // Initialize sales price adjustment if product has salesPrice
+      // Add sales price adjustment
       if (product.salesPrice && Number(product.salesPrice) > 0) {
         setAdjustments((prev) => ({
           ...prev,
@@ -90,10 +90,9 @@ function DashBoardProduct() {
     }
   };
 
-  // Cart items count
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Add variant selection handler
+  // Variant selection handler
   const handleVariantSelect = (variant: ProductVariant) => {
     if (!variantProduct) return;
 
@@ -104,36 +103,64 @@ function DashBoardProduct() {
       cartItemId: `${variantProduct.id}-${variant.id}`,
       imageUrl: variant.imageUrl,
       quantity: 1,
-      sku: variant.sku, // Added missing 'sku' property
+      sku: variant.sku,
     });
+
     setVariantProduct(null);
+    setActiveTab("cart"); // auto-open cart after selecting variant
   };
 
   return (
-    <div>
-      {/* Product selections sections */}
-      <CartProductSection
-        setCart={setCart}
-        showMobileCart={showMobileCart}
-        cart={cart}
-        sku={sku}
-        setSku={setSku}
-        setAdjustments={setAdjustments}
-        adjustments={adjustments}
-      />
-      {/* Cart Section - Desktop */}
+    <div className="">
+      {/* 🔥 Top Navigation Tabs */}
+      <div className="flex gap-6 mb-4 border-b pb-2">
+        <button
+          className={`px-4 py-2 font-medium ${
+            activeTab === "products"
+              ? "text-blue-600 border-b-2 border-blue-600"
+              : "text-gray-500"
+          }`}
+          onClick={() => setActiveTab("products")}
+        >
+          Products
+        </button>
 
-      <ShoppingCart
-        showMobileCart={showMobileCart}
-        cart={cart}
-        setCart={setCart}
-        adjustments={adjustments}
-        setAdjustments={setAdjustments}
-        onClose={() => {
-          setShowMobileCart(false);
-        }}
-        handleBarcodeScan={handleBarcodeScan}
-      />
+        <button
+          className={`px-4 py-2 font-medium ${
+            activeTab === "cart"
+              ? "text-blue-600 border-b-2 border-blue-600"
+              : "text-gray-500"
+          }`}
+          onClick={() => setActiveTab("cart")}
+        >
+          Cart ({cartItemsCount})
+        </button>
+      </div>
+
+      {/* 🔥 Tab Content Display */}
+      {activeTab === "products" && (
+        <CartProductSection
+          setCart={setCart}
+          cart={cart}
+          sku={sku}
+          setSku={setSku}
+          setAdjustments={setAdjustments}
+          adjustments={adjustments}
+        />
+      )}
+
+      {activeTab === "cart" && (
+        <ShoppingCart
+          cart={cart}
+          setCart={setCart}
+          adjustments={adjustments}
+          setAdjustments={setAdjustments}
+          handleBarcodeScan={handleBarcodeScan}
+          showMobileCart={true}
+          onClose={() => setActiveTab("products")} // switch back to product tab
+        />
+      )}
+
       {/* Variant Selection Modal */}
       <Modal
         isOpen={!!variantProduct}
@@ -149,6 +176,14 @@ function DashBoardProduct() {
           />
         )}
       </Modal>
+
+      {/* Mobile Floating Cart Button */}
+      <button
+        onClick={() => setActiveTab("cart")}
+        className="fixed bottom-4 right-4 bg-blue-600 text-white px-5 py-3 rounded-full shadow-lg md:hidden"
+      >
+        Cart ({cartItemsCount})
+      </button>
     </div>
   );
 }

@@ -6,6 +6,7 @@ interface ModalProps {
   title?: string;
   children: ReactNode;
   className?: string;
+  titleContainerClassName?: string;
   useInnerModal?: boolean;
 }
 
@@ -14,6 +15,7 @@ const Modal: React.FC<ModalProps> = ({
   onClose,
   title,
   children,
+  titleContainerClassName,
   className,
   useInnerModal = false,
 }) => {
@@ -35,7 +37,7 @@ const Modal: React.FC<ModalProps> = ({
             !useInnerModal
               ? "mb-6 justify-between"
               : "mb-[-45px] mr-4 flex items-center justify-center pb-1 bg-white ml-auto w-[30px] h-[30px] relative z-[50] rounded-md"
-          }`}
+          } ${titleContainerClassName}`}
         >
           {!useInnerModal && (
             <h2 className="text-xl font-semibold text-gray-800">
