@@ -83,7 +83,8 @@ function ShoppingCart({
   showMobileCart,
   onClose,
   handleBarcodeScan,
-  variant = "dynamic",
+  initialBarcodeOpen = false,
+  onCloseBarcodeScanner,
 }: {
   cart: CartItem[];
   adjustments: CartAdjustments;
@@ -91,8 +92,10 @@ function ShoppingCart({
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   showMobileCart: boolean;
   onClose: () => void;
+  initialBarcodeOpen?: boolean;
   handleBarcodeScan: (value: string) => void;
   variant?: "dynamic" | "mobile" | "desktop";
+  onCloseBarcodeScanner?: () => void;
 }) {
   const { user } = useAuth();
 
@@ -101,7 +104,8 @@ function ShoppingCart({
     phone: "",
   });
 
-  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] =
+    useState(initialBarcodeOpen);
 
   const queryClient = useQueryClient();
 
@@ -2060,7 +2064,10 @@ function ShoppingCart({
 
       <Modal
         isOpen={isBarcodeScannerOpen}
-        onClose={() => setIsBarcodeScannerOpen(false)}
+        onClose={() => {
+          onCloseBarcodeScanner?.();
+          setIsBarcodeScannerOpen(false);
+        }}
         title="Barcode Scanner"
         className="max-w-2xl"
       >

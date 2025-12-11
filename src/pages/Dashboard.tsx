@@ -27,6 +27,7 @@ import money from "@/utils/money";
 import MobileCartToggleButton from "@/components/shared/MobileCartToggleButton";
 import Modal from "@/components/Modal";
 import DashBoardProduct from "./DashBoardProduct";
+import { BiBarcode } from "react-icons/bi";
 
 interface DashboardStats {
   totalSales: number;
@@ -433,6 +434,10 @@ const Dashboard: React.FC = () => {
         }}
         open={showMobileCart}
         cartItemsCount={0}
+        icon={
+          <img src="/barcodescanner.gif" className="w-10 h-10 rounded-sm" />
+        }
+        // icon={<BiBarcode className="w-8 h-8 animate-pulse" />}
         // cartItemsCount={cartItemsCount}
       />
 
@@ -442,11 +447,11 @@ const Dashboard: React.FC = () => {
           setProductModalOpen(false);
           setShowMobileCart(false);
         }}
-        className="!max-w-[80vw]"
+        className="!md:max-w-[90vw] !max-w-[70vw]"
         titleContainerClassName="!mb-0"
         // useInnerModal={true}
       >
-        <DashBoardProduct />
+        <DashBoardProduct initialBarcodeOpen={true} />
       </Modal>
     </div>
   );

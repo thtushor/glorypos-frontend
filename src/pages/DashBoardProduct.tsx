@@ -11,7 +11,11 @@ import { set } from "lodash";
 import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
 
-function DashBoardProduct() {
+function DashBoardProduct({
+  initialBarcodeOpen = false,
+}: {
+  initialBarcodeOpen?: boolean;
+}) {
   const [sku, setSku] = useState("");
 
   const [adjustments, setAdjustments] = useState<CartAdjustments>({
@@ -26,12 +30,18 @@ function DashBoardProduct() {
   const [variantProduct, setVariantProduct] = useState<Product | null>(null);
 
   // 🔥 NEW — tab navigation state
-  const [activeTab, setActiveTab] = useState<"products" | "cart">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "cart">(
+    initialBarcodeOpen ? "cart" : "products"
+  );
+
+  const [initialBarcodeOpenState, setInitialBarcodeOpenState] =
+    useState(initialBarcodeOpen);
 
   const handleBarcodeScan = useCallback((barcode: string) => {
     if (barcode && barcode.trim()) {
       setSku(barcode.trim());
       setActiveTab("products"); // switch to products tab on scan
+      setInitialBarcodeOpenState(false);
       toast.success(`Searching for: ${barcode.trim()}`);
     }
   }, []);
@@ -157,6 +167,9 @@ function DashBoardProduct() {
           setAdjustments={setAdjustments}
           handleBarcodeScan={handleBarcodeScan}
           showMobileCart={true}
+          initialBarcodeOpen={initialBarcodeOpenState}
+          onCloseBarcodeScanner={() => setInitialBarcodeOpenState(false)}
+          // variant="desktop"
           onClose={() => setActiveTab("products")} // switch back to product tab
         />
       )}

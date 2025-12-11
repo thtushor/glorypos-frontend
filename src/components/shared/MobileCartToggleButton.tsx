@@ -10,11 +10,13 @@ function MobileCartToggleButton({
   open,
   cartItemsCount,
   enableMobileCart = true,
+  icon,
 }: {
   onClick: () => void;
   open: boolean;
   cartItemsCount: number;
   enableMobileCart?: boolean;
+  icon?: React.ReactNode;
 }) {
   return (
     <button
@@ -26,7 +28,7 @@ function MobileCartToggleButton({
       } fixed z-50`}
     >
       <div className="relative">
-        <FaShoppingCart className="w-6 h-6" />
+        {icon ? icon : <FaShoppingCart className="w-6 h-6" />}
         {cartItemsCount > 0 && (
           <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
             {cartItemsCount}
