@@ -27,7 +27,7 @@ import money from "@/utils/money";
 import MobileCartToggleButton from "@/components/shared/MobileCartToggleButton";
 import Modal from "@/components/Modal";
 import DashBoardProduct from "./DashBoardProduct";
-import { BiBarcode } from "react-icons/bi";
+// import { BiBarcode } from "react-icons/bi";
 
 interface DashboardStats {
   totalSales: number;

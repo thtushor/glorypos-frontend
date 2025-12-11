@@ -7,7 +7,7 @@ import { VariantSelectionModal } from "@/components/shared/VariantSelectionModal
 import { CartItem } from "@/types/cartItemType";
 import { Product, ProductVariant } from "@/types/ProductType";
 import { formatCurrency, successToast } from "@/utils/utils";
-import { set } from "lodash";
+// import { set } from "lodash";
 import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
 
