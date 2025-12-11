@@ -11,6 +11,8 @@ import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
 
 function DashBoardProduct() {
+  const [activeView, setActiveView] = useState("products"); //
+
   const [sku, setSku] = useState("");
 
   const [adjustments, setAdjustments] = useState<CartAdjustments>({

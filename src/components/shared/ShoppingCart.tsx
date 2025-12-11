@@ -83,8 +83,8 @@ function ShoppingCart({
   showMobileCart,
   onClose,
   handleBarcodeScan,
-  variant = "dynamic",
-}: {
+}: // variant = "dynamic",
+{
   cart: CartItem[];
   adjustments: CartAdjustments;
   setAdjustments: React.Dispatch<React.SetStateAction<CartAdjustments>>;
@@ -92,7 +92,7 @@ function ShoppingCart({
   showMobileCart: boolean;
   onClose: () => void;
   handleBarcodeScan: (value: string) => void;
-  variant?: "dynamic" | "mobile" | "desktop";
+  // variant?: "dynamic" | "mobile" | "desktop";
 }) {
   const { user } = useAuth();
 
