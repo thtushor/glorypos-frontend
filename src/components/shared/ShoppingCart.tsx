@@ -701,6 +701,7 @@ function ShoppingCart({
                             <input
                               type="text"
                               inputMode="decimal"
+                              
                               value={getNumericValue(salesPrice)}
                               onChange={(e) => {
                                 const filtered = filterNumericInput(
@@ -726,7 +727,7 @@ function ShoppingCart({
                                   formatCurrency(parsed)
                                 );
                               }}
-                              className="flex-1 min-w-0 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                              className=" w-[100px] min-w-0 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary"
                             />
                           </div>
                         </div>
@@ -787,7 +788,7 @@ function ShoppingCart({
                                   formatCurrency(finalValue)
                                 );
                               }}
-                              className="flex-1 min-w-0 px-2 py-1 text-xs border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                              className="w-[50px] px-2 py-1 text-xs border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
                             />
                             <select
                               value={discount.type}
@@ -801,7 +802,7 @@ function ShoppingCart({
                               className="text-xs border-y border-r rounded-r bg-gray-50 px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
                             >
                               <option value="percentage">%</option>
-                              <option value="amount">$</option>
+                              <option value="amount">฿</option>
                             </select>
                           </div>
                         </div>
@@ -1811,6 +1812,7 @@ function ShoppingCart({
                   ฿
                 </span>
                 <input
+                
                   type="text"
                   inputMode="decimal"
                   value={

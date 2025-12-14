@@ -1,13 +1,10 @@
-import Modal from "@/components/Modal";
 import CartProductSection from "@/components/shared/CartProductSection";
 import ShoppingCart, {
   CartAdjustments,
 } from "@/components/shared/ShoppingCart";
-import { VariantSelectionModal } from "@/components/shared/VariantSelectionModal";
+
 import { CartItem } from "@/types/cartItemType";
-import { Product, ProductVariant } from "@/types/ProductType";
-import { formatCurrency, successToast } from "@/utils/utils";
-import { set } from "lodash";
+
 import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
 
@@ -27,7 +24,6 @@ function DashBoardProduct({
   });
 
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [variantProduct, setVariantProduct] = useState<Product | null>(null);
 
   // 🔥 NEW — tab navigation state
   const [activeTab, setActiveTab] = useState<"products" | "cart">(
@@ -46,79 +42,8 @@ function DashBoardProduct({
     }
   }, []);
 
-  // Add to cart logic
-  const addToCart = (product: CartItem) => {
-    const existingItem = cart.find(
-      (item) => item.cartItemId === product.cartItemId
-    );
-
-    if (existingItem) {
-      if (
-        existingItem.quantity >=
-        (product.selectedVariant?.quantity || product.stock)
-      ) {
-        successToast("Stock limit reached", "warn");
-        return;
-      }
-
-      setCart(
-        cart.map((item) =>
-          item.cartItemId === product.cartItemId
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
-      );
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
-
-      // Add discount adjustments
-      if (product.discountType && Number(product.discountAmount || 0) > 0) {
-        setAdjustments((prev) => ({
-          ...prev,
-          discountAdjustments: {
-            ...prev.discountAdjustments,
-            [product.id]: {
-              type:
-                (product.discountType as "percentage" | "amount") ||
-                "percentage",
-              value: formatCurrency(Number(product.discountAmount || 0)),
-            },
-          },
-        }));
-      }
-
-      // Add sales price adjustment
-      if (product.salesPrice && Number(product.salesPrice) > 0) {
-        setAdjustments((prev) => ({
-          ...prev,
-          salesPriceAdjustments: {
-            ...prev.salesPriceAdjustments,
-            [product.id]: formatCurrency(Number(product.salesPrice)),
-          },
-        }));
-      }
-    }
-  };
-
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Variant selection handler
-  const handleVariantSelect = (variant: ProductVariant) => {
-    if (!variantProduct) return;
-
-    addToCart({
-      ...variantProduct,
-      unit: variantProduct.Unit,
-      selectedVariant: variant as any,
-      cartItemId: `${variantProduct.id}-${variant.id}`,
-      imageUrl: variant.imageUrl,
-      quantity: 1,
-      sku: variant.sku,
-    });
-
-    setVariantProduct(null);
-    setActiveTab("cart"); // auto-open cart after selecting variant
-  };
 
   return (
     <div className="">
@@ -174,21 +99,7 @@ function DashBoardProduct({
         />
       )}
 
-      {/* Variant Selection Modal */}
-      <Modal
-        isOpen={!!variantProduct}
-        onClose={() => setVariantProduct(null)}
-        title="Select Variant"
-        className="max-w-lg"
-      >
-        {variantProduct && (
-          <VariantSelectionModal
-            product={variantProduct}
-            onSelect={handleVariantSelect}
-            onClose={() => setVariantProduct(null)}
-          />
-        )}
-      </Modal>
+    
 
       {/* Mobile Floating Cart Button */}
       <button

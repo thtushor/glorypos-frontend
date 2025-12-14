@@ -27,7 +27,6 @@ import money from "@/utils/money";
 import MobileCartToggleButton from "@/components/shared/MobileCartToggleButton";
 import Modal from "@/components/Modal";
 import DashBoardProduct from "./DashBoardProduct";
-import { BiBarcode } from "react-icons/bi";
 
 interface DashboardStats {
   totalSales: number;
@@ -445,7 +444,7 @@ const Dashboard: React.FC = () => {
           setProductModalOpen(false);
           setShowMobileCart(false);
         }}
-        className="!md:max-w-[90vw] !max-w-[70vw]"
+        className="!max-w-[95vw]"
         titleContainerClassName="!mb-0"
         // useInnerModal={true}
       >
