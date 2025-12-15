@@ -36,6 +36,7 @@ type Kpis = {
   outOfStockCount: number;
   totalProducts: number;
   totalCategories: number;
+  totalBrands: number;
 };
 
 type ProductRow = {
@@ -455,7 +456,7 @@ export default function SalesReportPage() {
         <div className="space-y-6">
           {/* KPI Cards */}
           {kpis && (
-            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <KpiCard
                 title="Today's Sales"
                 value={kpis.todaySalesAmount}
@@ -496,6 +497,11 @@ export default function SalesReportPage() {
                 title="Total Categories"
                 value={kpis.totalCategories}
                 accent="cyan"
+              />
+              <KpiCard
+                title="Total Brands"
+                value={kpis.totalBrands}
+                accent="tomatoes"
               />
             </div>
           )}
@@ -558,65 +564,130 @@ export default function SalesReportPage() {
 
             {/* Category & brand summary */}
             <div className="space-y-4">
+              {/* Categories */}
               <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-5">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">
-                  Top Categories by Sales
+                  Top Categories Overview
                 </h2>
                 {categoryRows.length === 0 ? (
                   <p className="text-xs text-gray-500">
                     No category breakdown for this period.
                   </p>
                 ) : (
-                  <ul className="space-y-2">
+                  <ul className="space-y-3">
                     {categoryRows.slice(0, 5).map((cat) => (
                       <li
                         key={cat.categoryId}
-                        className="flex items-center justify-between text-xs"
+                        className="text-xs rounded-lg border border-gray-100 px-3 py-2 bg-gray-50/60"
                       >
-                        <div className="flex flex-col">
-                          <span className="font-medium text-gray-800">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium text-gray-900">
                             {cat.categoryName}
                           </span>
-                          <span className="text-gray-500">
-                            {cat.productsCount} products • {cat.salesQty} items
+                          <span className="font-semibold text-emerald-600">
+                            {money.format(Number(cat.salesAmount || 0))}
                           </span>
                         </div>
-                        <span className="font-semibold text-emerald-600">
-                          {money.format(Number(cat.salesAmount || 0))}
-                        </span>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-600">
+                          <span>
+                            Products:{" "}
+                            <span className="font-medium">
+                              {cat.productsCount}
+                            </span>
+                          </span>
+                          <span>
+                            Items sold:{" "}
+                            <span className="font-medium">{cat.salesQty}</span>
+                          </span>
+                          <span>
+                            Stock qty:{" "}
+                            <span className="font-medium">{cat.stockQty}</span>
+                          </span>
+                        </div>
+                        <div className="mt-2 h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
+                          {(() => {
+                            const maxSales = Math.max(
+                              ...categoryRows.map((c) => c.salesAmount || 0)
+                            );
+                            const width =
+                              maxSales > 0
+                                ? (Number(cat.salesAmount || 0) / maxSales) *
+                                  100
+                                : 0;
+                            return (
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-brand-primary"
+                                style={{ width: `${width}%` }}
+                              />
+                            );
+                          })()}
+                        </div>
                       </li>
                     ))}
                   </ul>
                 )}
               </div>
 
+              {/* Brands */}
               <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-5">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">
-                  Top Brands by Sales
+                  Top Brands Overview
                 </h2>
                 {brandRows.length === 0 ? (
                   <p className="text-xs text-gray-500">
                     No brand breakdown for this period.
                   </p>
                 ) : (
-                  <ul className="space-y-2">
+                  <ul className="space-y-3">
                     {brandRows.slice(0, 5).map((brand) => (
                       <li
                         key={brand.brandId}
-                        className="flex items-center justify-between text-xs"
+                        className="text-xs rounded-lg border border-gray-100 px-3 py-2 bg-gray-50/60"
                       >
-                        <div className="flex flex-col">
-                          <span className="font-medium text-gray-800">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium text-gray-900">
                             {brand.brandName}
                           </span>
-                          <span className="text-gray-500">
-                            {brand.productsCount} products • {brand.salesQty}{" "}
-                            items
+                          <span className="font-semibold text-emerald-600">
+                            {money.format(Number(brand.salesAmount || 0))}
                           </span>
                         </div>
-                        <span className="font-semibold text-emerald-600">
-                          {money.format(Number(brand.salesAmount || 0))}
-                        </span>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-600">
+                          <span>
+                            Products:{" "}
+                            <span className="font-medium">
+                              {brand.productsCount}
+                            </span>
+                          </span>
+                          <span>
+                            Items sold:{" "}
+                            <span className="font-medium">{brand.salesQty}</span>
+                          </span>
+                          <span>
+                            Stock qty:{" "}
+                            <span className="font-medium">
+                              {brand.stockQty}
+                            </span>
+                          </span>
+                        </div>
+                        <div className="mt-2 h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
+                          {(() => {
+                            const maxSales = Math.max(
+                              ...brandRows.map((b) => b.salesAmount || 0)
+                            );
+                            const width =
+                              maxSales > 0
+                                ? (Number(brand.salesAmount || 0) / maxSales) *
+                                  100
+                                : 0;
+                            return (
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-brand-primary"
+                                style={{ width: `${width}%` }}
+                              />
+                            );
+                          })()}
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -789,7 +860,8 @@ type Accent =
   | "orange"
   | "red"
   | "indigo"
-  | "cyan";
+  | "cyan"
+  | "tomatoes";
 
 interface KpiCardProps {
   title: string;
@@ -849,6 +921,12 @@ const accentMap: Record<
     text: "text-cyan-700",
     ring: "ring-cyan-100",
     pill: "bg-cyan-100 text-cyan-700",
+  },
+  tomatoes: {
+    bg: "from-red-50 to-red-100",
+    text: "text-red-700",
+    ring: "ring-red-100",
+    pill: "bg-red-100 text-red-700",
   },
 };
 
