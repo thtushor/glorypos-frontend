@@ -1,6 +1,15 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import {
   BRANDS_URL,
   CATEGORY_URL,
   COLORS_URL,
@@ -508,7 +517,7 @@ export default function SalesReportPage() {
 
           {/* Time series & summary */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2 bg-white rounded-xl shadow-sm border p-4 sm:p-5">
+            <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-5">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                   Sales Over Time
@@ -523,41 +532,33 @@ export default function SalesReportPage() {
                 </div>
               ) : (
                 <div className="relative h-56 sm:h-64">
-                  {/* Simple line-like viz using bars and dots to avoid chart libs */}
-                  <div className="absolute inset-0 flex flex-col justify-between text-[10px] text-gray-400">
-                    <div className="border-t" />
-                    <div className="border-t border-dashed" />
-                    <div className="border-t border-dashed" />
-                    <div className="border-t" />
-                  </div>
-                  <div className="relative h-full flex items-end gap-1 sm:gap-2">
-                    {timeSeries.map((point) => {
-                      const maxAmount = Math.max(
-                        ...timeSeries.map((p) => p.salesAmount || 0)
-                      );
-                      const height =
-                        maxAmount > 0
-                          ? (point.salesAmount / maxAmount) * 100
-                          : 0;
-                      return (
-                        <div
-                          key={point.date}
-                          className="flex-1 flex flex-col items-center group"
-                        >
-                          <div
-                            className="w-full rounded-t-md bg-gradient-to-t from-brand-primary to-emerald-400 shadow-sm group-hover:opacity-80 transition-opacity"
-                            style={{ height: `${Math.max(height, 6)}%` }}
-                          />
-                          <div className="mt-1 text-[10px] text-gray-400 rotate-45 origin-top">
-                            {new Date(point.date).toLocaleDateString(
-                              undefined,
-                              { month: "short", day: "numeric" }
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={timeSeries.map((point) => ({
+                        name: new Date(point.date).toLocaleDateString(
+                          undefined,
+                          { month: "short", day: "numeric" }
+                        ),
+                        sales: point.salesAmount,
+                        itemsSold: point.itemsSold,
+                        orders: point.orders,
+                      }))}
+                      margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Area
+                        type="monotone"
+                        dataKey="sales"
+                        stroke="#32cd32"
+                        fill="#32cd32"
+                        fillOpacity={0.15}
+                        name="Sales"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
               )}
             </div>
@@ -567,7 +568,7 @@ export default function SalesReportPage() {
               {/* Categories */}
               <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-5">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">
-                  Top Categories Overview
+                  All Categories Overview
                 </h2>
                 {categoryRows.length === 0 ? (
                   <p className="text-xs text-gray-500">
@@ -631,7 +632,7 @@ export default function SalesReportPage() {
               {/* Brands */}
               <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-5">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">
-                  Top Brands Overview
+                  All Brands Overview
                 </h2>
                 {brandRows.length === 0 ? (
                   <p className="text-xs text-gray-500">
