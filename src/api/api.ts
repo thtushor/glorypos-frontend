@@ -150,6 +150,9 @@ export const ORDERS_URL = `${BASE_URL}/orders`;
 export const DELETE_ORDERS_URL = `${BASE_URL}/orders/delete`;
 export const UPDATE_ORDERS_URL = `${BASE_URL}/orders/update`;
 
+// Sales Report API
+export const SALES_REPORT_URL = `${BASE_URL}/orders/report/sales-inventory`;
+
 // Subscription API
 export const SUBSCRIPTION_PLAN = `${BASE_URL}/subscription/plans`;
 export const DELETE_SUBSCRIPTION_PLAN = `${BASE_URL}/subscription/plans/delete`;
