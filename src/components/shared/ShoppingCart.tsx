@@ -369,9 +369,14 @@ function ShoppingCart({
     }));
   };
 
+  type CreateOrderVariables = {
+    cartItems: CartItem[];
+    kotPaymentStatus?: string;
+  };
+
   // Add this mutation
   const createOrderMutation = useMutation({
-    mutationFn: async (cartItems: CartItem[], kotPaymentStatus?: string) => {
+    mutationFn: async ({ cartItems, kotPaymentStatus }: CreateOrderVariables) => {
       const orderTotal = total;
       const isMixed =
         (partialPayment.cashAmount > 0 &&
@@ -520,12 +525,24 @@ function ShoppingCart({
       );
       return;
     }
-    createOrderMutation.mutate(cart);
+    createOrderMutation.mutate({ cartItems: cart });
   };
 
   const handleProcessPrintKOT = () => {
-    console.log({ cart });
-    // createOrderMutation.mutate(cart);
+    if (cart.length === 0) {
+      toast.error("Cart is empty");
+      return;
+    }
+
+    // Require staff selection similar to payment flow
+    if (selectedStaffId === null) {
+      setShowStaffModal(true);
+      toast.error("Please select staff or self sell before printing KOT");
+      return;
+    }
+
+    // Create order for KOT with pending KOT payment status
+    createOrderMutation.mutate({ cartItems: cart, kotPaymentStatus: "pending" });
   };
 
   const handleQuickPayment = (method: "cash" | "card" | "mobile_banking") => {
