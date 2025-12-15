@@ -1800,7 +1800,7 @@ function ShoppingCart({
                       : "text-blue-500"
                   }`}
                 />
-                Card Amount
+                Card Amouns
                 {partialPayment.cardAmount > 0 && (
                   <span className="ml-auto text-blue-600 font-bold">
                     ✓ Selected
