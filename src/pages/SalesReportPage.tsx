@@ -566,9 +566,12 @@ export default function SalesReportPage() {
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* Categories */}
             <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-5">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
                 All Categories Overview
               </h2>
+              <p className="text-[11px] text-gray-500 mb-2">
+                Longer bars indicate higher sales for this category in the selected period.
+              </p>
               {categoryRows.length === 0 ? (
                 <p className="text-xs text-gray-500">
                   No category breakdown for this period.
@@ -632,9 +635,12 @@ export default function SalesReportPage() {
 
             {/* Brands */}
             <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-5">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
                 All Brands Overview
               </h2>
+              <p className="text-[11px] text-gray-500 mb-2">
+                Longer bars indicate higher sales for this brand in the selected period.
+              </p>
               {brandRows.length === 0 ? (
                 <p className="text-xs text-gray-500">
                   No brand breakdown for this period.
