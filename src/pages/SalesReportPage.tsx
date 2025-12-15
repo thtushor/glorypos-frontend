@@ -515,68 +515,68 @@ export default function SalesReportPage() {
             </div>
           )}
 
-          {/* Time series & summary */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                  Sales Over Time
-                </h2>
-                <span className="text-xs text-gray-500">
-                  {timeSeries.length} data points
-                </span>
-              </div>
-              {timeSeries.length === 0 ? (
-                <div className="text-sm text-gray-500 text-center py-8">
-                  No sales data for this period.
-                </div>
-              ) : (
-                <div className="relative h-56 sm:h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={timeSeries.map((point) => ({
-                        name: new Date(point.date).toLocaleDateString(
-                          undefined,
-                          { month: "short", day: "numeric" }
-                        ),
-                        sales: point.salesAmount,
-                        itemsSold: point.itemsSold,
-                        orders: point.orders,
-                      }))}
-                      margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Area
-                        type="monotone"
-                        dataKey="sales"
-                        stroke="#32cd32"
-                        fill="#32cd32"
-                        fillOpacity={0.15}
-                        name="Sales"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
+          {/* Sales over time */}
+          <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                Sales Over Time
+              </h2>
+              <span className="text-xs text-gray-500">
+                {timeSeries.length} data points
+              </span>
             </div>
+            {timeSeries.length === 0 ? (
+              <div className="text-sm text-gray-500 text-center py-8">
+                No sales data for this period.
+              </div>
+            ) : (
+              <div className="relative h-56 sm:h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={timeSeries.map((point) => ({
+                      name: new Date(point.date).toLocaleDateString(
+                        undefined,
+                        { month: "short", day: "numeric" }
+                      ),
+                      sales: point.salesAmount,
+                      itemsSold: point.itemsSold,
+                      orders: point.orders,
+                    }))}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Area
+                      type="monotone"
+                      dataKey="sales"
+                      stroke="#32cd32"
+                      fill="#32cd32"
+                      fillOpacity={0.15}
+                      name="Sales"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
 
-            {/* Category & brand summary */}
-            <div className="space-y-4">
-              {/* Categories */}
-              <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-5">
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">
-                  All Categories Overview
-                </h2>
-                {categoryRows.length === 0 ? (
-                  <p className="text-xs text-gray-500">
-                    No category breakdown for this period.
-                  </p>
-                ) : (
+          {/* Category & brand summary */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {/* Categories */}
+            <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-5">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">
+                All Categories Overview
+              </h2>
+              {categoryRows.length === 0 ? (
+                <p className="text-xs text-gray-500">
+                  No category breakdown for this period.
+                </p>
+              ) : (
+                <div className="max-h-64 overflow-auto pr-1 custom-scrollbar">
                   <ul className="space-y-3">
-                    {categoryRows.slice(0, 5).map((cat) => (
+                    {categoryRows.map((cat) => (
                       <li
                         key={cat.categoryId}
                         className="text-xs rounded-lg border border-gray-100 px-3 py-2 bg-gray-50/60"
@@ -626,21 +626,23 @@ export default function SalesReportPage() {
                       </li>
                     ))}
                   </ul>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
 
-              {/* Brands */}
-              <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-5">
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">
-                  All Brands Overview
-                </h2>
-                {brandRows.length === 0 ? (
-                  <p className="text-xs text-gray-500">
-                    No brand breakdown for this period.
-                  </p>
-                ) : (
+            {/* Brands */}
+            <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-5">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">
+                All Brands Overview
+              </h2>
+              {brandRows.length === 0 ? (
+                <p className="text-xs text-gray-500">
+                  No brand breakdown for this period.
+                </p>
+              ) : (
+                <div className="max-h-64 overflow-auto pr-1 custom-scrollbar">
                   <ul className="space-y-3">
-                    {brandRows.slice(0, 5).map((brand) => (
+                    {brandRows.map((brand) => (
                       <li
                         key={brand.brandId}
                         className="text-xs rounded-lg border border-gray-100 px-3 py-2 bg-gray-50/60"
@@ -666,9 +668,7 @@ export default function SalesReportPage() {
                           </span>
                           <span>
                             Stock qty:{" "}
-                            <span className="font-medium">
-                              {brand.stockQty}
-                            </span>
+                            <span className="font-medium">{brand.stockQty}</span>
                           </span>
                         </div>
                         <div className="mt-2 h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
@@ -692,8 +692,8 @@ export default function SalesReportPage() {
                       </li>
                     ))}
                   </ul>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
 
