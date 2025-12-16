@@ -6,8 +6,8 @@ import {
   Product,
 } from "@/types/ProductType";
 
-export const BASE_URL = "https://glorypos.com/api/api";
-// export const BASE_URL = "http://localhost:3000/api";
+// export const BASE_URL = "https://glorypos.com/api/api";
+export const BASE_URL = "http://localhost:3000/api";
 
 export const REGISTER_URL = `${BASE_URL}/register`;
 export const LOGIN_URL = `${BASE_URL}/login`;
@@ -147,8 +147,12 @@ export const UPDATE_PRODUCT_VARIANTS_URL = `${BASE_URL}/product-variants/update`
 
 // Order API
 export const ORDERS_URL = `${BASE_URL}/orders`;
+export const SINGLE_ORDERS_URL = `${BASE_URL}/orders/single-order`;
 export const DELETE_ORDERS_URL = `${BASE_URL}/orders/delete`;
 export const UPDATE_ORDERS_URL = `${BASE_URL}/orders/update`;
+
+// Sales Report API
+export const SALES_REPORT_URL = `${BASE_URL}/orders/report/sales-inventory`;
 
 // Subscription API
 export const SUBSCRIPTION_PLAN = `${BASE_URL}/subscription/plans`;

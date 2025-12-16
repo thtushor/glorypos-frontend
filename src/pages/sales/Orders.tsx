@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FaSearch, FaEye, FaFilter } from "react-icons/fa";
+import { FaSearch, FaEye, FaFilter, FaRegEdit } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import { ORDERS_URL } from "@/api/api";
 import Pagination from "@/components/Pagination";
@@ -11,6 +11,8 @@ import { BiSpreadsheet } from "react-icons/bi";
 import ProductStatement from "@/components/ProductStatement";
 import Spinner from "@/components/Spinner";
 import money from "@/utils/money";
+import DashBoardProduct from "../DashBoardProduct";
+import { useAuth } from "@/context/AuthContext";
 
 interface OrderItem {
   id: number;
@@ -36,6 +38,9 @@ interface OrderItem {
 interface Order {
   id: number;
   orderNumber: string;
+  tableNumber?: string;
+  specialNotes?: string;
+  guestNumber?: number;
   customerName: string;
   customerPhone: string | null;
   customerEmail: string | null;
@@ -80,6 +85,7 @@ interface FilterParams {
 }
 
 const Orders: React.FC = () => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
@@ -90,6 +96,7 @@ const Orders: React.FC = () => {
   });
 
   const [isOpen, setIsOpen] = useState(false);
+  const [adjustOrderModalOpen, setAdjustOrderModalOpen] = useState(false);
 
   // Fetch Orders
   const {
@@ -283,6 +290,19 @@ const Orders: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Customer
                 </th>
+                {user?.shopType === "restaurant" &&
+                  <>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Table No.
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Guest No.
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Notes
+                    </th>
+                  </>
+                }
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Date
                 </th>
@@ -343,6 +363,19 @@ const Orders: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {order.customerName || "---"}
                       </td>
+                      {user?.shopType === "restaurant" &&
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {order?.tableNumber || ""}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {order?.guestNumber || ""}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {order?.specialNotes || ""}
+                          </td>
+                        </>
+                      }
                       <td className="px-6 py-4 whitespace-nowrap">
                         {order.orderDate
                           ? new Date(order.orderDate).toLocaleDateString()
@@ -351,8 +384,8 @@ const Orders: React.FC = () => {
                       {/* Seller Info */}
                       <td className="px-4 py-2 whitespace-nowrap">
                         {order.commissions?.[0]?.staff?.fullName ||
-                        order.commissions?.[0]?.staff?.role ||
-                        order?.commissions?.[0]?.staff?.parent?.businessName ? (
+                          order.commissions?.[0]?.staff?.role ||
+                          order?.commissions?.[0]?.staff?.parent?.businessName ? (
                           <div className="flex flex-col gap-0.5">
                             {order.commissions?.[0]?.staff?.fullName && (
                               <span className="text-sm font-medium text-gray-800">
@@ -368,11 +401,11 @@ const Orders: React.FC = () => {
                             )}
                             {order?.commissions?.[0]?.staff?.parent
                               ?.businessName && (
-                              <strong className="text-xs text-gray-500">
-                                shop:{" "}
-                                {order.commissions[0].staff.parent.businessName}
-                              </strong>
-                            )}
+                                <strong className="text-xs text-gray-500">
+                                  shop:{" "}
+                                  {order.commissions[0].staff.parent.businessName}
+                                </strong>
+                              )}
                           </div>
                         ) : (
                           <span className="text-gray-400">---</span>
@@ -433,7 +466,7 @@ const Orders: React.FC = () => {
                             <span className="font-semibold text-green-600">
                               {money.format(
                                 totals.totalProfit -
-                                  Number(totals.totalCommission || 0)
+                                Number(totals.totalCommission || 0)
                               )}
                             </span>
                           ) : (
@@ -441,7 +474,7 @@ const Orders: React.FC = () => {
                               -
                               {money.format(
                                 totals.totalLoss +
-                                  Number(totals.totalCommission || 0)
+                                Number(totals.totalCommission || 0)
                               )}
                             </span>
                           )
@@ -461,6 +494,17 @@ const Orders: React.FC = () => {
                           >
                             <FaEye className="w-4 h-4" />
                           </button>
+
+                         {order.orderStatus!=="completed" && <button
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setAdjustOrderModalOpen(true);
+                            }}
+                            className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full"
+                            title="Adjust Order"
+                          >
+                            <FaRegEdit className="w-4 h-4" />
+                          </button>}
                         </div>
                       </td>
                     </tr>
@@ -504,6 +548,19 @@ const Orders: React.FC = () => {
             onPrint={handlePrintInvoice}
           />
         )}
+      </Modal>
+
+
+      <Modal
+        isOpen={adjustOrderModalOpen}
+        onClose={() => {
+          setAdjustOrderModalOpen(false);
+        }}
+        className="!max-w-[95vw]"
+        titleContainerClassName="!mb-0"
+      // useInnerModal={true}
+      >
+        <DashBoardProduct orderId={selectedOrder?.id} />
       </Modal>
 
       <ProductStatement

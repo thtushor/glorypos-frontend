@@ -2,6 +2,7 @@ import { Category, Color, Size, Unit } from "./categoryType";
 import { Product } from "./ProductType";
 
 export interface CartItem extends Product {
+  orderItemId?: number;
   quantity: number;
   unit: Unit;
   selectedVariant?: {

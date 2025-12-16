@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useMemo } from "react";
 import { FaPrint, FaMoneyBill, FaCreditCard, FaWallet } from "react-icons/fa";
 // import LogoSvg from "./icons/LogoSvg";
 import { getExpiryDate } from "@/utils/utils";
@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import { useReactToPrint } from "react-to-print";
 import LogoSvg from "./icons/LogoSvg";
 import money from "@/utils/money";
+import { useReceiptPrint, type Order, type PrintOptions } from "react-pos-engine";
 // import { useAuth } from "@/context/AuthContext";
 
 interface InvoiceItem {
@@ -32,6 +33,10 @@ interface InvoiceItem {
 
 interface InvoiceData {
   invoiceNumber: string;
+  guestNumber?: number;
+  specialNotes?: number | string;
+  tableNumber?: string;
+  spec?: string;
   date: string;
   customer: {
     name: string;
@@ -103,6 +108,202 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     enabled: !!orderId,
   });
 
+  // Transform invoice data to Order format for react-pos-engine
+  const receiptOrder: Order | null = useMemo(() => {
+    if (!invoiceData) return null;
+
+    // Helper function to convert price to cents
+    // Prices in the system are in base currency (e.g., 29.99), need to convert to cents (2999)
+    const toCents = (price: number): number => {
+      // Convert to cents by multiplying by 100 and rounding to avoid floating point issues
+      return Math.round(price * 100);
+    };
+
+    // Build custom fields array (individual fields)
+    const individualFields: Array<{ key: string; value: string }> = [];
+    
+    // Invoice Number
+    if (invoiceData.invoiceNumber) {
+      individualFields.push({ key: "Invoice #", value: invoiceData.invoiceNumber });
+    }
+    
+    // Table Number
+    if (invoiceData.tableNumber) {
+      individualFields.push({ key: "Table", value: invoiceData.tableNumber });
+    }
+    
+    // Guest Number
+    if (invoiceData.guestNumber) {
+      individualFields.push({ key: "Guests", value: String(invoiceData.guestNumber) });
+    }
+    
+    // Payment Method
+    if (invoiceData.payment.method) {
+      const paymentMethodLabel = invoiceData.payment.method === "mobile_banking" 
+        ? "Mobile Banking" 
+        : invoiceData.payment.method.toUpperCase();
+      individualFields.push({ key: "Payment Method", value: paymentMethodLabel });
+    }
+    
+    // Payment Status
+    if (invoiceData.payment.status) {
+      individualFields.push({ key: "Payment Status", value: invoiceData.payment.status });
+    }
+    
+    // Order Status
+    if (invoiceData.orderStatus) {
+      individualFields.push({ key: "Order Status", value: invoiceData.orderStatus });
+    }
+    
+    // Tax ID
+    if (invoiceData.businessInfo.taxId) {
+      individualFields.push({ key: "Tax ID", value: invoiceData.businessInfo.taxId });
+    }
+    
+    // Spec
+    if (invoiceData.spec) {
+      individualFields.push({ key: "Spec", value: invoiceData.spec });
+    }
+    
+    // Remaining Amount (if partial payment)
+    if (invoiceData.payment.remainingAmount > 0) {
+      individualFields.push({ 
+        key: "Remaining Amount", 
+        value: money.format(Number(invoiceData.payment.remainingAmount)) 
+      });
+    }
+    
+    // Special Notes as custom field
+    if (invoiceData.specialNotes !== undefined && 
+        invoiceData.specialNotes !== null && 
+        String(invoiceData.specialNotes).trim() !== "") {
+      individualFields.push({ key: "Special Notes", value: String(invoiceData.specialNotes) });
+    }
+
+    // Format custom fields into pairs with pipe separator (max 2 lines)
+    // Each custom field entry will contain two field pairs separated by pipe
+    const customFields: Array<{ key: string; value: string }> = [];
+    
+    // Group fields into pairs - each custom field entry = one line with 2 field pairs
+    // Max 2 lines = max 4 fields total
+    for (let i = 0; i < individualFields.length && i < 4; i += 2) {
+      const field1 = individualFields[i];
+      const field2 = individualFields[i + 1];
+      
+      if (field2) {
+        // Two fields on one line: "Field1: Value1 | Field2: Value2"
+        customFields.push({
+          key: `${field1.key}: ${field1.value} | ${field2.key}: ${field2.value}`,
+          value: ""
+        });
+      } else {
+        // Single field on one line: "Field1: Value1"
+        customFields.push({
+          key: `${field1.key}: ${field1.value}`,
+          value: ""
+        });
+      }
+    }
+    
+    // If there are more than 4 fields, add remaining fields (but limit to 2 lines total)
+    if (individualFields.length > 4) {
+      // Start from field 4 (index 4) for the second line
+      for (let i = 4; i < individualFields.length && i < 6; i += 2) {
+        const field1 = individualFields[i];
+        const field2 = individualFields[i + 1];
+        
+        if (field2) {
+          customFields.push({
+            key: `${field1.key}: ${field1.value} | ${field2.key}: ${field2.value}`,
+            value: ""
+          });
+        } else {
+          customFields.push({
+            key: `${field1.key}: ${field1.value}`,
+            value: ""
+          });
+        }
+      }
+    }
+
+    // Build notes
+    let notes = "";
+    if (invoiceData.payment.isPartial) {
+      notes = "⚠ Partial Payment";
+    }
+    
+    if (!notes) {
+      notes = "Thank you for your business!";
+    }
+
+    return {
+      id: invoiceData.invoiceNumber,
+      date: new Date(invoiceData.date).getTime(),
+      items: invoiceData.items.map((item) => ({
+        name: `${item.productName}${item.details ? ` - ${item.details}` : ""}`,
+        price: toCents(item.unitPrice),
+        quantity: item.quantity,
+      })),
+      subtotal: toCents(Number(invoiceData.summary.subtotal)),
+      tax: toCents(Number(invoiceData.summary.tax)),
+      total: toCents(Number(invoiceData.summary.total)),
+      customer: {
+        name: invoiceData.customer.name,
+        address: invoiceData.businessInfo.address,
+        phone: invoiceData.customer.phone,
+        email: invoiceData.customer.email !== "N/A" ? invoiceData.customer.email : "",
+      },
+      customFields,
+      notes,
+    };
+  }, [invoiceData]);
+
+  // Print options for react-pos-engine
+  const printOptions: PrintOptions = useMemo(() => ({
+    layout: 2, // Layout 2: Detailed POS w/ Custom Fields
+    alignment: 'center',
+    primaryColor: '#000000',
+    textColor: '#000000',
+    borderColor: '#000000',
+    headerBgColor: '#000000',
+    baseFontSize: 10,
+    paperSize: '80mm', // Standard 80mm receipt paper
+    fontFamily: 'Arial',
+    logoUrl: '',
+    headerText: invoiceData?.businessInfo?.name || '',
+    footerText: 'Thank you for your business!',
+    sellerName: invoiceData?.businessInfo?.name || '',
+    showSignature: false,
+    showTaxBreakdown: true,
+    customCss: '',
+  }), [invoiceData]);
+
+  // Initialize react-pos-engine print hook
+  const { printReceipt } = useReceiptPrint(
+    receiptOrder || {
+      id: "",
+      date: Date.now(),
+      items: [],
+      subtotal: 0,
+      tax: 0,
+      total: 0,
+      customer: { name: "", address: "", phone: "", email: "" },
+      customFields: [],
+      notes: "",
+    },
+    printOptions
+  );
+
+  // Handle print button click
+  const handlePrint = () => {
+    if (receiptOrder && receiptOrder.items.length > 0) {
+      printReceipt();
+    } else {
+      // Fallback to react-to-print if receipt order is not available
+      reactToPrintFn();
+    }
+  };
+
   if (!orderId) return null;
 
   if (isLoading) {
@@ -159,6 +360,16 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             <p>Phone: {invoiceData.customer.phone}</p>
             {invoiceData.customer.email !== "N/A" && (
               <p>Email: {invoiceData.customer.email}</p>
+            )}
+            {(invoiceData.guestNumber || invoiceData.tableNumber) && (
+              <div className="mt-3 pt-3 border-t">
+                {invoiceData.tableNumber && (
+                  <p className="font-medium">Table: {invoiceData.tableNumber}</p>
+                )}
+                {invoiceData.guestNumber && (
+                  <p className="font-medium">Guests: {invoiceData.guestNumber}</p>
+                )}
+              </div>
             )}
           </div>
 
@@ -240,6 +451,16 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
               </tbody>
             </table>
           </div>
+
+          {/* Special Notes */}
+          {invoiceData.specialNotes !== undefined && 
+           invoiceData.specialNotes !== null && 
+           String(invoiceData.specialNotes).trim() !== "" && (
+            <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <h3 className="font-medium text-sm mb-1 text-yellow-800">Special Notes</h3>
+              <p className="text-sm text-yellow-700 whitespace-pre-wrap">{String(invoiceData.specialNotes)}</p>
+            </div>
+          )}
 
           {/* Summary */}
           <div className="space-y-2 text-sm">
@@ -389,8 +610,9 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             Close
           </button>
           <button
-            onClick={() => reactToPrintFn()}
-            className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-2"
+            onClick={handlePrint}
+            disabled={!invoiceData || invoiceData.items.length === 0}
+            className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaPrint className="w-4 h-4" />
             Print

@@ -1,20 +1,23 @@
-import Modal from "@/components/Modal";
+import { ORDERS_URL, SINGLE_ORDERS_URL } from "@/api/api";
+import AXIOS from "@/api/network/Axios";
 import CartProductSection from "@/components/shared/CartProductSection";
 import ShoppingCart, {
   CartAdjustments,
 } from "@/components/shared/ShoppingCart";
-import { VariantSelectionModal } from "@/components/shared/VariantSelectionModal";
+
 import { CartItem } from "@/types/cartItemType";
-import { Product, ProductVariant } from "@/types/ProductType";
-import { formatCurrency, successToast } from "@/utils/utils";
-// import { set } from "lodash";
-import { useCallback, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { formatCurrency } from "@/utils/utils";
 
 function DashBoardProduct({
   initialBarcodeOpen = false,
+  orderId,
 }: {
   initialBarcodeOpen?: boolean;
+  orderId?: number;
 }) {
   const [sku, setSku] = useState("");
 
@@ -27,7 +30,6 @@ function DashBoardProduct({
   });
 
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [variantProduct, setVariantProduct] = useState<Product | null>(null);
 
   // 🔥 NEW — tab navigation state
   const [activeTab, setActiveTab] = useState<"products" | "cart">(
@@ -46,79 +48,103 @@ function DashBoardProduct({
     }
   }, []);
 
-  // Add to cart logic
-  const addToCart = (product: CartItem) => {
-    const existingItem = cart.find(
-      (item) => item.cartItemId === product.cartItemId
-    );
-
-    if (existingItem) {
-      if (
-        existingItem.quantity >=
-        (product.selectedVariant?.quantity || product.stock)
-      ) {
-        successToast("Stock limit reached", "warn");
-        return;
-      }
-
-      setCart(
-        cart.map((item) =>
-          item.cartItemId === product.cartItemId
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
-      );
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
-
-      // Add discount adjustments
-      if (product.discountType && Number(product.discountAmount || 0) > 0) {
-        setAdjustments((prev) => ({
-          ...prev,
-          discountAdjustments: {
-            ...prev.discountAdjustments,
-            [product.id]: {
-              type:
-                (product.discountType as "percentage" | "amount") ||
-                "percentage",
-              value: formatCurrency(Number(product.discountAmount || 0)),
-            },
-          },
-        }));
-      }
-
-      // Add sales price adjustment
-      if (product.salesPrice && Number(product.salesPrice) > 0) {
-        setAdjustments((prev) => ({
-          ...prev,
-          salesPriceAdjustments: {
-            ...prev.salesPriceAdjustments,
-            [product.id]: formatCurrency(Number(product.salesPrice)),
-          },
-        }));
-      }
-    }
-  };
-
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Variant selection handler
-  const handleVariantSelect = (variant: ProductVariant) => {
-    if (!variantProduct) return;
 
-    addToCart({
-      ...variantProduct,
-      unit: variantProduct.Unit,
-      selectedVariant: variant as any,
-      cartItemId: `${variantProduct.id}-${variant.id}`,
-      imageUrl: variant.imageUrl,
-      quantity: 1,
-      sku: variant.sku,
+  const { data: orderItems,isSuccess } = useQuery({
+    queryKey: ["order", orderId],
+    queryFn: async () => {
+      const response = await AXIOS.get(`${SINGLE_ORDERS_URL}/${orderId}`);
+      console.log({ response });
+      return response;
+    },
+    enabled: !!orderId,
+  });
+
+
+  useEffect(() => {
+    if (!isSuccess) return;
+
+    console.log({ orderItems });
+
+    const mappedItems: CartItem[] =
+      orderItems?.data?.OrderItems?.map((item: any) => {
+        const product = item.Product;
+        const variant = item.ProductVariant;
+
+        const unitPriceNumber = Number(item.unitPrice ?? product?.price ?? 0)+Number(item?.unitDiscount ?? 0);
+        const discountAmountNumber = Number(
+          item.discountAmount ?? product?.discountAmount ?? 0
+        );
+
+        return {
+          ...product,
+          orderItemId: item.id,
+          quantity: Number(item.quantity ?? 0),
+          unit: product.Unit,
+          selectedVariant: variant
+            ? {
+                ...variant,
+                Category: product?.Category,
+              }
+            : undefined,
+          cartItemId: `${product.id}-${variant?.id ?? "default"}`,
+          imageUrl: variant?.imageUrl || product.productImage,
+          sku: variant?.sku || product.sku,
+          unitPrice: unitPriceNumber,
+          originalUnitPrice: Number(
+            item.originalUnitPrice ?? product?.price ?? 0
+          ),
+          purchasePrice: Number(item.purchasePrice ?? product?.purchasePrice ?? 0),
+          subtotal: Number(item.subtotal ?? 0),
+          discountType:
+            (item.discountType as CartItem["discountType"]) || product.discountType,
+          unitDiscount: Number(item.unitDiscount ?? 0),
+          discountAmount: discountAmountNumber,
+          totalDiscount: Number(item.totalDiscount ?? 0),
+          OrderId: item.OrderId,
+          ProductId: item.ProductId,
+          ProductVariantId: item.ProductVariantId,
+        };
+      }) || [];
+
+    setCart(mappedItems);
+
+    // Sync per-item adjustments from order data so cart math stays consistent
+    setAdjustments((prev) => {
+      const discountAdjustments = { ...prev.discountAdjustments };
+      const salesPriceAdjustments = { ...prev.salesPriceAdjustments };
+
+      mappedItems.forEach((cartItem) => {
+        const discountValue = Number(cartItem.discountAmount || 0);
+        const unitPrice = (cartItem as CartItem & { unitPrice?: number })
+          .unitPrice;
+
+        if (cartItem.discountType && discountValue > 0) {
+          discountAdjustments[cartItem.id] = {
+            type:
+              (cartItem.discountType as "percentage" | "amount") || "percentage",
+            value: formatCurrency(discountValue),
+          };
+        }
+
+        if (unitPrice !== undefined) {
+          salesPriceAdjustments[cartItem.id] = formatCurrency(
+            Number(unitPrice)
+          );
+        }
+      });
+
+      return {
+        ...prev,
+        discountAdjustments,
+        salesPriceAdjustments,
+      };
     });
+  }, [isSuccess, orderItems, setAdjustments]);
 
-    setVariantProduct(null);
-    setActiveTab("cart"); // auto-open cart after selecting variant
-  };
+  
+
 
   return (
     <div className="">
@@ -163,6 +189,7 @@ function DashBoardProduct({
         <ShoppingCart
           cart={cart}
           setCart={setCart}
+          orderId={orderId}
           adjustments={adjustments}
           setAdjustments={setAdjustments}
           handleBarcodeScan={handleBarcodeScan}
@@ -170,25 +197,24 @@ function DashBoardProduct({
           initialBarcodeOpen={initialBarcodeOpenState}
           onCloseBarcodeScanner={() => setInitialBarcodeOpenState(false)}
           // variant="desktop"
+          initialCustomerInfo={{ name: orderItems?.data?.customerName || "", phone: orderItems?.data?.customerPhone || "" }}
+          initialPaymentInfo={
+            {
+              walletAmount: orderItems?.data?.walletAmount||0,
+              cardAmount: orderItems?.data?.cardAmount||0,
+              cashAmount: orderItems?.data?.cashAmount||0
+            }
+          }
+          initialKOTInfo={{
+            tableNumber: orderItems?.data?.tableNumber||"",
+            guestCount: orderItems?.data?.guestNumber||1,
+            specialInstructions: orderItems?.data?.specialNotes||""
+          }}
           onClose={() => setActiveTab("products")} // switch back to product tab
         />
       )}
 
-      {/* Variant Selection Modal */}
-      <Modal
-        isOpen={!!variantProduct}
-        onClose={() => setVariantProduct(null)}
-        title="Select Variant"
-        className="max-w-lg"
-      >
-        {variantProduct && (
-          <VariantSelectionModal
-            product={variantProduct}
-            onSelect={handleVariantSelect}
-            onClose={() => setVariantProduct(null)}
-          />
-        )}
-      </Modal>
+    
 
       {/* Mobile Floating Cart Button */}
       <button

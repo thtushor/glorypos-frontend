@@ -17,6 +17,7 @@ import {
   FaStore,
   FaMoneyCheckAlt,
   FaChartLine,
+  FaCalculator,
 } from "react-icons/fa";
 import { MdSubscriptions } from "react-icons/md";
 import { RiProfileFill } from "react-icons/ri";
@@ -53,10 +54,16 @@ export const menuItems = [
         icon: <FaChartLine className="w-5 h-5" />,
       },
       {
-        id: "statement",
+        id: "staff-commissions",
         title: "Staff Commissions",
         path: "/sales/staff-commissions",
         icon: <FaChartLine className="w-5 h-5" />,
+      },
+      {
+        id: "sales-report",
+        title: "Sales Report",
+        path: "/sales/sales-report",
+        icon: <FaCalculator className="w-5 h-5" />,
       },
     ],
   },

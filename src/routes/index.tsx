@@ -45,6 +45,7 @@ import ReleaseHistory from "@/pages/payroll/ReleaseHistory";
 import HolidayHistory from "@/pages/payroll/HolidayHistory";
 import money, { CurrencyPresets } from "@/utils/money";
 import { useEffect } from "react";
+import SalesReportPage from "@/pages/SalesReportPage";
 
 const AppRoutes = () => {
   const { isLoadingProfile, user } = useAuth();
@@ -114,6 +115,10 @@ const AppRoutes = () => {
             <Route
               path="staff-commissions"
               element={<StaffCommissionsPage />}
+            />
+            <Route
+              path="sales-report"
+              element={<SalesReportPage />}
             />
           </Route>
           <Route path="inventory">

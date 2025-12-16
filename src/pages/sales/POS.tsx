@@ -1,11 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-import { formatCurrency, successToast } from "@/utils/utils";
-import Modal from "@/components/Modal";
-
-import { ProductVariant, Product } from "@/types/ProductType";
 import { toast } from "react-toastify";
-
 import MobileCartToggleButton from "@/components/shared/MobileCartToggleButton";
 import ShoppingCart from "@/components/shared/ShoppingCart";
 import CartProductSection from "@/components/shared/CartProductSection";
@@ -31,6 +26,7 @@ interface CartAdjustments {
   }; // Per-item discount adjustments
 }
 
+
 // Currency formatting helpers
 
 const POS: React.FC = () => {
@@ -51,8 +47,6 @@ const POS: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const [showMobileCart, setShowMobileCart] = useState(false);
-
-  const [variantProduct, setVariantProduct] = useState<Product | null>(null);
 
   // const queryClient = useQueryClient();
 
@@ -163,77 +157,9 @@ const POS: React.FC = () => {
     };
   }, [handleBarcodeScan]);
 
-  // Cart operations
-  const addToCart = (product: CartItem) => {
-    const existingItem = cart.find(
-      (item) => item.cartItemId === product.cartItemId
-    );
-
-    if (existingItem) {
-      if (
-        existingItem.quantity >=
-        (product.selectedVariant?.quantity || product.stock)
-      ) {
-        successToast("Stock limit reached", "warn");
-        return;
-      }
-      setCart(
-        cart.map((item) =>
-          item.cartItemId === product.cartItemId
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
-      );
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
-
-      // Initialize discount adjustment if product has discount
-      if (product.discountType && Number(product.discountAmount || 0) > 0) {
-        setAdjustments((prev) => ({
-          ...prev,
-          discountAdjustments: {
-            ...prev.discountAdjustments,
-            [product.id]: {
-              type:
-                (product.discountType as "percentage" | "amount") ||
-                "percentage",
-              value: formatCurrency(Number(product.discountAmount || 0)),
-            },
-          },
-        }));
-      }
-
-      // Initialize sales price adjustment if product has salesPrice
-      if (product.salesPrice && Number(product.salesPrice) > 0) {
-        setAdjustments((prev) => ({
-          ...prev,
-          salesPriceAdjustments: {
-            ...prev.salesPriceAdjustments,
-            [product.id]: formatCurrency(Number(product.salesPrice)),
-          },
-        }));
-      }
-    }
-  };
-
+ 
   // Cart items count
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  // Add variant selection handler
-  const handleVariantSelect = (variant: ProductVariant) => {
-    if (!variantProduct) return;
-
-    addToCart({
-      ...variantProduct,
-      unit: variantProduct.Unit,
-      selectedVariant: variant as any,
-      cartItemId: `${variantProduct.id}-${variant.id}`,
-      imageUrl: variant.imageUrl,
-      quantity: 1,
-      sku: variant.sku, // Added missing 'sku' property
-    });
-    setVariantProduct(null);
-  };
 
   return (
     <div className=" flex flex-col lg:flex-row gap-6 relative">
@@ -267,22 +193,6 @@ const POS: React.FC = () => {
         open={showMobileCart}
         cartItemsCount={cartItemsCount}
       />
-
-      {/* Variant Selection Modal */}
-      <Modal
-        isOpen={!!variantProduct}
-        onClose={() => setVariantProduct(null)}
-        title="Select Variant"
-        className="max-w-lg"
-      >
-        {variantProduct && (
-          <VariantSelectionModal
-            product={variantProduct}
-            onSelect={handleVariantSelect}
-            onClose={() => setVariantProduct(null)}
-          />
-        )}
-      </Modal>
     </div>
   );
 };

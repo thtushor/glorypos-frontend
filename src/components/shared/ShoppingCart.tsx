@@ -6,7 +6,7 @@ import {
   parseCurrencyInput,
   successToast,
 } from "@/utils/utils";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FaCheckCircle,
   FaChevronDown,
@@ -76,6 +76,7 @@ interface OrderData {
 }
 
 function ShoppingCart({
+  orderId,
   cart,
   setCart,
   adjustments,
@@ -85,6 +86,9 @@ function ShoppingCart({
   handleBarcodeScan,
   initialBarcodeOpen = false,
   onCloseBarcodeScanner,
+  initialCustomerInfo,
+  initialKOTInfo,
+  initialPaymentInfo
 }: {
   cart: CartItem[];
   adjustments: CartAdjustments;
@@ -96,12 +100,20 @@ function ShoppingCart({
   handleBarcodeScan: (value: string) => void;
   variant?: "dynamic" | "mobile" | "desktop";
   onCloseBarcodeScanner?: () => void;
+  initialCustomerInfo?: { name: string; phone: string };
+  orderId?: number;
+  initialKOTInfo?:{
+    tableNumber: string,
+    specialInstructions: string,
+    guestCount: number,
+  }
+  initialPaymentInfo?:PartialPayment;
 }) {
   const { user } = useAuth();
 
   const [customerInfo, setCustomerInfo] = useState({
-    name: "",
-    phone: "",
+    name: initialCustomerInfo?.name || "",
+    phone: initialCustomerInfo?.phone || "",
   });
 
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] =
@@ -369,9 +381,14 @@ function ShoppingCart({
     }));
   };
 
+  type CreateOrderVariables = {
+    cartItems: CartItem[];
+    kotPaymentStatus?: string;
+  };
+
   // Add this mutation
   const createOrderMutation = useMutation({
-    mutationFn: async (cartItems: CartItem[], kotPaymentStatus?: string) => {
+    mutationFn: async ({ cartItems, kotPaymentStatus }: CreateOrderVariables) => {
       const orderTotal = total;
       const isMixed =
         (partialPayment.cashAmount > 0 &&
@@ -389,6 +406,7 @@ function ShoppingCart({
       const orderData: any = {
         tableNumber: kotData.tableNumber,
         guestNumber: kotData?.guestCount,
+        orderId: orderId,
         specialNotes: kotData.specialInstructions,
         kotPaymentStatus: kotPaymentStatus,
         items: cartItems.map((item) => {
@@ -402,6 +420,7 @@ function ShoppingCart({
           };
 
           return {
+            orderItemId: item.orderItemId,
             productId: item.id,
             quantity: item.quantity,
             unitPrice: salesPrice, // Use sales price as unitPrice (before discount)
@@ -465,7 +484,7 @@ function ShoppingCart({
       queryClient.invalidateQueries({ queryKey: ["stock-alerts"] });
     },
     onError: (error: any) => {
-      toast.error(error?.message || "Failed to create order");
+      toast.error(error?.message|| error?.error|| "Failed to create order");
     },
   });
 
@@ -520,12 +539,24 @@ function ShoppingCart({
       );
       return;
     }
-    createOrderMutation.mutate(cart);
+    createOrderMutation.mutate({ cartItems: cart });
   };
 
   const handleProcessPrintKOT = () => {
-    console.log({ cart });
-    // createOrderMutation.mutate(cart);
+    if (cart.length === 0) {
+      toast.error("Cart is empty");
+      return;
+    }
+
+    // Require staff selection similar to payment flow
+    if (selectedStaffId === null) {
+      setShowStaffModal(true);
+      toast.error("Please select staff or self sell before printing KOT");
+      return;
+    }
+
+    // Create order for KOT with pending KOT payment status
+    createOrderMutation.mutate({ cartItems: cart, kotPaymentStatus: "pending" });
   };
 
   const handleQuickPayment = (method: "cash" | "card" | "mobile_banking") => {
@@ -552,6 +583,23 @@ function ShoppingCart({
       window.location.reload(); // Reload to restore React app
     }
   };
+
+
+  useEffect(() => {
+    if (!initialCustomerInfo) return;
+    setCustomerInfo(initialCustomerInfo || { name: "", phone: "" });
+  }, [initialCustomerInfo]);
+
+  useEffect(()=>{
+    if(!initialKOTInfo) return;
+    setKotData(initialKOTInfo);
+  },[initialKOTInfo])
+
+  useEffect(()=>{
+    if(!initialPaymentInfo) return;
+    setPartialPayment(initialPaymentInfo);
+  },[initialPaymentInfo])
+
 
   return (
     <>
@@ -701,6 +749,7 @@ function ShoppingCart({
                             <input
                               type="text"
                               inputMode="decimal"
+                              
                               value={getNumericValue(salesPrice)}
                               onChange={(e) => {
                                 const filtered = filterNumericInput(
@@ -726,7 +775,7 @@ function ShoppingCart({
                                   formatCurrency(parsed)
                                 );
                               }}
-                              className="flex-1 min-w-0 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                              className=" w-[100px] min-w-0 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary"
                             />
                           </div>
                         </div>
@@ -787,7 +836,7 @@ function ShoppingCart({
                                   formatCurrency(finalValue)
                                 );
                               }}
-                              className="flex-1 min-w-0 px-2 py-1 text-xs border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                              className="w-[50px] px-2 py-1 text-xs border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
                             />
                             <select
                               value={discount.type}
@@ -801,7 +850,7 @@ function ShoppingCart({
                               className="text-xs border-y border-r rounded-r bg-gray-50 px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
                             >
                               <option value="percentage">%</option>
-                              <option value="amount">$</option>
+                              <option value="amount">฿</option>
                             </select>
                           </div>
                         </div>
@@ -1799,7 +1848,7 @@ function ShoppingCart({
                       : "text-blue-500"
                   }`}
                 />
-                Card Amount
+                Card Amouns
                 {partialPayment.cardAmount > 0 && (
                   <span className="ml-auto text-blue-600 font-bold">
                     ✓ Selected
@@ -1811,6 +1860,7 @@ function ShoppingCart({
                   ฿
                 </span>
                 <input
+                
                   type="text"
                   inputMode="decimal"
                   value={
