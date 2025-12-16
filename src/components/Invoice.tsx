@@ -33,8 +33,8 @@ interface InvoiceItem {
 interface InvoiceData {
   invoiceNumber: string;
   guestNumber?: number;
-  specialNotes: Number;
-  tableNumber?:string;
+  specialNotes?: number | string;
+  tableNumber?: string;
   date: string;
   customer: {
     name: string;
@@ -163,6 +163,16 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             {invoiceData.customer.email !== "N/A" && (
               <p>Email: {invoiceData.customer.email}</p>
             )}
+            {(invoiceData.guestNumber || invoiceData.tableNumber) && (
+              <div className="mt-3 pt-3 border-t">
+                {invoiceData.tableNumber && (
+                  <p className="font-medium">Table: {invoiceData.tableNumber}</p>
+                )}
+                {invoiceData.guestNumber && (
+                  <p className="font-medium">Guests: {invoiceData.guestNumber}</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Items */}
@@ -243,6 +253,16 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
               </tbody>
             </table>
           </div>
+
+          {/* Special Notes */}
+          {invoiceData.specialNotes !== undefined && 
+           invoiceData.specialNotes !== null && 
+           String(invoiceData.specialNotes).trim() !== "" && (
+            <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <h3 className="font-medium text-sm mb-1 text-yellow-800">Special Notes</h3>
+              <p className="text-sm text-yellow-700 whitespace-pre-wrap">{String(invoiceData.specialNotes)}</p>
+            </div>
+          )}
 
           {/* Summary */}
           <div className="space-y-2 text-sm">
