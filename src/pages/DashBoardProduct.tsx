@@ -1,4 +1,4 @@
-import { ORDERS_URL, SINGLE_ORDERS_URL } from "@/api/api";
+import { SINGLE_ORDERS_URL } from "@/api/api";
 import AXIOS from "@/api/network/Axios";
 import CartProductSection from "@/components/shared/CartProductSection";
 import ShoppingCart, {
