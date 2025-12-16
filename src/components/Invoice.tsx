@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useMemo } from "react";
 import { FaPrint, FaMoneyBill, FaCreditCard, FaWallet } from "react-icons/fa";
 // import LogoSvg from "./icons/LogoSvg";
 import { getExpiryDate } from "@/utils/utils";
@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import { useReactToPrint } from "react-to-print";
 import LogoSvg from "./icons/LogoSvg";
 import money from "@/utils/money";
+import { useReceiptPrint, type Order, type PrintOptions } from "react-pos-engine";
 // import { useAuth } from "@/context/AuthContext";
 
 interface InvoiceItem {
@@ -105,6 +106,123 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     },
     enabled: !!orderId,
   });
+
+  // Transform invoice data to Order format for react-pos-engine
+  const receiptOrder: Order | null = useMemo(() => {
+    if (!invoiceData) return null;
+
+    // Helper function to convert price to cents
+    // Prices in the system are in base currency (e.g., 29.99), need to convert to cents (2999)
+    const toCents = (price: number): number => {
+      // Convert to cents by multiplying by 100 and rounding to avoid floating point issues
+      return Math.round(price * 100);
+    };
+
+    // Build custom fields
+    const customFields: Array<{ key: string; value: string }> = [];
+    
+    if (invoiceData.tableNumber) {
+      customFields.push({ key: "Table", value: invoiceData.tableNumber });
+    }
+    
+    if (invoiceData.guestNumber) {
+      customFields.push({ key: "Guests", value: String(invoiceData.guestNumber) });
+    }
+    
+    if (invoiceData.payment.method) {
+      const paymentMethodLabel = invoiceData.payment.method === "mobile_banking" 
+        ? "Mobile Banking" 
+        : invoiceData.payment.method.toUpperCase();
+      customFields.push({ key: "Payment Method", value: paymentMethodLabel });
+    }
+    
+    if (invoiceData.orderStatus) {
+      customFields.push({ key: "Order Status", value: invoiceData.orderStatus });
+    }
+
+    // Build notes from special notes
+    let notes = "";
+    if (invoiceData.specialNotes !== undefined && 
+        invoiceData.specialNotes !== null && 
+        String(invoiceData.specialNotes).trim() !== "") {
+      notes = String(invoiceData.specialNotes);
+    }
+    
+    if (invoiceData.payment.isPartial) {
+      notes += (notes ? "\n" : "") + "⚠ Partial Payment";
+    }
+    
+    if (!notes) {
+      notes = "Thank you for your business!";
+    }
+
+    return {
+      id: invoiceData.invoiceNumber,
+      date: new Date(invoiceData.date).getTime(),
+      items: invoiceData.items.map((item) => ({
+        name: `${item.productName}${item.details ? ` - ${item.details}` : ""}`,
+        price: toCents(item.unitPrice),
+        quantity: item.quantity,
+      })),
+      subtotal: toCents(Number(invoiceData.summary.subtotal)),
+      tax: toCents(Number(invoiceData.summary.tax)),
+      total: toCents(Number(invoiceData.summary.total)),
+      customer: {
+        name: invoiceData.customer.name,
+        address: invoiceData.businessInfo.address,
+        phone: invoiceData.customer.phone,
+        email: invoiceData.customer.email !== "N/A" ? invoiceData.customer.email : "",
+      },
+      customFields,
+      notes,
+    };
+  }, [invoiceData]);
+
+  // Print options for react-pos-engine
+  const printOptions: PrintOptions = useMemo(() => ({
+    layout: 2, // Layout 2: Detailed POS w/ Custom Fields
+    alignment: 'center',
+    primaryColor: '#000000',
+    textColor: '#000000',
+    borderColor: '#000000',
+    headerBgColor: '#000000',
+    baseFontSize: 10,
+    paperSize: '80mm', // Standard 80mm receipt paper
+    fontFamily: 'Arial',
+    logoUrl: '',
+    headerText: invoiceData?.businessInfo?.name || '',
+    footerText: 'Thank you for your business!',
+    sellerName: invoiceData?.businessInfo?.name || '',
+    showSignature: false,
+    showTaxBreakdown: true,
+    customCss: '',
+  }), [invoiceData]);
+
+  // Initialize react-pos-engine print hook
+  const { printReceipt } = useReceiptPrint(
+    receiptOrder || {
+      id: "",
+      date: Date.now(),
+      items: [],
+      subtotal: 0,
+      tax: 0,
+      total: 0,
+      customer: { name: "", address: "", phone: "", email: "" },
+      customFields: [],
+      notes: "",
+    },
+    printOptions
+  );
+
+  // Handle print button click
+  const handlePrint = () => {
+    if (receiptOrder && receiptOrder.items.length > 0) {
+      printReceipt();
+    } else {
+      // Fallback to react-to-print if receipt order is not available
+      reactToPrintFn();
+    }
+  };
 
   if (!orderId) return null;
 
@@ -412,8 +530,9 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             Close
           </button>
           <button
-            onClick={() => reactToPrintFn()}
-            className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-2"
+            onClick={handlePrint}
+            disabled={!invoiceData || invoiceData.items.length === 0}
+            className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaPrint className="w-4 h-4" />
             Print
