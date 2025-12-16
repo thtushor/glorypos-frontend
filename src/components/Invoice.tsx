@@ -36,6 +36,7 @@ interface InvoiceData {
   guestNumber?: number;
   specialNotes?: number | string;
   tableNumber?: string;
+  spec?: string;
   date: string;
   customer: {
     name: string;
@@ -118,38 +119,117 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       return Math.round(price * 100);
     };
 
-    // Build custom fields
-    const customFields: Array<{ key: string; value: string }> = [];
+    // Build custom fields array (individual fields)
+    const individualFields: Array<{ key: string; value: string }> = [];
     
+    // Invoice Number
+    if (invoiceData.invoiceNumber) {
+      individualFields.push({ key: "Invoice #", value: invoiceData.invoiceNumber });
+    }
+    
+    // Table Number
     if (invoiceData.tableNumber) {
-      customFields.push({ key: "Table", value: invoiceData.tableNumber });
+      individualFields.push({ key: "Table", value: invoiceData.tableNumber });
     }
     
+    // Guest Number
     if (invoiceData.guestNumber) {
-      customFields.push({ key: "Guests", value: String(invoiceData.guestNumber) });
+      individualFields.push({ key: "Guests", value: String(invoiceData.guestNumber) });
     }
     
+    // Payment Method
     if (invoiceData.payment.method) {
       const paymentMethodLabel = invoiceData.payment.method === "mobile_banking" 
         ? "Mobile Banking" 
         : invoiceData.payment.method.toUpperCase();
-      customFields.push({ key: "Payment Method", value: paymentMethodLabel });
+      individualFields.push({ key: "Payment Method", value: paymentMethodLabel });
     }
     
-    if (invoiceData.orderStatus) {
-      customFields.push({ key: "Order Status", value: invoiceData.orderStatus });
+    // Payment Status
+    if (invoiceData.payment.status) {
+      individualFields.push({ key: "Payment Status", value: invoiceData.payment.status });
     }
-
-    // Build notes from special notes
-    let notes = "";
+    
+    // Order Status
+    if (invoiceData.orderStatus) {
+      individualFields.push({ key: "Order Status", value: invoiceData.orderStatus });
+    }
+    
+    // Tax ID
+    if (invoiceData.businessInfo.taxId) {
+      individualFields.push({ key: "Tax ID", value: invoiceData.businessInfo.taxId });
+    }
+    
+    // Spec
+    if (invoiceData.spec) {
+      individualFields.push({ key: "Spec", value: invoiceData.spec });
+    }
+    
+    // Remaining Amount (if partial payment)
+    if (invoiceData.payment.remainingAmount > 0) {
+      individualFields.push({ 
+        key: "Remaining Amount", 
+        value: money.format(Number(invoiceData.payment.remainingAmount)) 
+      });
+    }
+    
+    // Special Notes as custom field
     if (invoiceData.specialNotes !== undefined && 
         invoiceData.specialNotes !== null && 
         String(invoiceData.specialNotes).trim() !== "") {
-      notes = String(invoiceData.specialNotes);
+      individualFields.push({ key: "Special Notes", value: String(invoiceData.specialNotes) });
+    }
+
+    // Format custom fields into pairs with pipe separator (max 2 lines)
+    // Each custom field entry will contain two field pairs separated by pipe
+    const customFields: Array<{ key: string; value: string }> = [];
+    
+    // Group fields into pairs - each custom field entry = one line with 2 field pairs
+    // Max 2 lines = max 4 fields total
+    for (let i = 0; i < individualFields.length && i < 4; i += 2) {
+      const field1 = individualFields[i];
+      const field2 = individualFields[i + 1];
+      
+      if (field2) {
+        // Two fields on one line: "Field1: Value1 | Field2: Value2"
+        customFields.push({
+          key: `${field1.key}: ${field1.value} | ${field2.key}: ${field2.value}`,
+          value: ""
+        });
+      } else {
+        // Single field on one line: "Field1: Value1"
+        customFields.push({
+          key: `${field1.key}: ${field1.value}`,
+          value: ""
+        });
+      }
     }
     
+    // If there are more than 4 fields, add remaining fields (but limit to 2 lines total)
+    if (individualFields.length > 4) {
+      // Start from field 4 (index 4) for the second line
+      for (let i = 4; i < individualFields.length && i < 6; i += 2) {
+        const field1 = individualFields[i];
+        const field2 = individualFields[i + 1];
+        
+        if (field2) {
+          customFields.push({
+            key: `${field1.key}: ${field1.value} | ${field2.key}: ${field2.value}`,
+            value: ""
+          });
+        } else {
+          customFields.push({
+            key: `${field1.key}: ${field1.value}`,
+            value: ""
+          });
+        }
+      }
+    }
+
+    // Build notes
+    let notes = "";
     if (invoiceData.payment.isPartial) {
-      notes += (notes ? "\n" : "") + "⚠ Partial Payment";
+      notes = "⚠ Partial Payment";
     }
     
     if (!notes) {

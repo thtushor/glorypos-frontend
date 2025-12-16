@@ -754,6 +754,9 @@ export default function SalesReportPage() {
                             <span className="text-[11px] text-gray-500">
                               SKU: {row.sku}
                             </span>
+                            <span className="text-[11px] text-gray-500">
+                              Model Name: {row.modelNo||"N/A"}
+                            </span>
                             <span className="text-[11px] text-gray-400">
                               {row.categoryName} • {row.brandName}
                             </span>
