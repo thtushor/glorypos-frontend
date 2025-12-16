@@ -6,7 +6,7 @@ import {
   parseCurrencyInput,
   successToast,
 } from "@/utils/utils";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FaCheckCircle,
   FaChevronDown,
@@ -85,6 +85,7 @@ function ShoppingCart({
   handleBarcodeScan,
   initialBarcodeOpen = false,
   onCloseBarcodeScanner,
+  initialCustomerInfo,
 }: {
   cart: CartItem[];
   adjustments: CartAdjustments;
@@ -96,12 +97,13 @@ function ShoppingCart({
   handleBarcodeScan: (value: string) => void;
   variant?: "dynamic" | "mobile" | "desktop";
   onCloseBarcodeScanner?: () => void;
+  initialCustomerInfo?: { name: string; phone: string };
 }) {
   const { user } = useAuth();
 
   const [customerInfo, setCustomerInfo] = useState({
-    name: "",
-    phone: "",
+    name: initialCustomerInfo?.name || "",
+    phone: initialCustomerInfo?.phone || "",
   });
 
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] =
@@ -569,6 +571,13 @@ function ShoppingCart({
       window.location.reload(); // Reload to restore React app
     }
   };
+
+
+  useEffect(() => {
+    if (!initialCustomerInfo) return;
+    setCustomerInfo(initialCustomerInfo || { name: "", phone: "" });
+  }, [initialCustomerInfo]);
+
 
   return (
     <>

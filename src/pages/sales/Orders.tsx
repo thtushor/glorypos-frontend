@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FaSearch, FaEye, FaFilter } from "react-icons/fa";
+import { FaSearch, FaEye, FaFilter, FaRegEdit } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import { ORDERS_URL } from "@/api/api";
 import Pagination from "@/components/Pagination";
@@ -11,6 +11,7 @@ import { BiSpreadsheet } from "react-icons/bi";
 import ProductStatement from "@/components/ProductStatement";
 import Spinner from "@/components/Spinner";
 import money from "@/utils/money";
+import DashBoardProduct from "../DashBoardProduct";
 
 interface OrderItem {
   id: number;
@@ -90,6 +91,7 @@ const Orders: React.FC = () => {
   });
 
   const [isOpen, setIsOpen] = useState(false);
+  const [adjustOrderModalOpen, setAdjustOrderModalOpen] = useState(false);
 
   // Fetch Orders
   const {
@@ -461,6 +463,17 @@ const Orders: React.FC = () => {
                           >
                             <FaEye className="w-4 h-4" />
                           </button>
+
+                          <button
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setAdjustOrderModalOpen(true);
+                            }}
+                            className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full"
+                            title="Adjust Order"
+                          >
+                            <FaRegEdit className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -504,6 +517,19 @@ const Orders: React.FC = () => {
             onPrint={handlePrintInvoice}
           />
         )}
+      </Modal>
+
+
+      <Modal
+        isOpen={adjustOrderModalOpen}
+        onClose={() => {
+          setAdjustOrderModalOpen(false);
+        }}
+        className="!max-w-[95vw]"
+        titleContainerClassName="!mb-0"
+        // useInnerModal={true}
+      >
+        <DashBoardProduct orderId={selectedOrder?.id} />
       </Modal>
 
       <ProductStatement
