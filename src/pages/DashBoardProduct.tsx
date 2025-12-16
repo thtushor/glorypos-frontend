@@ -79,6 +79,7 @@ function DashBoardProduct({
 
         return {
           ...product,
+          orderItemId: item.id,
           quantity: Number(item.quantity ?? 0),
           unit: product.Unit,
           selectedVariant: variant
@@ -142,6 +143,8 @@ function DashBoardProduct({
     });
   }, [isSuccess, orderItems, setAdjustments]);
 
+  
+
 
   return (
     <div className="">
@@ -186,6 +189,7 @@ function DashBoardProduct({
         <ShoppingCart
           cart={cart}
           setCart={setCart}
+          orderId={orderId}
           adjustments={adjustments}
           setAdjustments={setAdjustments}
           handleBarcodeScan={handleBarcodeScan}
@@ -194,6 +198,18 @@ function DashBoardProduct({
           onCloseBarcodeScanner={() => setInitialBarcodeOpenState(false)}
           // variant="desktop"
           initialCustomerInfo={{ name: orderItems?.data?.customerName || "", phone: orderItems?.data?.customerPhone || "" }}
+          initialPaymentInfo={
+            {
+              walletAmount: orderItems?.data?.walletAmount||0,
+              cardAmount: orderItems?.data?.cardAmount||0,
+              cashAmount: orderItems?.data?.cashAmount||0
+            }
+          }
+          initialKOTInfo={{
+            tableNumber: orderItems?.data?.tableNumber||"",
+            guestCount: orderItems?.data?.guestNumber||1,
+            specialInstructions: orderItems?.data?.specialNotes||""
+          }}
           onClose={() => setActiveTab("products")} // switch back to product tab
         />
       )}

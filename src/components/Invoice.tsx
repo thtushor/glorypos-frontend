@@ -32,6 +32,9 @@ interface InvoiceItem {
 
 interface InvoiceData {
   invoiceNumber: string;
+  guestNumber?: number;
+  specialNotes: Number;
+  tableNumber?:string;
   date: string;
   customer: {
     name: string;

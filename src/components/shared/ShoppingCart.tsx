@@ -76,6 +76,7 @@ interface OrderData {
 }
 
 function ShoppingCart({
+  orderId,
   cart,
   setCart,
   adjustments,
@@ -86,6 +87,8 @@ function ShoppingCart({
   initialBarcodeOpen = false,
   onCloseBarcodeScanner,
   initialCustomerInfo,
+  initialKOTInfo,
+  initialPaymentInfo
 }: {
   cart: CartItem[];
   adjustments: CartAdjustments;
@@ -98,6 +101,13 @@ function ShoppingCart({
   variant?: "dynamic" | "mobile" | "desktop";
   onCloseBarcodeScanner?: () => void;
   initialCustomerInfo?: { name: string; phone: string };
+  orderId?: number;
+  initialKOTInfo?:{
+    tableNumber: string,
+    specialInstructions: string,
+    guestCount: number,
+  }
+  initialPaymentInfo?:PartialPayment;
 }) {
   const { user } = useAuth();
 
@@ -396,6 +406,7 @@ function ShoppingCart({
       const orderData: any = {
         tableNumber: kotData.tableNumber,
         guestNumber: kotData?.guestCount,
+        orderId: orderId,
         specialNotes: kotData.specialInstructions,
         kotPaymentStatus: kotPaymentStatus,
         items: cartItems.map((item) => {
@@ -409,6 +420,7 @@ function ShoppingCart({
           };
 
           return {
+            orderItemId: item.orderItemId,
             productId: item.id,
             quantity: item.quantity,
             unitPrice: salesPrice, // Use sales price as unitPrice (before discount)
@@ -472,7 +484,7 @@ function ShoppingCart({
       queryClient.invalidateQueries({ queryKey: ["stock-alerts"] });
     },
     onError: (error: any) => {
-      toast.error(error?.message || "Failed to create order");
+      toast.error(error?.message|| error?.error|| "Failed to create order");
     },
   });
 
@@ -577,6 +589,16 @@ function ShoppingCart({
     if (!initialCustomerInfo) return;
     setCustomerInfo(initialCustomerInfo || { name: "", phone: "" });
   }, [initialCustomerInfo]);
+
+  useEffect(()=>{
+    if(!initialKOTInfo) return;
+    setKotData(initialKOTInfo);
+  },[initialKOTInfo])
+
+  useEffect(()=>{
+    if(!initialPaymentInfo) return;
+    setPartialPayment(initialPaymentInfo);
+  },[initialPaymentInfo])
 
 
   return (
