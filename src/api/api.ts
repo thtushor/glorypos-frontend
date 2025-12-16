@@ -147,6 +147,7 @@ export const UPDATE_PRODUCT_VARIANTS_URL = `${BASE_URL}/product-variants/update`
 
 // Order API
 export const ORDERS_URL = `${BASE_URL}/orders`;
+export const SINGLE_ORDERS_URL = `${BASE_URL}/orders/single-order`;
 export const DELETE_ORDERS_URL = `${BASE_URL}/orders/delete`;
 export const UPDATE_ORDERS_URL = `${BASE_URL}/orders/update`;
 

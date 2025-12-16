@@ -1,4 +1,4 @@
-import { ORDERS_URL } from "@/api/api";
+import { ORDERS_URL, SINGLE_ORDERS_URL } from "@/api/api";
 import AXIOS from "@/api/network/Axios";
 import CartProductSection from "@/components/shared/CartProductSection";
 import ShoppingCart, {
@@ -54,7 +54,7 @@ function DashBoardProduct({
   const { data: orderItems,isSuccess } = useQuery({
     queryKey: ["order", orderId],
     queryFn: async () => {
-      const response = await AXIOS.get(`${ORDERS_URL}/${orderId}`);
+      const response = await AXIOS.get(`${SINGLE_ORDERS_URL}/${orderId}`);
       console.log({ response });
       return response;
     },
