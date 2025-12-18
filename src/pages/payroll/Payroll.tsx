@@ -122,19 +122,17 @@ const Payroll = () => {
                   className={`
                     group relative py-3 px-1 whitespace-nowrap border-b-2 font-medium text-sm transition-all duration-200
                     flex items-center gap-2
-                    ${
-                      isActive
-                        ? "border-brand-primary text-brand-primary"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    ${isActive
+                      ? "border-brand-primary text-brand-primary"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                     }
                   `}
                 >
                   <Icon
-                    className={`w-4 h-4 transition-colors ${
-                      isActive
-                        ? "text-brand-primary"
-                        : "text-gray-400 group-hover:text-gray-600"
-                    }`}
+                    className={`w-4 h-4 transition-colors ${isActive
+                      ? "text-brand-primary"
+                      : "text-gray-400 group-hover:text-gray-600"
+                      }`}
                   />
                   <span>{tab.name}</span>
 
@@ -186,7 +184,8 @@ const Payroll = () => {
         isOpen={showReleaseSalaryModal}
         onClose={() => setShowReleaseSalaryModal(false)}
         title="Release Salary"
-        useInnerModal={true}
+        // useInnerModal={true}
+        className="!max-w-[90vw] !max-h-[98vh]"
       >
         <ReleaseSalaryForm
           onSuccess={() => {
@@ -200,7 +199,7 @@ const Payroll = () => {
         isOpen={showAdvanceSalaryModal}
         onClose={() => setShowAdvanceSalaryModal(false)}
         title="Request Advance Salary"
-        // useInnerModal={true}
+      // useInnerModal={true}
       >
         <AdvanceSalaryForm
           onSuccess={() => {
