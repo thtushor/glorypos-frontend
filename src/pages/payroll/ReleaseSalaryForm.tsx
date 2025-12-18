@@ -98,11 +98,10 @@ interface ReleaseSalaryFormProps {
   onSuccess?: () => void;
 }
 
+
 const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [month, setMonth] = useState("");
-  const [payrollDetails, setPayrollDetails] = useState<PayrollDetails | null>(null);
-  const [isFetchingDetails, setIsFetchingDetails] = useState(false);
 
   const { user } = useAuth();
   const previewRef = useRef<HTMLDivElement>(null);
@@ -118,6 +117,19 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
 
   const employees: ChildUser[] = employeesData?.users || [];
 
+  // Fetch payroll details mutation
+  const {
+    mutate: fetchPayrollDetails,
+    data: payrollDetails,
+    isPending: isFetchingDetails,
+    reset: resetPayrollDetails
+  } = useMutation({
+    mutationFn: async (params: { userId: number; salaryMonth: string }) => {
+      const response = await AXIOS.post(PAYROLL_DETAILS, params);
+      return response.data as PayrollDetails;
+    },
+  });
+
   // Auto-scroll when payrollDetails appears
   useEffect(() => {
     if (payrollDetails && previewRef.current) {
@@ -130,34 +142,21 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
 
   // Auto-fetch payroll details when employee and month are selected
   useEffect(() => {
-    const fetchPayrollDetails = async () => {
-      if (!selectedUserId || !month) {
-        setPayrollDetails(null);
-        return;
-      }
+    if (!selectedUserId || !month) {
+      resetPayrollDetails();
+      return;
+    }
 
-      setIsFetchingDetails(true);
-      try {
-        const response = await AXIOS.post(PAYROLL_DETAILS, {
-          userId: parseInt(selectedUserId),
-          salaryMonth: month,
-        });
-        setPayrollDetails(response.data);
-      } catch (error) {
-        console.error("Error fetching payroll details:", error);
-        setPayrollDetails(null);
-      } finally {
-        setIsFetchingDetails(false);
-      }
-    };
-
-    fetchPayrollDetails();
+    fetchPayrollDetails({
+      userId: parseInt(selectedUserId),
+      salaryMonth: month,
+    });
   }, [selectedUserId, month]);
 
   const { mutate: releaseMutation, isPending } = useMutation({
     mutationFn: (data: any) => AXIOS.post(PAYROLL_RELEASE, data),
     onSuccess: () => {
-      setPayrollDetails(null);
+      resetPayrollDetails();
       setSelectedUserId("");
       setMonth("");
       onSuccess?.();
@@ -174,6 +173,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   };
 
   const isLoading = isFetchingDetails || isPending;
+
 
   return (
     <div className="w-full mx-auto p-2 rounded-2xl bg-white">
