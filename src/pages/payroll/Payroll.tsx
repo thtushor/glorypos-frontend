@@ -12,6 +12,7 @@ import {
   FaCalendarTimes,
   FaStar,
   FaHistory,
+  FaMoneyBill,
 } from "react-icons/fa";
 import { useQueryClient } from "@tanstack/react-query";
 import ReleaseSalaryForm from "./ReleaseSalaryForm";
@@ -41,6 +42,11 @@ const Payroll = () => {
       name: "Promotion History",
       path: "/payroll/promotion-history",
       icon: FaStar,
+    },
+    {
+      name: "Advance Salary History",
+      path: "/payroll/advance-salary-history",
+      icon: FaMoneyBill,
     },
     {
       name: "Salary History",
@@ -199,7 +205,6 @@ const Payroll = () => {
         <AdvanceSalaryForm
           onSuccess={() => {
             setShowAdvanceSalaryModal(false);
-            toast.success("Advance salary requested");
           }}
         />
       </Modal>

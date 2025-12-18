@@ -43,6 +43,7 @@ import PromotionHistory from "@/pages/payroll/PromotionHistory";
 import PayrollMain from "@/pages/payroll/PayrollMain";
 import ReleaseHistory from "@/pages/payroll/ReleaseHistory";
 import HolidayHistory from "@/pages/payroll/HolidayHistory";
+import AdvanceSalaryHistory from "@/pages/payroll/AdvanceSalaryHistory";
 import money, { CurrencyPresets } from "@/utils/money";
 import { useEffect } from "react";
 import SalesReportPage from "@/pages/SalesReportPage";
@@ -98,6 +99,10 @@ const AppRoutes = () => {
             <Route path="holiday-history" element={<HolidayHistory />} />
             <Route path="promotion-history" element={<PromotionHistory />} />
             <Route path="salary-history" element={<ReleaseHistory />} />
+            <Route
+              path="advance-salary-history"
+              element={<AdvanceSalaryHistory />}
+            />
           </Route>
         </Route>
 
@@ -116,10 +121,7 @@ const AppRoutes = () => {
               path="staff-commissions"
               element={<StaffCommissionsPage />}
             />
-            <Route
-              path="sales-report"
-              element={<SalesReportPage />}
-            />
+            <Route path="sales-report" element={<SalesReportPage />} />
           </Route>
           <Route path="inventory">
             <Route path="products" element={<Products />} />

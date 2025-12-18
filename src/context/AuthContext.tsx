@@ -22,8 +22,6 @@ interface User {
     email: string;
     id?: number;
   } | null;
-  parentShop: any | null;
-  shopType?: "normal" | "restaurant";
   // Add other user properties as needed
 }
 
@@ -124,10 +122,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     },
     onSuccess: (response: any) => {
       if (response.status) {
-        const { user } = response.data;
+        const { user, token } = response.data;
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
-        // Access token is automatically set by server in cookies
+        document.cookie = `access_token=${token}; path=/`;
         toast.success("Login successful!");
         setSuccessMessage({
           message: "Login successful!",
