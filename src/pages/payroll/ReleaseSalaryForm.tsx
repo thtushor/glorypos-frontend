@@ -195,17 +195,84 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   const handleRelease = () => {
     if (!payrollDetails) return;
 
-    releaseMutation({
+    // Calculate total deductions
+    const totalDeductions =
+      editableLeaveDeduction +
+      editableAdvanceDeduction +
+      editableFine +
+      (payrollDetails.loanDeduction || 0) +
+      (payrollDetails.otherDeduction || 0);
+
+    // Calculate gross salary (base + commission + bonus + overtime)
+    const grossSalary =
+      payrollDetails.baseSalary +
+      payrollDetails.totalCommission +
+      editableBonus +
+      editableOvertime;
+
+    // Calculate due amount (assuming paidAmount is 0 for now since it's not in the form)
+    const paidAmount = 0;
+    const dueAmount = editableNetPayable - paidAmount;
+
+    // Format the payload according to the requested structure
+    const payload = {
       userId: payrollDetails.userId,
-      month: month,
-      shopId: user?.id,
-      bonusAmount: editableBonus,
-      bonusDescription: editableBonusDescription,
+      salaryMonth: month,
+      baseSalary: payrollDetails.baseSalary,
+
+      // Only include if values exist
+      ...(editableAdvanceDeduction > 0 && { advanceAmount: editableAdvanceDeduction }),
+      ...(editableBonus > 0 && { bonusAmount: editableBonus }),
+      ...(editableBonusDescription && { bonusDescription: editableBonusDescription }),
+
+      ...(payrollDetails.loanDeduction > 0 && { loanDeduction: payrollDetails.loanDeduction }),
+      ...(editableFine > 0 && { fineAmount: editableFine }),
+      ...(editableOvertime > 0 && { overtimeAmount: editableOvertime }),
+      ...(payrollDetails.otherDeduction > 0 && { otherDeduction: payrollDetails.otherDeduction }),
+
       netPayableSalary: editableNetPayable,
-      advanceDeduction: editableAdvanceDeduction,
-      overtimeAmount: editableOvertime,
-      fineAmount: editableFine,
-    });
+      ...(paidAmount > 0 && { paidAmount }),
+
+      shopId: user?.id,
+
+      calculationSnapshot: {
+        workingDays: payrollDetails.totalWorkingDays,
+        presentDays: payrollDetails.totalWorkingDays - payrollDetails.totalUnpaidLeaveDays,
+        paidLeaveDays: payrollDetails.totalPaidLeaveDays,
+        unpaidLeaveDays: payrollDetails.totalUnpaidLeaveDays,
+        perDaySalary: payrollDetails.baseSalary / payrollDetails.totalWorkingDays,
+        unpaidLeaveDeduction: editableLeaveDeduction,
+
+        advance: {
+          totalTaken: payrollDetails.totalAdvanceTaken,
+          totalRepaidBefore: payrollDetails.totalAdvanceRepaid,
+          deductedThisMonth: editableAdvanceDeduction,
+          remaining: payrollDetails.outstandingAdvance - editableAdvanceDeduction,
+        },
+
+        ...(payrollDetails.totalSales > 0 && {
+          commission: {
+            totalSales: payrollDetails.totalSales,
+            commissionRate: payrollDetails.calculationSnapshot?.commissionData?.commissionRecords?.[0]?.commissionPercentage || "0%",
+            commissionAmount: payrollDetails.totalCommission,
+          }
+        }),
+
+        salaryBreakdown: {
+          gross: grossSalary,
+          totalDeductions: totalDeductions,
+          netPayable: editableNetPayable,
+          paid: paidAmount,
+          due: dueAmount,
+        }
+      }
+    };
+
+    // Log the formatted payload to console
+    console.log("Formatted Salary Release Payload:", JSON.stringify(payload, null, 2));
+
+    // Uncomment below to actually make the API call
+    // releaseMutation(payload);
   };
 
   const isLoading = isFetchingDetails || isPending;
