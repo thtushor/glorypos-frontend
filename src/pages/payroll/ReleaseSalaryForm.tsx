@@ -110,6 +110,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   const [editableAdvanceDeduction, setEditableAdvanceDeduction] = useState<number>(0);
   const [editableOvertime, setEditableOvertime] = useState<number>(0);
   const [editableFine, setEditableFine] = useState<number>(0);
+  const [editableLeaveDeduction, setEditableLeaveDeduction] = useState<number>(0);
 
   const { user } = useAuth();
   const previewRef = useRef<HTMLDivElement>(null);
@@ -144,6 +145,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
       setEditableAdvanceDeduction(data.outstandingAdvance);
       setEditableOvertime(data.overtimeAmount);
       setEditableFine(data.fineAmount);
+      setEditableLeaveDeduction(data.unpaidLeaveDeductionAmount);
     },
   });
 
@@ -502,6 +504,19 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                   />
                 </div>
 
+                {/* Editable: Leave Deduction */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    Leave Deduction
+                  </label>
+                  <input
+                    type="number"
+                    value={editableLeaveDeduction}
+                    onChange={(e) => setEditableLeaveDeduction(parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                  />
+                </div>
+
                 {/* Editable: Advance Deduction */}
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-1 block">
@@ -552,6 +567,10 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                   <div>
                     <p className="text-gray-600">Bonus</p>
                     <p className="font-semibold text-green-600">{money.format(editableBonus)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Leave Deduction</p>
+                    <p className="font-semibold text-red-600">-{money.format(editableLeaveDeduction)}</p>
                   </div>
                   <div>
                     <p className="text-gray-600">Advance Deduction</p>
