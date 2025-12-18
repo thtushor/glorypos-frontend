@@ -42,6 +42,7 @@ function AddProduct({
 }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const isRestaurent = user?.shopType === "restaurant";
   const currentShopId = user?.child?.id ?? user?.id;
   const [enableVariants, setEnableVariants] = useState(false);
 
@@ -458,7 +459,7 @@ function AddProduct({
         {/* Category, Brand, Unit */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Category*
+            Category{!isRestaurent ? "*" : ""}
           </label>
           <select
             value={formData.CategoryId || ""}
@@ -469,7 +470,7 @@ function AddProduct({
               })
             }
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
-            required
+            required={!isRestaurent}
           >
             <option value="">Select Category</option>
             {categories.map((category) => (
@@ -482,7 +483,7 @@ function AddProduct({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Brand*
+            Brand{!isRestaurent ? "*" : ""}
           </label>
           <select
             value={formData.BrandId || ""}
@@ -493,7 +494,7 @@ function AddProduct({
               })
             }
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
-            required
+            required={!isRestaurent}
           >
             <option value="">Select Brand</option>
             {brands.map((brand) => (
@@ -506,7 +507,7 @@ function AddProduct({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Unit*
+            Unit{!isRestaurent ? "*" : ""}
           </label>
           <select
             value={formData.UnitId || ""}
@@ -517,7 +518,7 @@ function AddProduct({
               })
             }
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
-            required
+            required={!isRestaurent}
           >
             <option value="">Select Unit</option>
             {units.map((unit) => (
@@ -577,28 +578,30 @@ function AddProduct({
         </div>
 
         {/* Gender */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Gender
-          </label>
-          <select
-            value={formData.gender || ""}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                gender: e.target.value
-                  ? (e.target.value as "men" | "women" | "others")
-                  : null,
-              })
-            }
-            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
-          >
-            <option value="">Select Gender</option>
-            <option value="men">Men</option>
-            <option value="women">Women</option>
-            <option value="others">Others</option>
-          </select>
-        </div>
+        {!isRestaurent && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Gender
+            </label>
+            <select
+              value={formData.gender || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  gender: e.target.value
+                    ? (e.target.value as "men" | "women" | "others")
+                    : null,
+                })
+              }
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
+            >
+              <option value="">Select Gender</option>
+              <option value="men">Men</option>
+              <option value="women">Women</option>
+              <option value="others">Others</option>
+            </select>
+          </div>
+        )}
 
         {/* Model Number */}
         <div>

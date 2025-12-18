@@ -124,10 +124,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     },
     onSuccess: (response: any) => {
       if (response.status) {
-        const { user, token } = response.data;
+        const { user } = response.data;
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
-        document.cookie = `access_token=${token}; path=/`;
+        // Access token is automatically set by server in cookies
         toast.success("Login successful!");
         setSuccessMessage({
           message: "Login successful!",
