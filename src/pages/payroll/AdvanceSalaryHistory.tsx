@@ -6,6 +6,8 @@ import AXIOS from "@/api/network/Axios";
 import {
   PAYROLL_ADVANCE_SALERY,
   PAYROLL_ADVANCE_SALERY_STATUS,
+  CHILD_USERS_URL,
+  SUB_SHOPS_URL,
 } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import { toast } from "react-toastify";
@@ -15,7 +17,10 @@ import {
   FaUser,
   FaCalendarAlt,
   FaDollarSign,
+  FaBuilding,
 } from "react-icons/fa";
+import { FiUser } from "react-icons/fi";
+import { useAuth } from "@/context/AuthContext";
 
 interface AdvanceSalary {
   id: number;
@@ -46,6 +51,44 @@ interface AdvanceSalaryResponse {
     pageSize: number;
     totalCount: number;
     totalPages: number;
+  };
+}
+
+interface ChildUser {
+  id: number;
+  fullName: string;
+  email: string;
+  role: string;
+}
+
+interface ChildUsersResponse {
+  status: boolean;
+  message: string;
+  users: ChildUser[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+interface SubShop {
+  id: number;
+  fullName: string;
+  email: string;
+  businessName: string;
+  accountType: string;
+}
+
+interface SubShopResponse {
+  users: SubShop[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalItems: number;
   };
 }
 
@@ -109,12 +152,14 @@ const ConfirmationModal = ({
 
 const AdvanceSalaryHistory = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [filters, setFilters] = useState({
     page: 1,
     pageSize: 10,
     status: "",
     userId: "",
     salaryMonth: "",
+    shopId: "",
   });
 
   // === Modal States ===
@@ -124,14 +169,53 @@ const AdvanceSalaryHistory = () => {
     null
   );
 
+  // Fetch all employees for the dropdown
+  const { data: usersData, isLoading: loadingUsers } =
+    useQuery<ChildUsersResponse>({
+      queryKey: ["childUsers", "all"],
+      queryFn: async () => {
+        const res = await AXIOS.get(
+          `${CHILD_USERS_URL}?page=1&pageSize=1000&withAttendance=true`
+        );
+        return res.data;
+      },
+    });
+
+  const users = usersData?.users || [];
+
+  // Fetch all shops for the dropdown
+  const { data: shopData, isLoading: isLoadingShops } =
+    useQuery<SubShopResponse>({
+      queryKey: ["sub-shops-for-filter"],
+      queryFn: async () => {
+        const response = await AXIOS.get(SUB_SHOPS_URL, {
+          params: {
+            page: 1,
+            pageSize: 1000000,
+          },
+        });
+        return response.data;
+      },
+    });
+
+  const shops = shopData?.users || [];
+
   const { data, isLoading, error } = useQuery<AdvanceSalaryResponse>({
-    queryKey: ["advanceSalary"],
+    queryKey: ["advanceSalary", { ...filters }],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      Object.entries(filters).forEach(([k, v]) => {
-        if (v) params.append(k, String(v));
+      // Build params object, excluding empty values
+      const params: Record<string, any> = {
+        page: filters.page,
+        pageSize: filters.pageSize,
+      };
+      if (filters.status) params.status = filters.status;
+      if (filters.userId) params.userId = filters.userId;
+      if (filters.salaryMonth) params.salaryMonth = filters.salaryMonth;
+      if (filters.shopId) params.shopId = filters.shopId;
+
+      const res = await AXIOS.get(`${PAYROLL_ADVANCE_SALERY}`, {
+        params,
       });
-      const res = await AXIOS.get(`${PAYROLL_ADVANCE_SALERY}?${params}`);
       console.log("Advance Salary Response:", res?.data);
       // Handle both response structures:
       // 1. { status: true, message: "...", data: { advances: [], pagination: {} } }
@@ -242,18 +326,60 @@ const AdvanceSalaryHistory = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Employee ID
+          <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
+            <FaBuilding className="inline" />
+            Shop
           </label>
-          <input
-            type="number"
-            placeholder="e.g. 10"
+          <select
+            value={filters.shopId}
+            onChange={(e) =>
+              setFilters({ ...filters, shopId: e.target.value, page: 1 })
+            }
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition"
+            disabled={isLoadingShops}
+          >
+            <option value="">
+              {isLoadingShops ? "Loading shops..." : "All Shops"}
+            </option>
+            {user?.id && (
+              <option key={user.id} value={user.id}>
+                {(user as any)?.businessName ||
+                  (user as any)?.fullName ||
+                  "Current Shop"}
+              </option>
+            )}
+            {shops.map((shop) =>
+              shop?.id ? (
+                <option key={shop?.id} value={shop?.id}>
+                  {shop.businessName || shop.fullName}
+                </option>
+              ) : null
+            )}
+          </select>
+        </div>
+
+        <div>
+          <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
+            <FiUser className="inline" />
+            Employee
+          </label>
+          <select
             value={filters.userId}
             onChange={(e) =>
               setFilters({ ...filters, userId: e.target.value, page: 1 })
             }
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-          />
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition"
+            disabled={loadingUsers}
+          >
+            <option value="">
+              {loadingUsers ? "Loading employees..." : "All Employees"}
+            </option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.fullName} ({user.role})
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
@@ -353,7 +479,12 @@ const AdvanceSalaryHistory = () => {
                     <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-sm font-medium">
                         <FaCalendarAlt className="text-emerald-600" />
-                        {advance.salaryMonth}
+                        {advance.salaryMonth
+                          ? format(
+                              new Date(`${advance.salaryMonth}-01`),
+                              "MMMM yyyy"
+                            )
+                          : advance.salaryMonth}
                       </div>
                     </td>
 

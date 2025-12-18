@@ -12,6 +12,7 @@ import {
   FaBriefcase,
   FaCamera,
   FaSpinner,
+  FaPercent,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
 import { uploadFile } from "@/utils/utils";
@@ -26,7 +27,8 @@ interface ProfileData {
   businessName?: string;
   businessType?: string;
   image?: string;
-  role: "admin" | "shop";
+  accountType: "admin" | "shop";
+  stuffCommission?: number;
 }
 
 const ProfilePage = () => {
@@ -95,8 +97,28 @@ const ProfilePage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // No need to handle file upload here since it's already done in handleImageChange
-    updateProfileMutation.mutate(formData as any);
+    // Convert formData to FormData format, similar to OtherShops.tsx
+    const submitData = new FormData();
+
+    if (formData.fullName) submitData.append("fullName", formData.fullName);
+    if (formData.phoneNumber)
+      submitData.append("phoneNumber", formData.phoneNumber);
+    if (formData.location) submitData.append("location", formData.location);
+    if (formData.businessName)
+      submitData.append("businessName", formData.businessName);
+    if (formData.businessType)
+      submitData.append("businessType", formData.businessType);
+    if (formData.image) submitData.append("image", formData.image);
+
+    // Handle stuffCommission similar to OtherShops.tsx
+    if (
+      formData.stuffCommission !== undefined &&
+      formData.stuffCommission !== null
+    ) {
+      submitData.append("stuffCommission", formData.stuffCommission.toString());
+    }
+
+    updateProfileMutation.mutate(submitData);
   };
 
   if (isLoading) {
@@ -108,6 +130,8 @@ const ProfilePage = () => {
   }
 
   const profile = profileData;
+
+  console.log({ profile });
 
   if (!profile) return null;
 
@@ -150,7 +174,9 @@ const ProfilePage = () => {
             <h1 className="text-white text-xl sm:text-3xl font-bold mt-4">
               {profile.fullName}
             </h1>
-            <p className="text-white/80 mt-2 capitalize">{profile.role}</p>
+            <p className="text-white/80 mt-2 capitalize">
+              {profile.accountType}
+            </p>
           </div>
         </div>
 
@@ -241,7 +267,7 @@ const ProfilePage = () => {
               </div>
 
               {/* Business Fields (Only for shop role) */}
-              {profile.role === "shop" && (
+              {profile.accountType === "shop" && (
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -280,6 +306,31 @@ const ProfilePage = () => {
                             businessType: e.target.value,
                           }))
                         }
+                        className="pl-10 w-full py-[6px] rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Stuff Sell Commission (%)
+                    </label>
+                    <div className="relative">
+                      <FaPercent className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="number"
+                        step="0.01"
+                        disabled={!isEditing}
+                        value={formData?.stuffCommission?.toString() || ""}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            stuffCommission: e.target.value
+                              ? Number(e.target.value)
+                              : undefined,
+                          }))
+                        }
+                        placeholder="Enter commission percentage"
                         className="pl-10 w-full py-[6px] rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                       />
                     </div>

@@ -18,6 +18,17 @@ interface User {
   id?: number;
   businessName?: string;
   image?: string;
+  shopType?: "normal" | "restaurant";
+  parentShop?: {
+    email: string;
+    id?: number;
+    businessName?: string;
+    image?: string;
+    accountType?: "admin" | "shop";
+    shopType?: "normal" | "restaurant";
+    stuffCommission?: number;
+  } | null;
+
   child: {
     email: string;
     id?: number;

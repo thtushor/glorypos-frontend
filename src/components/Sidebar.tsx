@@ -107,8 +107,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                   {user.parentShop && (
                     <div className="flex items-center justify-center gap-2 text-xs bg-orange-50 border border-orange-200 rounded-md px-3 py-1">
                       <FallbackAvatar
-                        src={user.parentShop.image}
-                        alt={user.parentShop.businessName}
+                        src={user.parentShop?.image || null}
+                        alt={user.parentShop?.businessName || ""}
                         className="w-5 h-5 rounded-full"
                       />
                       <span className="text-gray-600">
