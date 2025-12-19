@@ -250,14 +250,16 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   const handleRelease = () => {
     if (!payrollDetails) return;
 
-    // Validate paid amount
+    // Validate paid amount - can pay up to total payable (current + previous dues)
+    const maxPayableAmount = payrollDetails.totalPayable;
+
     if (editablePaidAmount <= 0) {
       alert("Paid amount must be greater than 0");
       return;
     }
 
-    if (editablePaidAmount > editableNetPayable) {
-      alert("Paid amount cannot exceed net payable salary");
+    if (editablePaidAmount > maxPayableAmount) {
+      alert(`Paid amount cannot exceed total payable amount: ${money.format(maxPayableAmount)}`);
       return;
     }
 
@@ -670,6 +672,122 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                 <h3 className="text-lg font-bold">Adjust Salary Components</h3>
               </div>
 
+              {/* Payment Overview Section */}
+              <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-xl p-4 border-2 border-indigo-200 shadow-lg">
+                <h4 className="font-bold text-indigo-900 mb-4 text-base flex items-center gap-2">
+                  <FiDollarSign className="w-5 h-5" />
+                  Payment Overview
+                </h4>
+
+                <div className="space-y-3">
+                  {/* Previous Month Dues */}
+                  {payrollDetails.hasPreviousDues && payrollDetails.previousDuesBreakdown && payrollDetails.previousDuesBreakdown.length > 0 && (
+                    <div className="bg-white rounded-lg p-3 border-l-4 border-orange-400 shadow-sm">
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="font-semibold text-orange-700 text-sm flex items-center gap-1">
+                          <FiTrendingDown className="w-4 h-4" />
+                          Previous Outstanding Dues
+                        </h5>
+                        <span className="text-lg font-bold text-orange-600">
+                          {money.format(payrollDetails.totalPreviousDues)}
+                        </span>
+                      </div>
+
+                      {/* Breakdown */}
+                      <div className="space-y-1.5 mt-2">
+                        {payrollDetails.previousDuesBreakdown.map((prevDue, index) => (
+                          <div key={index} className="bg-orange-50 rounded-md p-2 text-xs">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-medium text-gray-700">{prevDue.salaryMonth}</span>
+                              <span className="font-bold text-red-600">{money.format(prevDue.due)}</span>
+                            </div>
+                            <div className="flex justify-between text-gray-600">
+                              <span>Net: {money.format(prevDue.netPayable)}</span>
+                              <span>Paid: {money.format(prevDue.paid)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Current Month Salary */}
+                  <div className="bg-white rounded-lg p-3 border-l-4 border-blue-400 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="font-semibold text-blue-700 text-sm flex items-center gap-1">
+                        <FiCalendar className="w-4 h-4" />
+                        Current Month ({month})
+                      </h5>
+                      <span className="text-lg font-bold text-blue-600">
+                        {money.format(payrollDetails.currentMonthNetPayable)}
+                      </span>
+                    </div>
+
+                    {/* Show if there are existing payments */}
+                    {payrollDetails.hasCurrentMonthPayments && (
+                      <div className="mt-2 space-y-1">
+                        <div className="flex justify-between text-xs text-gray-600">
+                          <span>Already Paid:</span>
+                          <span className="font-semibold text-green-600">
+                            {money.format(payrollDetails.currentMonthPaidAmount)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-600">
+                          <span>Remaining Due:</span>
+                          <span className="font-semibold text-orange-600">
+                            {money.format(payrollDetails.currentMonthRemainingDue)}
+                          </span>
+                        </div>
+                        <div className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 mt-1">
+                          💡 {payrollDetails.currentMonthPaymentsCount} payment(s) made
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Total Payable Summary */}
+                  <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-3 text-white shadow-md">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm opacity-90">
+                        <span>Current Month:</span>
+                        <span className="font-semibold">{money.format(payrollDetails.currentMonthNetPayable)}</span>
+                      </div>
+
+                      {payrollDetails.hasPreviousDues && (
+                        <div className="flex justify-between items-center text-sm opacity-90">
+                          <span>Previous Dues:</span>
+                          <span className="font-semibold">+ {money.format(payrollDetails.totalPreviousDues)}</span>
+                        </div>
+                      )}
+
+                      <div className="border-t border-white/30 pt-2 mt-2">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-base">Total Payable:</span>
+                          <span className="text-2xl font-bold">{money.format(payrollDetails.totalPayable)}</span>
+                        </div>
+                      </div>
+
+                      {payrollDetails.hasCurrentMonthPayments && (
+                        <>
+                          <div className="flex justify-between items-center text-sm opacity-90">
+                            <span>Already Paid:</span>
+                            <span className="font-semibold">- {money.format(payrollDetails.currentMonthPaidAmount)}</span>
+                          </div>
+                          <div className="border-t border-white/30 pt-2">
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold">Final Remaining:</span>
+                              <span className="text-xl font-bold text-yellow-300">
+                                {money.format(payrollDetails.netPayableSalary)}
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Read-only: Base Salary */}
                 <div>
@@ -797,39 +915,85 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-1 block">
                     Paid Amount
-                    <span className="text-xs text-red-500 ml-2">
-                      (Must be greater than 0 and ≤ Net Payable)
+                    <span className="text-xs text-blue-600 ml-2">
+                      (Max: {money.format(payrollDetails.totalPayable)})
                     </span>
                   </label>
-                  <input
-                    type="number"
-                    value={editablePaidAmount}
-                    onChange={(e) => {
-                      const value = parseFloat(e.target.value) || 0;
-                      // Ensure value is between 0 and net payable
-                      if (value > editableNetPayable) {
-                        setEditablePaidAmount(editableNetPayable);
-                      } else if (value < 0) {
-                        setEditablePaidAmount(0);
-                      } else {
-                        setEditablePaidAmount(value);
-                      }
-                    }}
-                    min={0}
-                    max={editableNetPayable}
-                    step="0.01"
-                    className="w-full px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none font-semibold"
-                  />
-                  {editablePaidAmount > 0 && editablePaidAmount < editableNetPayable && (
-                    <p className="text-xs text-orange-600 mt-1">
-                      Due: {money.format(editableNetPayable - editablePaidAmount)}
-                    </p>
-                  )}
-                  {editablePaidAmount === editableNetPayable && editablePaidAmount > 0 && (
-                    <p className="text-xs text-green-600 mt-1">
-                      ✓ Full payment
-                    </p>
-                  )}
+                  <div className="space-y-2">
+                    <input
+                      type="number"
+                      value={editablePaidAmount}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value) || 0;
+                        const maxPayable = payrollDetails.totalPayable;
+                        // Ensure value is between 0 and total payable
+                        if (value > maxPayable) {
+                          setEditablePaidAmount(maxPayable);
+                        } else if (value < 0) {
+                          setEditablePaidAmount(0);
+                        } else {
+                          setEditablePaidAmount(value);
+                        }
+                      }}
+                      min={0}
+                      max={payrollDetails.totalPayable}
+                      step="0.01"
+                      className="w-full px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none font-semibold"
+                    />
+
+                    {/* Quick Payment Buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditablePaidAmount(editableNetPayable)}
+                        className="flex-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
+                      >
+                        Current Month Only ({money.format(editableNetPayable)})
+                      </button>
+                      {payrollDetails.hasPreviousDues && (
+                        <button
+                          type="button"
+                          onClick={() => setEditablePaidAmount(payrollDetails.totalPayable)}
+                          className="flex-1 px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition"
+                        >
+                          Pay All ({money.format(payrollDetails.totalPayable)})
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Payment Status Messages */}
+                    {editablePaidAmount > 0 && editablePaidAmount < payrollDetails.totalPayable && (
+                      <div className="text-xs space-y-1">
+                        {editablePaidAmount <= editableNetPayable ? (
+                          <p className="text-orange-600">
+                            💰 Partial payment for current month. Remaining: {money.format(editableNetPayable - editablePaidAmount)}
+                          </p>
+                        ) : (
+                          <>
+                            <p className="text-green-600">
+                              ✓ Current month fully paid ({money.format(editableNetPayable)})
+                            </p>
+                            <p className="text-blue-600">
+                              💰 Previous dues payment: {money.format(editablePaidAmount - editableNetPayable)}
+                            </p>
+                            <p className="text-orange-600">
+                              Remaining dues: {money.format(payrollDetails.totalPayable - editablePaidAmount)}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    )}
+                    {editablePaidAmount === payrollDetails.totalPayable && editablePaidAmount > 0 && (
+                      <p className="text-xs text-green-600 font-semibold">
+                        ✓ Full payment (Current month + All previous dues)
+                      </p>
+                    )}
+                    {editablePaidAmount === editableNetPayable && editablePaidAmount > 0 && !payrollDetails.hasPreviousDues && (
+                      <p className="text-xs text-green-600 font-semibold">
+                        ✓ Full payment for current month
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -891,7 +1055,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                 </button>
                 <button
                   onClick={handleRelease}
-                  disabled={isPending || editablePaidAmount <= 0 || editablePaidAmount > editableNetPayable}
+                  disabled={isPending || editablePaidAmount <= 0 || editablePaidAmount > payrollDetails.totalPayable}
                   className="flex-1 py-3 text-base rounded-lg font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPending ? "Releasing..." : "Release Salary"}
