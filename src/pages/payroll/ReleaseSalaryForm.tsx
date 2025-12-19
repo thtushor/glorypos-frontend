@@ -111,6 +111,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   const [editableOvertime, setEditableOvertime] = useState<number>(0);
   const [editableFine, setEditableFine] = useState<number>(0);
   const [editableLeaveDeduction, setEditableLeaveDeduction] = useState<number>(0);
+  const [editablePaidAmount, setEditablePaidAmount] = useState<number>(0);
 
   const { user } = useAuth();
   const previewRef = useRef<HTMLDivElement>(null);
@@ -141,11 +142,12 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
       // Initialize editable fields with fetched data
       setEditableBonus(data.bonusAmount);
       setEditableBonusDescription(data.bonusDescription || "");
-      setEditableNetPayable(data.netPayableSalary);
-      setEditableAdvanceDeduction(data.outstandingAdvance);
+      setEditableAdvanceDeduction(0); // Default to 0, user can adjust
       setEditableOvertime(data.overtimeAmount);
       setEditableFine(data.fineAmount);
       setEditableLeaveDeduction(data.unpaidLeaveDeductionAmount);
+      setEditablePaidAmount(0); // Default to 0, user must enter amount
+      // Net payable will be calculated in useEffect
     },
   });
 
@@ -173,6 +175,24 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
     });
   }, [selectedUserId, month]);
 
+  // Auto-calculate net payable salary when deductions/additions change
+  useEffect(() => {
+    if (!payrollDetails) return;
+
+    const calculatedNetPayable =
+      payrollDetails.baseSalary +
+      payrollDetails.totalCommission +
+      editableBonus +
+      editableOvertime -
+      editableLeaveDeduction -
+      editableAdvanceDeduction -
+      editableFine -
+      (payrollDetails.loanDeduction || 0) -
+      (payrollDetails.otherDeduction || 0);
+
+    setEditableNetPayable(calculatedNetPayable);
+  }, [payrollDetails, editableBonus, editableOvertime, editableLeaveDeduction, editableAdvanceDeduction, editableFine]);
+
   const { mutate: releaseMutation, isPending } = useMutation({
     mutationFn: (data: any) => AXIOS.post(PAYROLL_RELEASE, data),
     onSuccess: () => {
@@ -195,6 +215,17 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   const handleRelease = () => {
     if (!payrollDetails) return;
 
+    // Validate paid amount
+    if (editablePaidAmount <= 0) {
+      alert("Paid amount must be greater than 0");
+      return;
+    }
+
+    if (editablePaidAmount > editableNetPayable) {
+      alert("Paid amount cannot exceed net payable salary");
+      return;
+    }
+
     // Calculate total deductions
     const totalDeductions =
       editableLeaveDeduction +
@@ -210,9 +241,8 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
       editableBonus +
       editableOvertime;
 
-    // Calculate due amount (assuming paidAmount is 0 for now since it's not in the form)
-    const paidAmount = 0;
-    const dueAmount = editableNetPayable - paidAmount;
+    // Calculate due amount
+    const dueAmount = editableNetPayable - editablePaidAmount;
 
     // Format the payload according to the requested structure
     const payload = {
@@ -231,7 +261,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
       ...(payrollDetails.otherDeduction > 0 && { otherDeduction: payrollDetails.otherDeduction }),
 
       netPayableSalary: editableNetPayable,
-      ...(paidAmount > 0 && { paidAmount }),
+      paidAmount: editablePaidAmount,
 
       shopId: user?.id,
 
@@ -262,7 +292,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
           gross: grossSalary,
           totalDeductions: totalDeductions,
           netPayable: editableNetPayable,
-          paid: paidAmount,
+          paid: editablePaidAmount,
           due: dueAmount,
         }
       }
@@ -272,7 +302,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
     console.log("Formatted Salary Release Payload:", JSON.stringify(payload, null, 2));
 
     // Uncomment below to actually make the API call
-    // releaseMutation(payload);
+    releaseMutation(payload);
   };
 
   const isLoading = isFetchingDetails || isPending;
@@ -588,26 +618,69 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-1 block">
                     Advance Deduction
+                    <span className="text-xs text-gray-500 ml-2">
+                      (Outstanding: {money.format(payrollDetails.outstandingAdvance)})
+                    </span>
                   </label>
                   <input
                     type="number"
                     value={editableAdvanceDeduction}
                     onChange={(e) => setEditableAdvanceDeduction(parseFloat(e.target.value) || 0)}
+                    max={payrollDetails.outstandingAdvance}
                     className="w-full px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                   />
                 </div>
 
-                {/* Editable: Net Payable */}
+                {/* Read-only: Net Payable (Auto-calculated) */}
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-1 block">
-                    Net Payable Salary
+                    Net Payable Salary (Auto-calculated)
+                  </label>
+                  <input
+                    type="text"
+                    value={money.format(editableNetPayable)}
+                    readOnly
+                    className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-blue-50 text-blue-700 font-bold text-lg cursor-not-allowed"
+                  />
+                </div>
+
+                {/* Editable: Paid Amount */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    Paid Amount
+                    <span className="text-xs text-red-500 ml-2">
+                      (Must be greater than 0 and ≤ Net Payable)
+                    </span>
                   </label>
                   <input
                     type="number"
-                    value={editableNetPayable}
-                    onChange={(e) => setEditableNetPayable(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-semibold"
+                    value={editablePaidAmount}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) || 0;
+                      // Ensure value is between 0 and net payable
+                      if (value > editableNetPayable) {
+                        setEditablePaidAmount(editableNetPayable);
+                      } else if (value < 0) {
+                        setEditablePaidAmount(0);
+                      } else {
+                        setEditablePaidAmount(value);
+                      }
+                    }}
+                    min={0}
+                    max={editableNetPayable}
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none font-semibold"
                   />
+                  {editablePaidAmount > 0 && editablePaidAmount < editableNetPayable && (
+                    <p className="text-xs text-orange-600 mt-1">
+                      Due: {money.format(editableNetPayable - editablePaidAmount)}
+                    </p>
+                  )}
+                  {editablePaidAmount === editableNetPayable && editablePaidAmount > 0 && (
+                    <p className="text-xs text-green-600 mt-1">
+                      ✓ Full payment
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -647,6 +720,14 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                     <p className="text-gray-600">Final Net Payable</p>
                     <p className="text-2xl font-bold text-blue-600">{money.format(editableNetPayable)}</p>
                   </div>
+                  <div>
+                    <p className="text-gray-600">Paid Amount</p>
+                    <p className="text-xl font-bold text-green-600">{money.format(editablePaidAmount)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Due Amount</p>
+                    <p className="text-xl font-bold text-orange-600">{money.format(editableNetPayable - editablePaidAmount)}</p>
+                  </div>
                 </div>
               </div>
 
@@ -661,8 +742,8 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                 </button>
                 <button
                   onClick={handleRelease}
-                  disabled={isPending}
-                  className="flex-1 py-3 text-base rounded-lg font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg transition-all disabled:opacity-50"
+                  disabled={isPending || editablePaidAmount <= 0 || editablePaidAmount > editableNetPayable}
+                  className="flex-1 py-3 text-base rounded-lg font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPending ? "Releasing..." : "Release Salary"}
                 </button>
