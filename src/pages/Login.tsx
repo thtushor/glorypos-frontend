@@ -85,6 +85,7 @@ const Login: React.FC = () => {
               icon={LockIcon}
               name="password"
               type="password"
+              autocomplete="current-password"
               required
               placeholder="Enter password"
               value={credentials.password}
