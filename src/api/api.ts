@@ -6,8 +6,8 @@ import {
   Product,
 } from "@/types/ProductType";
 
-export const BASE_URL = "https://glorypos.com/api/api";
-// export const BASE_URL = "http://localhost:3000/api";
+// export const BASE_URL = "https://glorypos.com/api/api";
+export const BASE_URL = "http://localhost:3000/api";
 
 export const REGISTER_URL = `${BASE_URL}/register`;
 export const LOGIN_URL = `${BASE_URL}/login`;
@@ -185,7 +185,7 @@ export const PAYROLL_HOLIDAY = `${BASE_URL}/payroll/holiday`;
 export const PAYROLL_HOLIDAYS = `${BASE_URL}/payroll/holidays`;
 export const PAYROLL_PROMOTION = `${BASE_URL}/payroll/promotion`;
 export const PAYROLL_SALARY_DETAILS = `${BASE_URL}/payroll/salary/details`; // Use with /:userId/:month
-export const PAYROLL_RELEASE = `${BASE_URL}/payroll/release-with-validation`;
+export const PAYROLL_RELEASE = `${BASE_URL}/payroll/payroll/release-with-validation`;
 export const PAYROLL_DETAILS = `${BASE_URL}/payroll/details`;
 export const PAYROLL_HISTORY = `${BASE_URL}/payroll/history`; // Use with /:userId
 export const PAYROLL_ATTENDANCE_PRESENT_MULTIPLE = `${BASE_URL}/payroll/attendance/present/multiple`;

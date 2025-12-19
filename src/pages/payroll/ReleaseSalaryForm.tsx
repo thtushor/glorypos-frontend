@@ -56,6 +56,20 @@ interface PayrollDetails {
   status: string;
   releaseDate: string | null;
   releasedBy: number | null;
+  totalPreviousDues: number;
+  previousDuesBreakdown: Array<{
+    salaryMonth: string;
+    netPayable: number;
+    paid: number;
+    due: number;
+  }>;
+  hasPreviousDues: boolean;
+  currentMonthNetPayable: number;
+  currentMonthPaidAmount: number;
+  hasCurrentMonthPayments: boolean;
+  currentMonthPaymentsCount: number;
+  totalPayable: number;
+  currentMonthRemainingDue: number;
   calculationSnapshot: {
     advanceData: {
       totalAdvanceTaken: number;
@@ -89,6 +103,27 @@ interface PayrollDetails {
         commissionAmount: string;
         commissionPercentage: string;
       }>;
+    };
+    previousDues: {
+      total: number;
+      breakdown: Array<{
+        salaryMonth: string;
+        netPayable: number;
+        paid: number;
+        due: number;
+      }>;
+    };
+    currentMonthPayments: {
+      totalPaid: number;
+      paymentsCount: number;
+      hasPayments: boolean;
+    };
+    paymentSummary: {
+      currentMonthNetPayable: number;
+      previousDues: number;
+      totalPayable: number;
+      alreadyPaid: number;
+      remainingDue: number;
     };
     deductionRule: string;
   };
@@ -496,6 +531,120 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                       </div>
                     </div>
                   )}
+
+                  {/* Payment Summary Overview */}
+                  <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 shadow-md border-2 border-purple-200">
+                    <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                      <FiDollarSign className="text-purple-600" />
+                      Payment Summary Overview
+                    </h4>
+
+                    {/* Previous Dues Section */}
+                    {payrollDetails.hasPreviousDues && payrollDetails.previousDuesBreakdown && payrollDetails.previousDuesBreakdown.length > 0 && (
+                      <div className="mb-4 bg-white rounded-lg p-3 border border-orange-200">
+                        <h5 className="font-semibold text-orange-700 mb-2 flex items-center gap-2">
+                          <FiTrendingDown className="w-4 h-4" />
+                          Previous Month(s) Outstanding Dues
+                        </h5>
+                        <div className="space-y-2">
+                          {payrollDetails.previousDuesBreakdown.map((prevDue, index) => (
+                            <div key={index} className="bg-orange-50 rounded-md p-2 border border-orange-100">
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                                <div>
+                                  <p className="text-xs text-gray-500">Month</p>
+                                  <p className="font-semibold text-gray-700">{prevDue.salaryMonth}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500">Net Payable</p>
+                                  <p className="font-semibold text-blue-600">{money.format(prevDue.netPayable)}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500">Paid</p>
+                                  <p className="font-semibold text-green-600">{money.format(prevDue.paid)}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500">Due</p>
+                                  <p className="font-semibold text-red-600">{money.format(prevDue.due)}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="pt-2 border-t border-orange-200">
+                            <div className="flex justify-between items-center">
+                              <p className="font-semibold text-gray-700">Total Previous Dues:</p>
+                              <p className="text-xl font-bold text-red-600">{money.format(payrollDetails.totalPreviousDues)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Current Month Salary Section */}
+                    <div className="mb-4 bg-white rounded-lg p-3 border border-blue-200">
+                      <h5 className="font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                        <FiCalendar className="w-4 h-4" />
+                        Current Month Salary ({month})
+                      </h5>
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="text-xs text-gray-500">Net Payable</p>
+                            <p className="font-bold text-blue-600">{money.format(payrollDetails.currentMonthNetPayable)}</p>
+                          </div>
+                          {payrollDetails.hasCurrentMonthPayments && (
+                            <>
+                              <div>
+                                <p className="text-xs text-gray-500">Already Paid</p>
+                                <p className="font-bold text-green-600">{money.format(payrollDetails.currentMonthPaidAmount)}</p>
+                              </div>
+                              <div className="col-span-2">
+                                <p className="text-xs text-gray-500">Remaining Due (Current Month)</p>
+                                <p className="font-bold text-orange-600">{money.format(payrollDetails.currentMonthRemainingDue)}</p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        {payrollDetails.hasCurrentMonthPayments && (
+                          <div className="text-xs text-gray-600 bg-blue-50 rounded p-2">
+                            <p>💡 {payrollDetails.currentMonthPaymentsCount} payment(s) already made for this month</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Total Payable Summary */}
+                    <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg p-4 border-2 border-purple-300">
+                      <h5 className="font-bold text-purple-800 mb-3 text-base">Overall Payment Summary</h5>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                          <p className="text-gray-700">Current Month Net Payable:</p>
+                          <p className="font-semibold text-blue-600">{money.format(payrollDetails.currentMonthNetPayable)}</p>
+                        </div>
+                        {payrollDetails.hasPreviousDues && (
+                          <div className="flex justify-between items-center text-sm">
+                            <p className="text-gray-700">Previous Dues:</p>
+                            <p className="font-semibold text-red-600">+ {money.format(payrollDetails.totalPreviousDues)}</p>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center text-sm pt-2 border-t border-purple-300">
+                          <p className="font-semibold text-gray-800">Total Payable:</p>
+                          <p className="text-lg font-bold text-purple-700">{money.format(payrollDetails.totalPayable)}</p>
+                        </div>
+                        {payrollDetails.hasCurrentMonthPayments && (
+                          <>
+                            <div className="flex justify-between items-center text-sm">
+                              <p className="text-gray-700">Already Paid (Current Month):</p>
+                              <p className="font-semibold text-green-600">- {money.format(payrollDetails.currentMonthPaidAmount)}</p>
+                            </div>
+                            <div className="flex justify-between items-center text-sm pt-2 border-t border-purple-300">
+                              <p className="font-bold text-gray-800">Final Remaining Due:</p>
+                              <p className="text-xl font-bold text-orange-600">{money.format(payrollDetails.netPayableSalary)}</p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
