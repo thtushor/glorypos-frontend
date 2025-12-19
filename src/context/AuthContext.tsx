@@ -98,6 +98,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     if (error) {
+      console.log("navigating login....");
       setUser(null);
       localStorage.removeItem("user");
       navigate("/login");
@@ -134,6 +135,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           status: true,
         });
         setTimeout(() => {
+          console.log("navigating to dashboard....");
           navigate("/dashboard");
         }, 2000);
       } else {
