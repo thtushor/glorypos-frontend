@@ -66,6 +66,7 @@ const Login: React.FC = () => {
               icon={EnvelopeIcon}
               name="email"
               type="email"
+              autoComplete="username"
               required
               placeholder="Enter your email"
               value={credentials.email}
