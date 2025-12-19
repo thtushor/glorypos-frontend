@@ -148,6 +148,8 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   const [editableLeaveDeduction, setEditableLeaveDeduction] = useState<number>(0);
   const [editablePaidAmount, setEditablePaidAmount] = useState<number>(0);
 
+  console.log({ editablePaidAmount })
+
   const { user } = useAuth();
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -936,47 +938,162 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
 
               {/* Summary Card */}
               <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-lg p-4 border-2 border-emerald-200">
-                <h4 className="font-bold text-gray-800 mb-3">Final Summary</h4>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-gray-600">Employee</p>
-                    <p className="font-semibold">{payrollDetails.fullName}</p>
+                <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                  <FiDollarSign className="text-emerald-600" />
+                  Final Summary
+                </h4>
+
+                <div className="space-y-4">
+                  {/* Employee & Month Info */}
+                  <div className="grid grid-cols-2 gap-3 text-sm pb-3 border-b border-emerald-200">
+                    <div>
+                      <p className="text-gray-600 text-xs">Employee</p>
+                      <p className="font-semibold">{payrollDetails.fullName}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 text-xs">Month</p>
+                      <p className="font-semibold">{month}</p>
+                    </div>
                   </div>
+
+                  {/* Current Month Salary Breakdown */}
                   <div>
-                    <p className="text-gray-600">Month</p>
-                    <p className="font-semibold">{month}</p>
+                    <h5 className="font-semibold text-blue-700 text-sm mb-2 flex items-center gap-1">
+                      <FiCalendar className="w-3 h-3" />
+                      Current Month Salary
+                    </h5>
+                    <div className="grid grid-cols-2 gap-2 text-xs bg-blue-50 rounded-lg p-2">
+                      <div>
+                        <p className="text-gray-600">Base Salary</p>
+                        <p className="font-semibold text-gray-800">{money.format(payrollDetails.baseSalary)}</p>
+                      </div>
+                      {payrollDetails.totalCommission > 0 && (
+                        <div>
+                          <p className="text-gray-600">Commission</p>
+                          <p className="font-semibold text-green-600">+{money.format(payrollDetails.totalCommission)}</p>
+                        </div>
+                      )}
+                      {editableBonus > 0 && (
+                        <div>
+                          <p className="text-gray-600">Bonus</p>
+                          <p className="font-semibold text-green-600">+{money.format(editableBonus)}</p>
+                        </div>
+                      )}
+                      {editableOvertime > 0 && (
+                        <div>
+                          <p className="text-gray-600">Overtime</p>
+                          <p className="font-semibold text-green-600">+{money.format(editableOvertime)}</p>
+                        </div>
+                      )}
+                      {editableLeaveDeduction > 0 && (
+                        <div>
+                          <p className="text-gray-600">Leave Deduction</p>
+                          <p className="font-semibold text-red-600">-{money.format(editableLeaveDeduction)}</p>
+                        </div>
+                      )}
+                      {editableAdvanceDeduction > 0 && (
+                        <div>
+                          <p className="text-gray-600">Advance Deduction</p>
+                          <p className="font-semibold text-red-600">-{money.format(editableAdvanceDeduction)}</p>
+                        </div>
+                      )}
+                      {editableFine > 0 && (
+                        <div>
+                          <p className="text-gray-600">Fine</p>
+                          <p className="font-semibold text-red-600">-{money.format(editableFine)}</p>
+                        </div>
+                      )}
+                      <div className="col-span-2 pt-2 border-t border-blue-200">
+                        <p className="text-gray-600">Current Month Net</p>
+                        <p className="text-lg font-bold text-blue-600">{money.format(editableNetPayable)}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-600">Base Salary</p>
-                    <p className="font-semibold">{money.format(payrollDetails.baseSalary)}</p>
+
+                  {/* Previous Dues Section */}
+                  {payrollDetails.hasPreviousDues && (
+                    <div>
+                      <h5 className="font-semibold text-orange-700 text-sm mb-2 flex items-center gap-1">
+                        <FiTrendingDown className="w-3 h-3" />
+                        Previous Outstanding Dues
+                      </h5>
+                      <div className="bg-orange-50 rounded-lg p-2 space-y-1">
+                        {payrollDetails.previousDuesBreakdown.map((prevDue, index) => (
+                          <div key={index} className="flex justify-between text-xs">
+                            <span className="text-gray-700">{prevDue.salaryMonth}</span>
+                            <span className="font-semibold text-red-600">{money.format(prevDue.due)}</span>
+                          </div>
+                        ))}
+                        <div className="flex justify-between text-xs pt-1 border-t border-orange-200">
+                          <span className="font-semibold text-gray-700">Total Previous Dues:</span>
+                          <span className="font-bold text-orange-600">{money.format(payrollDetails.totalPreviousDues)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Payment Calculation */}
+                  <div className="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-lg p-3">
+                    <h5 className="font-semibold text-purple-800 text-sm mb-2">Payment Calculation</h5>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-gray-700">Current Month Net:</span>
+                        <span className="font-semibold text-blue-600">{money.format(editableNetPayable)}</span>
+                      </div>
+                      {payrollDetails.hasPreviousDues && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-700">Previous Dues:</span>
+                          <span className="font-semibold text-orange-600">+{money.format(payrollDetails.totalPreviousDues)}</span>
+                        </div>
+                      )}
+                      {payrollDetails.hasCurrentMonthPayments && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-700">Already Paid (Current Month):</span>
+                          <span className="font-semibold text-green-600">-{money.format(payrollDetails.currentMonthPaidAmount)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between pt-2 border-t border-purple-300">
+                        <span className="font-bold text-gray-800">Total Remaining:</span>
+                        <span className="text-base font-bold text-purple-700">{money.format(payrollDetails.netPayableSalary)}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-600">Commission</p>
-                    <p className="font-semibold text-green-600">{money.format(payrollDetails.totalCommission)}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Bonus</p>
-                    <p className="font-semibold text-green-600">{money.format(editableBonus)}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Leave Deduction</p>
-                    <p className="font-semibold text-red-600">-{money.format(editableLeaveDeduction)}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Advance Deduction</p>
-                    <p className="font-semibold text-red-600">-{money.format(editableAdvanceDeduction)}</p>
-                  </div>
-                  <div className="col-span-2 pt-2 border-t-2 border-emerald-300">
-                    <p className="text-gray-600">Final Net Payable</p>
-                    <p className="text-2xl font-bold text-blue-600">{money.format(editableNetPayable)}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Paid Amount</p>
-                    <p className="text-xl font-bold text-green-600">{money.format(editablePaidAmount)}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Due Amount</p>
-                    <p className="text-xl font-bold text-orange-600">{money.format(editableNetPayable - editablePaidAmount)}</p>
+
+                  {/* Payment Action */}
+                  <div className="bg-white rounded-lg p-3 border-2 border-green-300">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-600">Paying Now</p>
+                        <p className="text-xl font-bold text-green-600">{money.format(editablePaidAmount)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Will Remain Due</p>
+                        <p className="text-xl font-bold text-orange-600">{money.format(payrollDetails.netPayableSalary - editablePaidAmount)}</p>
+                      </div>
+                    </div>
+
+                    {/* Payment Distribution Info */}
+                    {editablePaidAmount > 0 && (
+                      <div className="mt-2 pt-2 border-t border-gray-200">
+                        <p className="text-xs font-semibold text-gray-700 mb-1">Payment Distribution:</p>
+                        {editablePaidAmount <= editableNetPayable ? (
+                          <p className="text-xs text-blue-600">
+                            💰 {money.format(editablePaidAmount)} to current month
+                            {editablePaidAmount < editableNetPayable && (
+                              <span className="text-orange-600"> (Partial payment)</span>
+                            )}
+                          </p>
+                        ) : (
+                          <div className="text-xs space-y-0.5">
+                            <p className="text-green-600">✓ {money.format(editableNetPayable)} to current month (Full)</p>
+                            <p className="text-blue-600">💰 {money.format(editablePaidAmount - editableNetPayable)} to previous dues</p>
+                            {(editablePaidAmount - editableNetPayable) < payrollDetails.totalPreviousDues && (
+                              <p className="text-orange-600">⚠ {money.format(payrollDetails.totalPreviousDues - (editablePaidAmount - editableNetPayable))} previous dues still remaining</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
