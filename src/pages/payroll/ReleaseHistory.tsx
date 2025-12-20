@@ -1,23 +1,78 @@
 // src/pages/payroll/ReleaseHistory.tsx
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AXIOS from "@/api/network/Axios";
-import { PAYROLL_RELEASE_HISTORY } from "@/api/api";
+import { PAYROLL_HISTORY } from "@/api/api";
 import Spinner from "@/components/Spinner";
-import { FaCalendarAlt, FaUserCheck } from "react-icons/fa";
+import { FaCalendarAlt, FaUserCheck, FaPrint, FaEye, FaBuilding } from "react-icons/fa";
+import { FiUser } from "react-icons/fi";
+import money from "@/utils/money";
+import { useReactToPrint } from "react-to-print";
+import { CHILD_USERS_URL, SUB_SHOPS_URL } from "@/api/api";
+import { useAuth } from "@/context/AuthContext";
 
 interface Release {
   id: number;
   userId: number;
-  fullName: string;
-  email: string;
-  role: string;
-  period: string;
-  releasedAmount: number;
-  releasedOn: string;
-  releaserId: number;
-  releaserFullname: string;
-  details: string | object;
+  salaryMonth: string;
+  baseSalary: string;
+  advanceAmount: string;
+  bonusAmount: string;
+  bonusDescription: string | null;
+  loanDeduction: string;
+  fineAmount: string;
+  overtimeAmount: string;
+  otherDeduction: string;
+  netPayableSalary: string;
+  paidAmount: string;
+  status: string;
+  releaseDate: string | null;
+  releasedBy: number | null;
+  shopId: number;
+  calculationSnapshot: {
+    advance: {
+      remaining: number;
+      totalTaken: number;
+      deductedThisMonth: number;
+      totalRepaidBefore: number;
+    };
+    commission?: {
+      totalSales: number;
+      commissionRate: string;
+      commissionAmount: number;
+    };
+    presentDays: number;
+    workingDays: number;
+    perDaySalary: number;
+    paidLeaveDays: number;
+    salaryBreakdown: {
+      due: number;
+      paid: number;
+      gross: number;
+      netPayable: number;
+      totalDeductions: number;
+    };
+    unpaidLeaveDays: number;
+    unpaidLeaveDeduction: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+  UserRole: {
+    id: number;
+    fullName: string;
+    email: string;
+    role: string;
+    baseSalary: string;
+    parent: {
+      id: number;
+      fullName: string;
+      businessName: string;
+    };
+  };
+  releaser: {
+    id: number;
+    fullName: string;
+  } | null;
 }
 
 interface Pagination {
@@ -28,73 +83,319 @@ interface Pagination {
   hasMore: boolean;
 }
 
+interface ChildUser {
+  id: number;
+  fullName: string;
+  email: string;
+  role: string;
+}
+
+interface ChildUsersResponse {
+  status: boolean;
+  message: string;
+  users: ChildUser[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+interface SubShop {
+  id: number;
+  fullName: string;
+  email: string;
+  businessName: string;
+  accountType: string;
+}
+
+interface SubShopResponse {
+  users: SubShop[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
 const ReleaseHistory = () => {
+  const { user } = useAuth();
   const [filters, setFilters] = useState({
     page: 1,
     pageSize: 10,
+    search: "",
+    startDate: "",
+    endDate: "",
+    status: "",
     userId: "",
-    periodStart: "",
-    periodEnd: "",
+    shopId: "",
+    minAmount: "",
+    maxAmount: "",
   });
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["release-history", filters],
+  const [selectedPayslip, setSelectedPayslip] = useState<Release | null>(null);
+  const payslipRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: payslipRef,
+  });
+
+  // Fetch all employees for the dropdown
+  const { data: usersData, isLoading: loadingUsers } = useQuery<ChildUsersResponse>({
+    queryKey: ["childUsers", "all"],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) params.append(key, String(value));
-      });
-      const res = await AXIOS.get(`${PAYROLL_RELEASE_HISTORY}?${params}`);
+      const res = await AXIOS.get(`${CHILD_USERS_URL}?page=1&pageSize=1000`);
       return res.data;
     },
   });
 
-  const history: Release[] = data?.history || [];
+  const employees = usersData?.users || [];
+
+  // Fetch all shops for the dropdown
+  const { data: shopData, isLoading: isLoadingShops } = useQuery<SubShopResponse>({
+    queryKey: ["sub-shops-for-filter"],
+    queryFn: async () => {
+      const response = await AXIOS.get(SUB_SHOPS_URL, {
+        params: {
+          page: 1,
+          pageSize: 1000000,
+        },
+      });
+      return response.data;
+    },
+  });
+
+  const shops = shopData?.users || [];
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["release-history", filters],
+    queryFn: async () => {
+      // Build params object, excluding empty values
+      const params: Record<string, any> = {
+        page: filters.page,
+        pageSize: filters.pageSize,
+      };
+      if (filters.search) params.search = filters.search;
+      if (filters.startDate) params.startDate = filters.startDate;
+      if (filters.endDate) params.endDate = filters.endDate;
+      if (filters.status) params.status = filters.status;
+      if (filters.userId) params.userId = filters.userId;
+      if (filters.shopId) params.shopId = filters.shopId;
+      if (filters.minAmount) params.minAmount = filters.minAmount;
+      if (filters.maxAmount) params.maxAmount = filters.maxAmount;
+
+      const res = await AXIOS.get(PAYROLL_HISTORY, { params });
+      return res.data;
+    },
+  });
+
+  const releases: Release[] = data?.releases || [];
   const pagination: Pagination | undefined = data?.pagination;
 
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const formatMonth = (monthString: string) => {
+    const [year, month] = monthString.split("-");
+    return new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+    });
+  };
+
   return (
-    <div className=" max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {/* Filters */}
-      <div className="bg-white pb-4 rounded-lg shadow-sm gap-4 grid grid-cols-1 sm:grid-cols-3">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Employee ID
-          </label>
-          <input
-            type="number"
-            placeholder="e.g. 10"
-            value={filters.userId}
-            onChange={(e) =>
-              setFilters({ ...filters, userId: e.target.value, page: 1 })
-            }
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-          />
+      <div className="bg-white p-4 rounded-lg shadow-sm gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          {/* Search */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Search
+            </label>
+            <input
+              type="text"
+              placeholder="Search by name, email..."
+              value={filters.search}
+              onChange={(e) =>
+                setFilters({ ...filters, search: e.target.value, page: 1 })
+              }
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
+
+          {/* Status */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status
+            </label>
+            <select
+              value={filters.status}
+              onChange={(e) =>
+                setFilters({ ...filters, status: e.target.value, page: 1 })
+              }
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="">All</option>
+              <option value="PENDING">Pending</option>
+              <option value="RELEASED">Released</option>
+            </select>
+          </div>
+
+          {/* Shop */}
+          <div>
+            <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
+              <FaBuilding className="inline" />
+              Shop
+            </label>
+            <select
+              value={filters.shopId}
+              onChange={(e) =>
+                setFilters({ ...filters, shopId: e.target.value, page: 1 })
+              }
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+              disabled={isLoadingShops}
+            >
+              <option value="">
+                {isLoadingShops ? "Loading shops..." : "All Shops"}
+              </option>
+              {user?.id && (
+                <option key={user.id} value={user.id}>
+                  {(user as any)?.businessName ||
+                    (user as any)?.fullName ||
+                    "Current Shop"}
+                </option>
+              )}
+              {shops.map((shop) =>
+                shop?.id ? (
+                  <option key={shop?.id} value={shop?.id}>
+                    {shop.businessName || shop.fullName}
+                  </option>
+                ) : null
+              )}
+            </select>
+          </div>
+
+          {/* Employee */}
+          <div>
+            <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
+              <FiUser className="inline" />
+              Employee
+            </label>
+            <select
+              value={filters.userId}
+              onChange={(e) =>
+                setFilters({ ...filters, userId: e.target.value, page: 1 })
+              }
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+              disabled={loadingUsers}
+            >
+              <option value="">
+                {loadingUsers ? "Loading employees..." : "All Employees"}
+              </option>
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.fullName} ({emp.role})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Period Start
-          </label>
-          <input
-            type="date"
-            value={filters.periodStart}
-            onChange={(e) =>
-              setFilters({ ...filters, periodStart: e.target.value, page: 1 })
-            }
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-          />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Start Date */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Start Date
+            </label>
+            <input
+              type="date"
+              value={filters.startDate}
+              onChange={(e) =>
+                setFilters({ ...filters, startDate: e.target.value, page: 1 })
+              }
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
+
+          {/* End Date */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              End Date
+            </label>
+            <input
+              type="date"
+              value={filters.endDate}
+              onChange={(e) =>
+                setFilters({ ...filters, endDate: e.target.value, page: 1 })
+              }
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
+
+          {/* Min Amount */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Min Amount
+            </label>
+            <input
+              type="number"
+              placeholder="0"
+              value={filters.minAmount}
+              onChange={(e) =>
+                setFilters({ ...filters, minAmount: e.target.value, page: 1 })
+              }
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
+
+          {/* Max Amount */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Max Amount
+            </label>
+            <input
+              type="number"
+              placeholder="999999"
+              value={filters.maxAmount}
+              onChange={(e) =>
+                setFilters({ ...filters, maxAmount: e.target.value, page: 1 })
+              }
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Period End
-          </label>
-          <input
-            type="date"
-            value={filters.periodEnd}
-            onChange={(e) =>
-              setFilters({ ...filters, periodEnd: e.target.value, page: 1 })
+
+        {/* Clear Filters Button */}
+        <div className="mt-4">
+          <button
+            onClick={() =>
+              setFilters({
+                page: 1,
+                pageSize: 10,
+                search: "",
+                startDate: "",
+                endDate: "",
+                status: "",
+                userId: "",
+                shopId: "",
+                minAmount: "",
+                maxAmount: "",
+              })
             }
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-          />
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+          >
+            Clear All Filters
+          </button>
         </div>
       </div>
 
@@ -107,7 +408,7 @@ const ReleaseHistory = () => {
         <div className="text-center py-12 text-red-600">
           Failed to load history
         </div>
-      ) : history.length === 0 ? (
+      ) : releases.length === 0 ? (
         <div className="text-center py-16 text-gray-500 text-lg">
           No salary records found
         </div>
@@ -122,87 +423,107 @@ const ReleaseHistory = () => {
                     Employee
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                    Period
+                    Month
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                    Specify
+                    Net Payable
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                    Amount
+                    Paid
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
+                    Due
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
+                    Status
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
                     Released On
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                    Released By
+                    Actions
                   </th>
                 </tr>
               </thead>
 
               <tbody className="bg-white divide-y divide-gray-200">
-                {history.map((item) => (
+                {releases.map((item) => (
                   <tr
                     key={item.id}
                     className="hover:bg-emerald-50 transition duration-200"
                   >
                     {/* Employee */}
                     <td className="px-6 py-5 whitespace-nowrap">
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <div className="font-semibold text-gray-900 flex items-center gap-2">
-                            ID: {item.userId}
-                          </div>
-                          <div className="text-[14px] font-bold text-gray-800">
-                            NAME: {item.fullName}
-                          </div>
-                          <div className="text-sm text-gray-600 text-nowrap flex items-center gap-1">
-                            EMAIL: {item.email}
-                          </div>
-                          <div className="text-xs font-semibold text-emerald-600">
-                            ROLE: {item.role}
-                          </div>
+                      <div>
+                        <div className="font-semibold text-gray-900">
+                          {item.UserRole.fullName}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {item.UserRole.email}
+                        </div>
+                        <div className="text-xs font-semibold text-emerald-600">
+                          {item.UserRole.role.toUpperCase()}
                         </div>
                       </div>
                     </td>
 
-                    {/* Period */}
+                    {/* Month */}
                     <td className="px-6 py-5">
-                      <div className="flex items-center gap-2  text-nowrap text-sm font-medium">
+                      <div className="flex items-center gap-2 text-nowrap text-sm font-medium">
                         <FaCalendarAlt className="text-emerald-600" />
-                        {item.period}
+                        {formatMonth(item.salaryMonth)}
                       </div>
                     </td>
 
-                    {/* Details */}
-                    <td className="px-6 py-5 text-sm  text-nowrap">
-                      <span className="px-3 py-1 bg-emerald-100  text-nowrap text-emerald-800 rounded-full text-xs font-medium">
-                        {typeof item.details === "string"
-                          ? item.details
-                          : "Custom Period"}
-                      </span>
-                    </td>
-
-                    {/* Amount – Fixed locale (choose your currency) */}
+                    {/* Net Payable */}
                     <td className="px-6 py-5">
-                      <div className="text-base  text-nowrap font-bold text-emerald-600 flex items-center gap-1">
-                        {/* Thai Baht */}฿
-                        {item.releasedAmount.toLocaleString("th-TH")}
-                        {/* Indian Rupee → ₹{item.releasedAmount.toLocaleString("en-IN")} */}
-                        {/* USD → ${item.releasedAmount.toLocaleString("en-US")} */}
+                      <div className="text-base text-nowrap font-bold text-blue-600">
+                        {money.format(parseFloat(item.netPayableSalary))}
                       </div>
+                    </td>
+
+                    {/* Paid */}
+                    <td className="px-6 py-5">
+                      <div className="text-base text-nowrap font-bold text-green-600">
+                        {money.format(parseFloat(item.paidAmount))}
+                      </div>
+                    </td>
+
+                    {/* Due */}
+                    <td className="px-6 py-5">
+                      <div className="text-base text-nowrap font-bold text-orange-600">
+                        {money.format(item.calculationSnapshot.salaryBreakdown.due)}
+                      </div>
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-6 py-5">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${item.status === "RELEASED"
+                          ? "bg-green-100 text-green-800"
+                          : item.status === "PENDING"
+                            ? "bg-orange-100 text-orange-800"
+                            : "bg-gray-100 text-gray-800"
+                          }`}
+                      >
+                        {item.status}
+                      </span>
                     </td>
 
                     {/* Released On */}
                     <td className="px-6 py-5 text-sm text-nowrap text-gray-700 font-medium">
-                      {item.releasedOn}
+                      {formatDate(item.releaseDate)}
                     </td>
 
-                    {/* Released By */}
+                    {/* Actions */}
                     <td className="px-6 py-5">
-                      <div className="flex items-center text-nowrap gap-2 text-[14px] font-semibold">
-                        <FaUserCheck className="text-green-600" />
-                        {item.releaserFullname}
-                      </div>
+                      <button
+                        onClick={() => setSelectedPayslip(item)}
+                        className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition text-sm font-medium"
+                      >
+                        <FaEye />
+                        Payslip
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -249,6 +570,215 @@ const ReleaseHistory = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Payslip Modal */}
+      {selectedPayslip && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-800">Salary Payslip</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={handlePrint}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+                >
+                  <FaPrint />
+                  Print
+                </button>
+                <button
+                  onClick={() => setSelectedPayslip(null)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            {/* Payslip Content */}
+            <div ref={payslipRef} className="p-8">
+              {/* Company Header */}
+              <div className="text-center mb-6 border-b-2 border-gray-300 pb-4">
+                <h1 className="text-2xl font-bold text-gray-800">
+                  {selectedPayslip.UserRole.parent.businessName}
+                </h1>
+                <p className="text-sm text-gray-600">Salary Payslip</p>
+              </div>
+
+              {/* Employee & Period Info */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <p className="text-sm text-gray-600">Employee Name:</p>
+                  <p className="font-semibold text-gray-800">{selectedPayslip.UserRole.fullName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Employee ID:</p>
+                  <p className="font-semibold text-gray-800">{selectedPayslip.userId}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Designation:</p>
+                  <p className="font-semibold text-gray-800">{selectedPayslip.UserRole.role.toUpperCase()}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Salary Month:</p>
+                  <p className="font-semibold text-gray-800">{formatMonth(selectedPayslip.salaryMonth)}</p>
+                </div>
+              </div>
+
+              {/* Attendance Details */}
+              <div className="mb-6">
+                <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">Attendance Details</h3>
+                <div className="grid grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Working Days:</p>
+                    <p className="font-semibold">{selectedPayslip.calculationSnapshot.workingDays}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Present Days:</p>
+                    <p className="font-semibold text-green-600">{selectedPayslip.calculationSnapshot.presentDays}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Paid Leave:</p>
+                    <p className="font-semibold text-blue-600">{selectedPayslip.calculationSnapshot.paidLeaveDays}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Unpaid Leave:</p>
+                    <p className="font-semibold text-red-600">{selectedPayslip.calculationSnapshot.unpaidLeaveDays}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Earnings & Deductions */}
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                {/* Earnings */}
+                <div>
+                  <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">Earnings</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Base Salary:</span>
+                      <span className="font-semibold">{money.format(parseFloat(selectedPayslip.baseSalary))}</span>
+                    </div>
+                    {selectedPayslip.calculationSnapshot.commission && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Commission:</span>
+                        <span className="font-semibold text-green-600">
+                          {money.format(selectedPayslip.calculationSnapshot.commission.commissionAmount)}
+                        </span>
+                      </div>
+                    )}
+                    {parseFloat(selectedPayslip.bonusAmount) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Bonus:</span>
+                        <span className="font-semibold text-green-600">
+                          {money.format(parseFloat(selectedPayslip.bonusAmount))}
+                        </span>
+                      </div>
+                    )}
+                    {parseFloat(selectedPayslip.overtimeAmount) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Overtime:</span>
+                        <span className="font-semibold text-green-600">
+                          {money.format(parseFloat(selectedPayslip.overtimeAmount))}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between pt-2 border-t font-bold">
+                      <span>Gross Salary:</span>
+                      <span className="text-blue-600">
+                        {money.format(selectedPayslip.calculationSnapshot.salaryBreakdown.gross)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Deductions */}
+                <div>
+                  <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">Deductions</h3>
+                  <div className="space-y-2 text-sm">
+                    {selectedPayslip.calculationSnapshot.unpaidLeaveDeduction > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Leave Deduction:</span>
+                        <span className="font-semibold text-red-600">
+                          {money.format(selectedPayslip.calculationSnapshot.unpaidLeaveDeduction)}
+                        </span>
+                      </div>
+                    )}
+                    {parseFloat(selectedPayslip.advanceAmount) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Advance Deduction:</span>
+                        <span className="font-semibold text-red-600">
+                          {money.format(parseFloat(selectedPayslip.advanceAmount))}
+                        </span>
+                      </div>
+                    )}
+                    {parseFloat(selectedPayslip.fineAmount) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Fine:</span>
+                        <span className="font-semibold text-red-600">
+                          {money.format(parseFloat(selectedPayslip.fineAmount))}
+                        </span>
+                      </div>
+                    )}
+                    {parseFloat(selectedPayslip.loanDeduction) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Loan Deduction:</span>
+                        <span className="font-semibold text-red-600">
+                          {money.format(parseFloat(selectedPayslip.loanDeduction))}
+                        </span>
+                      </div>
+                    )}
+                    {parseFloat(selectedPayslip.otherDeduction) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Other Deduction:</span>
+                        <span className="font-semibold text-red-600">
+                          {money.format(parseFloat(selectedPayslip.otherDeduction))}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between pt-2 border-t font-bold">
+                      <span>Total Deductions:</span>
+                      <span className="text-red-600">
+                        {money.format(selectedPayslip.calculationSnapshot.salaryBreakdown.totalDeductions)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Summary */}
+              <div className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg p-4 mb-6">
+                <h3 className="font-bold text-gray-800 mb-3">Payment Summary</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-700">Net Payable Salary:</span>
+                    <span className="font-bold text-blue-600">
+                      {money.format(parseFloat(selectedPayslip.netPayableSalary))}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-700">Amount Paid:</span>
+                    <span className="font-bold text-green-600">
+                      {money.format(parseFloat(selectedPayslip.paidAmount))}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-base pt-2 border-t border-gray-300">
+                    <span className="font-bold text-gray-800">Remaining Due:</span>
+                    <span className="font-bold text-orange-600">
+                      {money.format(selectedPayslip.calculationSnapshot.salaryBreakdown.due)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="mt-8 pt-4 border-t text-xs text-gray-600">
+                <p>Generated on: {new Date().toLocaleDateString()}</p>
+                <p className="mt-2">This is a computer-generated payslip and does not require a signature.</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

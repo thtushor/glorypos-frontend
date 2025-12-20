@@ -187,7 +187,7 @@ export const PAYROLL_PROMOTION = `${BASE_URL}/payroll/promotion`;
 export const PAYROLL_SALARY_DETAILS = `${BASE_URL}/payroll/salary/details`; // Use with /:userId/:month
 export const PAYROLL_RELEASE = `${BASE_URL}/payroll/payroll/release-with-validation`;
 export const PAYROLL_DETAILS = `${BASE_URL}/payroll/details`;
-export const PAYROLL_HISTORY = `${BASE_URL}/payroll/history`; // Use with /:userId
+export const PAYROLL_HISTORY = `${BASE_URL}/payroll/payroll/history`; // Use with /:userId
 export const PAYROLL_ATTENDANCE_PRESENT_MULTIPLE = `${BASE_URL}/payroll/attendance/present/multiple`;
 export const PAYROLL_ATTENDANCE_ABSENT_MULTIPLE = `${BASE_URL}/payroll/attendance/absent/multiple`;
 export const PAYROLL_ATTENDANCE_DELETE = `${BASE_URL}/payroll/attendance`; // DELETE /:userId?date=...

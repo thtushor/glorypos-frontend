@@ -148,8 +148,6 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   const [editableLeaveDeduction, setEditableLeaveDeduction] = useState<number>(0);
   const [editablePaidAmount, setEditablePaidAmount] = useState<number>(0);
 
-  console.log({ editablePaidAmount })
-
   const { user } = useAuth();
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -884,10 +882,16 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => setEditablePaidAmount(editableNetPayable)}
+                        onClick={() => {
+                          // If there are already payments, use remaining amount, otherwise use full net payable
+                          const currentMonthAmount = payrollDetails.hasCurrentMonthPayments
+                            ? editableNetPayable - payrollDetails.currentMonthPaidAmount
+                            : editableNetPayable;
+                          setEditablePaidAmount(Number(currentMonthAmount.toFixed(2)));
+                        }}
                         className="flex-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
                       >
-                        Current Month Only ({money.format(editableNetPayable)})
+                        Current Month Only ({money.format(payrollDetails.hasCurrentMonthPayments ? editableNetPayable - payrollDetails.currentMonthPaidAmount : editableNetPayable)})
                       </button>
                       {payrollDetails.hasPreviousDues && (
                         <button
@@ -903,23 +907,34 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                     {/* Payment Status Messages */}
                     {editablePaidAmount > 0 && editablePaidAmount < payrollDetails.netPayableSalary && (
                       <div className="text-xs space-y-1">
-                        {editablePaidAmount <= editableNetPayable ? (
-                          <p className="text-orange-600">
-                            💰 Partial payment for current month. Remaining: {money.format(editableNetPayable - editablePaidAmount)}
-                          </p>
-                        ) : (
-                          <>
-                            <p className="text-green-600">
-                              ✓ Current month fully paid ({money.format(editableNetPayable)})
-                            </p>
-                            <p className="text-blue-600">
-                              💰 Previous dues payment: {money.format(editablePaidAmount - editableNetPayable)}
-                            </p>
-                            <p className="text-orange-600">
-                              Remaining dues: {money.format(payrollDetails.netPayableSalary - editablePaidAmount)}
-                            </p>
-                          </>
-                        )}
+                        {(() => {
+                          // Calculate current month remaining (accounting for already paid)
+                          const currentMonthRemaining = payrollDetails.hasCurrentMonthPayments
+                            ? payrollDetails.currentMonthRemainingDue
+                            : editableNetPayable;
+
+                          if (editablePaidAmount <= currentMonthRemaining) {
+                            return (
+                              <p className="text-orange-600">
+                                💰 Partial payment for current month. Remaining: {money.format(currentMonthRemaining - editablePaidAmount)}
+                              </p>
+                            );
+                          } else {
+                            return (
+                              <>
+                                <p className="text-green-600">
+                                  ✓ Current month fully paid ({money.format(currentMonthRemaining)})
+                                </p>
+                                <p className="text-blue-600">
+                                  💰 Previous dues payment: {money.format(editablePaidAmount - currentMonthRemaining)}
+                                </p>
+                                <p className="text-orange-600">
+                                  Remaining dues: {money.format(payrollDetails.netPayableSalary - editablePaidAmount)}
+                                </p>
+                              </>
+                            );
+                          }
+                        })()}
                       </div>
                     )}
                     {editablePaidAmount === payrollDetails.netPayableSalary && editablePaidAmount > 0 && (
@@ -927,11 +942,16 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                         ✓ Full payment (Current month + All previous dues)
                       </p>
                     )}
-                    {editablePaidAmount === editableNetPayable && editablePaidAmount > 0 && !payrollDetails.hasPreviousDues && (
-                      <p className="text-xs text-green-600 font-semibold">
-                        ✓ Full payment for current month
-                      </p>
-                    )}
+                    {(() => {
+                      const currentMonthRemaining = payrollDetails.hasCurrentMonthPayments
+                        ? payrollDetails.currentMonthRemainingDue
+                        : editableNetPayable;
+                      return editablePaidAmount === currentMonthRemaining && editablePaidAmount > 0 && !payrollDetails.hasPreviousDues;
+                    })() && (
+                        <p className="text-xs text-green-600 font-semibold">
+                          ✓ Full payment for current month
+                        </p>
+                      )}
                   </div>
                 </div>
               </div>
@@ -1076,22 +1096,33 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                     {editablePaidAmount > 0 && (
                       <div className="mt-2 pt-2 border-t border-gray-200">
                         <p className="text-xs font-semibold text-gray-700 mb-1">Payment Distribution:</p>
-                        {editablePaidAmount <= editableNetPayable ? (
-                          <p className="text-xs text-blue-600">
-                            💰 {money.format(editablePaidAmount)} to current month
-                            {editablePaidAmount < editableNetPayable && (
-                              <span className="text-orange-600"> (Partial payment)</span>
-                            )}
-                          </p>
-                        ) : (
-                          <div className="text-xs space-y-0.5">
-                            <p className="text-green-600">✓ {money.format(editableNetPayable)} to current month (Full)</p>
-                            <p className="text-blue-600">💰 {money.format(editablePaidAmount - editableNetPayable)} to previous dues</p>
-                            {(editablePaidAmount - editableNetPayable) < payrollDetails.totalPreviousDues && (
-                              <p className="text-orange-600">⚠ {money.format(payrollDetails.totalPreviousDues - (editablePaidAmount - editableNetPayable))} previous dues still remaining</p>
-                            )}
-                          </div>
-                        )}
+                        {(() => {
+                          // Calculate current month remaining (accounting for already paid)
+                          const currentMonthRemaining = payrollDetails.hasCurrentMonthPayments
+                            ? payrollDetails.currentMonthRemainingDue
+                            : editableNetPayable;
+
+                          if (editablePaidAmount <= currentMonthRemaining) {
+                            return (
+                              <p className="text-xs text-blue-600">
+                                💰 {money.format(editablePaidAmount)} to current month
+                                {editablePaidAmount < currentMonthRemaining && (
+                                  <span className="text-orange-600"> (Partial payment)</span>
+                                )}
+                              </p>
+                            );
+                          } else {
+                            return (
+                              <div className="text-xs space-y-0.5">
+                                <p className="text-green-600">✓ {money.format(currentMonthRemaining)} to current month (Full)</p>
+                                <p className="text-blue-600">💰 {money.format(editablePaidAmount - currentMonthRemaining)} to previous dues</p>
+                                {(editablePaidAmount - currentMonthRemaining) < payrollDetails.totalPreviousDues && (
+                                  <p className="text-orange-600">⚠ {money.format(payrollDetails.totalPreviousDues - (editablePaidAmount - currentMonthRemaining))} previous dues still remaining</p>
+                                )}
+                              </div>
+                            );
+                          }
+                        })()}
                       </div>
                     )}
                   </div>
