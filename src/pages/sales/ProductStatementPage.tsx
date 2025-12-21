@@ -10,6 +10,8 @@ import ProductStatement from "@/components/ProductStatement";
 import Spinner from "@/components/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import money from "@/utils/money";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface StatementItem {
   id: number;
@@ -118,6 +120,11 @@ interface FilterParams {
 
 const ProductStatementPage: React.FC = () => {
   const { user } = useAuth();
+  const { hasPermission } = usePermission();
+
+  // Permission check for viewing cost and profit data
+  const canViewCostProfit = hasPermission(PERMISSIONS.SALES.VIEW_COST_PROFIT);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -251,17 +258,17 @@ const ProductStatementPage: React.FC = () => {
 
   const summary = apiSummary
     ? {
-        totalSales: apiSummary.totalRevenue,
-        totalProfit: apiSummary.totalProfit,
-        totalLoss: apiSummary.totalLoss,
-        totalTax: calculatedTax,
-      }
+      totalSales: apiSummary.totalRevenue,
+      totalProfit: apiSummary.totalProfit,
+      totalLoss: apiSummary.totalLoss,
+      totalTax: calculatedTax,
+    }
     : {
-        totalSales: 0,
-        totalProfit: 0,
-        totalLoss: 0,
-        totalTax: 0,
-      };
+      totalSales: 0,
+      totalProfit: 0,
+      totalLoss: 0,
+      totalTax: 0,
+    };
 
   const handlePageChange = (newPage: number) => {
     setFilters((prev) => ({ ...prev, page: newPage }));
@@ -283,20 +290,18 @@ const ProductStatementPage: React.FC = () => {
     if (item?.Order?.UserId === item?.Product?.UserId) {
       return {
         type: "Self",
-        name: `${
-          item.Order?.User?.businessName ||
+        name: `${item.Order?.User?.businessName ||
           item.Order?.User?.fullName ||
           "Unknown Shop"
-        }`,
+          }`,
       };
     }
     return {
       type: "Shop",
-      name: `${
-        item.Order?.User?.businessName ||
+      name: `${item.Order?.User?.businessName ||
         item.Order?.User?.fullName ||
         "Unknown Shop"
-      }`,
+        }`,
     };
   };
 
@@ -357,22 +362,26 @@ const ProductStatementPage: React.FC = () => {
               {money.format(summary.totalSales)}
             </p>
           </div>
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-            <h3 className="text-sm font-medium text-green-700 mb-1">
-              Total Profit
-            </h3>
-            <p className="text-2xl font-bold text-green-800">
-              {money.format(summary.totalProfit)}
-            </p>
-          </div>
-          <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-            <h3 className="text-sm font-medium text-red-700 mb-1">
-              Total Loss
-            </h3>
-            <p className="text-2xl font-bold text-red-800">
-              {money.format(summary.totalLoss)}
-            </p>
-          </div>
+          {canViewCostProfit && (
+            <>
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <h3 className="text-sm font-medium text-green-700 mb-1">
+                  Total Profit
+                </h3>
+                <p className="text-2xl font-bold text-green-800">
+                  {money.format(summary.totalProfit)}
+                </p>
+              </div>
+              <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                <h3 className="text-sm font-medium text-red-700 mb-1">
+                  Total Loss
+                </h3>
+                <p className="text-2xl font-bold text-red-800">
+                  {money.format(summary.totalLoss)}
+                </p>
+              </div>
+            </>
+          )}
           <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
             <h3 className="text-sm font-medium text-purple-700 mb-1">
               Total Tax
@@ -593,18 +602,22 @@ const ProductStatementPage: React.FC = () => {
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Qty
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cost Price
-                </th>
+                {canViewCostProfit && (
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cost Price
+                  </th>
+                )}
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Unit Price
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Sales Price
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Profit
-                </th>
+                {canViewCostProfit && (
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Profit
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -783,24 +796,27 @@ const ProductStatementPage: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
                         {item?.quantity}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                        {money.format(cost)}
-                      </td>
+                      {canViewCostProfit && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
+                          {money.format(cost)}
+                        </td>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
                         {money.format(Number(item?.unitPrice))}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
                         {money.format(sales)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                        <span
-                          className={`font-medium ${
-                            profit >= 0 ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {money.format(profit)}
-                        </span>
-                      </td>
+                      {canViewCostProfit && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                          <span
+                            className={`font-medium ${profit >= 0 ? "text-green-600" : "text-red-600"
+                              }`}
+                          >
+                            {money.format(profit)}
+                          </span>
+                        </td>
+                      )}
                     </tr>
                   );
                 })
@@ -818,24 +834,28 @@ const ProductStatementPage: React.FC = () => {
                   <td className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
                     {totals?.quantity}
                   </td>
-                  <td className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                    {money.format(totals?.cost)}
-                  </td>
+                  {canViewCostProfit && (
+                    <td className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
+                      {money.format(totals?.cost)}
+                    </td>
+                  )}
                   <td className="px-6 py-3"></td>
                   <td className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
                     {money.format(totals?.sales)}
                   </td>
-                  <td className="px-6 py-3 text-right text-sm font-semibold">
-                    <span
-                      className={
-                        totals?.sales - totals?.cost >= 0
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }
-                    >
-                      {money.format(totals?.sales - totals?.cost)}
-                    </span>
-                  </td>
+                  {canViewCostProfit && (
+                    <td className="px-6 py-3 text-right text-sm font-semibold">
+                      <span
+                        className={
+                          totals?.sales - totals?.cost >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }
+                      >
+                        {money.format(totals?.sales - totals?.cost)}
+                      </span>
+                    </td>
+                  )}
                 </tr>
               </tfoot>
             )}
