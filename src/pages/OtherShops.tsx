@@ -31,6 +31,8 @@ import PhoneIcon from "@/components/icons/PhoneIcon";
 import LocationIcon from "@/components/icons/Location";
 import Category from "@/components/icons/Category";
 import BusinessIcon from "@/components/icons/BusinessIcon";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 // import FallbackAvatar from "@/components/shared/FallbackAvatar";
 
 interface SubShop {
@@ -68,6 +70,11 @@ interface SubShopResponse {
 const OtherShops = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { hasPermission } = usePermission();
+
+  // Permission check
+  const canManageSubShops = hasPermission(PERMISSIONS.SHOPS.MANAGE_SUB_SHOPS);
+
   const [showFilters, setShowFilters] = useState(false);
   const [selectedShop, setSelectedShop] = useState<SubShop | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -169,16 +176,18 @@ const OtherShops = () => {
       <div className="flex sm:flex-row flex-col sm:justify-between gap-2 sm:items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Other Shops</h1>
         <div className="flex sm:flex-row flex-col sm:justify-between gap-2 sm:items-center">
-          <button
-            onClick={() => {
-              setSelectedShop(null);
-              setShowAddModal(true);
-            }}
-            className="flex justify-center whitespace-nowrap items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-hover transition-colors"
-          >
-            <FaPlus className="w-4 h-4" />
-            Add Sub Shop
-          </button>
+          {canManageSubShops && (
+            <button
+              onClick={() => {
+                setSelectedShop(null);
+                setShowAddModal(true);
+              }}
+              className="flex justify-center whitespace-nowrap items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-hover transition-colors"
+            >
+              <FaPlus className="w-4 h-4" />
+              Add Sub Shop
+            </button>
+          )}
           <div className="flex gap-2">
             <div className="relative w-full">
               <input
@@ -308,29 +317,31 @@ const OtherShops = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          shop?.accountStatus === "active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
+                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${shop?.accountStatus === "active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                          }`}
                       >
                         {shop?.accountStatus}
                       </span>
                     </td>
                     <td className="px-6 py-4 capitalize whitespace-nowrap text-sm text-gray-500">
-                      {shop?.shopType||"shop"}
+                      {shop?.shopType || "shop"}
                       {/* {shop?.accountType} */}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => {
-                          setSelectedShop(shop);
-                          setShowEditModal(true);
-                        }}
-                        className="text-brand-primary hover:text-brand-hover"
-                      >
-                        <FaEdit className="w-5 h-5" />
-                      </button>
+                      {canManageSubShops && (
+                        <button
+                          onClick={() => {
+                            setSelectedShop(shop);
+                            setShowEditModal(true);
+                          }}
+                          className="text-brand-primary hover:text-brand-hover"
+                          title="Edit Shop"
+                        >
+                          <FaEdit className="w-5 h-5" />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -353,375 +364,375 @@ const OtherShops = () => {
         />
       )}
 
-    {/* Add Sub Shop Modal */}
-<Modal
-  isOpen={showAddModal}
-  onClose={() => setShowAddModal(false)}
-  title="Add Sub Shop"
-  className="max-w-2xl"
->
-  <form
-    onSubmit={(e) => {
-      e.preventDefault();
-      const formData = new FormData(e.currentTarget);
-      handleCreateShop({
-        fullName: formData.get("fullName") as string,
-        email: formData.get("email") as string,
-        phoneNumber: formData.get("phoneNumber") as string,
-        location: formData.get("location") as string,
-        businessName: formData.get("businessName") as string,
-        businessType: formData.get("businessType") as string,
-        shopType: formData.get("shopType") as 'normal' | 'restaurant'| undefined,
-        password: formData.get("password") as string,
-        stuffCommission: formData.get("stuffCommission")
-          ? Number(formData.get("stuffCommission"))
-          : undefined,
-      });
-    }}
-    className="space-y-4"
-  >
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          What's your name?
-        </label>
-        <InputWithIcon
-          type="text"
-          name="fullName"
-          icon={UserIcon}
-          required
-          placeholder="Enter full name"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          What's your Email*
-        </label>
-        <InputWithIcon
-          type="email"
-          name="email"
-          icon={EnvelopeIcon}
-          required
-          placeholder="Enter your email"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          What's the Phone Number
-        </label>
-        <InputWithIcon
-          type="tel"
-          name="phoneNumber"
-          icon={PhoneIcon}
-          placeholder="Enter your number"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Where is your location?*
-        </label>
-        <InputWithIcon
-          type="text"
-          name="location"
-          icon={LocationIcon}
-          required
-          placeholder="Enter your location"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          What is your business name?*
-        </label>
-        <InputWithIcon
-          type="text"
-          name="businessName"
-          icon={BusinessIcon}
-          required
-          placeholder="Enter your business name"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          What kind of business do you run?*
-        </label>
-        <InputWithIcon
-          type="text"
-          name="businessType"
-          icon={Category}
-          required
-          placeholder="Enter your business type"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          What type of shop do you have?*
-        </label>
-        <select
-          name="shopType"
-          required
-          defaultValue="normal"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm p-2"
+      {/* Add Sub Shop Modal */}
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        title="Add Sub Shop"
+        className="max-w-2xl"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            handleCreateShop({
+              fullName: formData.get("fullName") as string,
+              email: formData.get("email") as string,
+              phoneNumber: formData.get("phoneNumber") as string,
+              location: formData.get("location") as string,
+              businessName: formData.get("businessName") as string,
+              businessType: formData.get("businessType") as string,
+              shopType: formData.get("shopType") as 'normal' | 'restaurant' | undefined,
+              password: formData.get("password") as string,
+              stuffCommission: formData.get("stuffCommission")
+                ? Number(formData.get("stuffCommission"))
+                : undefined,
+            });
+          }}
+          className="space-y-4"
         >
-          <option value="normal">Normal Shop</option>
-          <option value="restaurant">Restaurant</option>
-        </select>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Password*
-        </label>
-        <InputWithIcon
-          type="password"
-          name="password"
-          icon={LockIcon}
-          required
-          placeholder="Enter password"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Stuff Sell Commission (%)
-        </label>
-        <InputWithIcon
-          type="number"
-          name="stuffCommission"
-          icon={FaPercent}
-          step="0.01"
-          placeholder="Enter commission percentage"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-        />
-      </div>
-    </div>
-
-    <div className="flex justify-end gap-2">
-      <button
-        type="button"
-        onClick={() => setShowAddModal(false)}
-        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
-      >
-        Cancel
-      </button>
-      <button
-        type="submit"
-        disabled={createShopMutation.isPending}
-        className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md disabled:opacity-50"
-      >
-        {createShopMutation.isPending ? "Creating..." : "Add Sub Shop"}
-      </button>
-    </div>
-  </form>
-</Modal>
-
-{/* Edit Sub Shop Modal */}
-<Modal
-  isOpen={showEditModal}
-  onClose={() => setShowEditModal(false)}
-  title="Edit Sub Shop"
-  className="max-w-2xl"
->
-  {selectedShop && (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        handleUpdateShop({
-          fullName: formData.get("fullName") as string,
-          email: formData.get("email") as string,
-          phoneNumber: formData.get("phoneNumber") as string,
-          location: formData.get("location") as string,
-          businessName: formData.get("businessName") as string,
-          businessType: formData.get("businessType") as string,
-          shopType: formData.get("shopType") as 'normal' | 'restaurant'| undefined,
-          accountStatus: formData.get("accountStatus") as
-            | "active"
-            | "inactive",
-          accountType: formData.get("accountType") as
-            | "super admin"
-            | "admin"
-            | "shop",
-          stuffCommission: formData.get("stuffCommission")
-            ? Number(formData.get("stuffCommission"))
-            : undefined,
-        });
-      }}
-      className="space-y-4"
-    >
-      {/* Show parent ID if selected shop id and parent id are different */}
-      {selectedShop?.parentId &&
-        selectedShop?.id !== selectedShop?.parentId && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-sm text-blue-800">
-              <span className="font-medium">Parent ID:</span>{" "}
-              {selectedShop?.parentId}
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                What's your name?
+              </label>
+              <InputWithIcon
+                type="text"
+                name="fullName"
+                icon={UserIcon}
+                required
+                placeholder="Enter full name"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                What's your Email*
+              </label>
+              <InputWithIcon
+                type="email"
+                name="email"
+                icon={EnvelopeIcon}
+                required
+                placeholder="Enter your email"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                What's the Phone Number
+              </label>
+              <InputWithIcon
+                type="tel"
+                name="phoneNumber"
+                icon={PhoneIcon}
+                placeholder="Enter your number"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Where is your location?*
+              </label>
+              <InputWithIcon
+                type="text"
+                name="location"
+                icon={LocationIcon}
+                required
+                placeholder="Enter your location"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                What is your business name?*
+              </label>
+              <InputWithIcon
+                type="text"
+                name="businessName"
+                icon={BusinessIcon}
+                required
+                placeholder="Enter your business name"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                What kind of business do you run?*
+              </label>
+              <InputWithIcon
+                type="text"
+                name="businessType"
+                icon={Category}
+                required
+                placeholder="Enter your business type"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                What type of shop do you have?*
+              </label>
+              <select
+                name="shopType"
+                required
+                defaultValue="normal"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm p-2"
+              >
+                <option value="normal">Normal Shop</option>
+                <option value="restaurant">Restaurant</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Password*
+              </label>
+              <InputWithIcon
+                type="password"
+                name="password"
+                icon={LockIcon}
+                required
+                placeholder="Enter password"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Stuff Sell Commission (%)
+              </label>
+              <InputWithIcon
+                type="number"
+                name="stuffCommission"
+                icon={FaPercent}
+                step="0.01"
+                placeholder="Enter commission percentage"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+              />
+            </div>
           </div>
+
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAddModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createShopMutation.isPending}
+              className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md disabled:opacity-50"
+            >
+              {createShopMutation.isPending ? "Creating..." : "Add Sub Shop"}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Sub Shop Modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Sub Shop"
+        className="max-w-2xl"
+      >
+        {selectedShop && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              handleUpdateShop({
+                fullName: formData.get("fullName") as string,
+                email: formData.get("email") as string,
+                phoneNumber: formData.get("phoneNumber") as string,
+                location: formData.get("location") as string,
+                businessName: formData.get("businessName") as string,
+                businessType: formData.get("businessType") as string,
+                shopType: formData.get("shopType") as 'normal' | 'restaurant' | undefined,
+                accountStatus: formData.get("accountStatus") as
+                  | "active"
+                  | "inactive",
+                accountType: formData.get("accountType") as
+                  | "super admin"
+                  | "admin"
+                  | "shop",
+                stuffCommission: formData.get("stuffCommission")
+                  ? Number(formData.get("stuffCommission"))
+                  : undefined,
+              });
+            }}
+            className="space-y-4"
+          >
+            {/* Show parent ID if selected shop id and parent id are different */}
+            {selectedShop?.parentId &&
+              selectedShop?.id !== selectedShop?.parentId && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-medium">Parent ID:</span>{" "}
+                    {selectedShop?.parentId}
+                  </p>
+                </div>
+              )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Full Name
+                </label>
+                <InputWithIcon
+                  type="text"
+                  name="fullName"
+                  icon={<FiUser className="text-gray-400" />}
+                  defaultValue={selectedShop?.fullName}
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <InputWithIcon
+                  type="email"
+                  name="email"
+                  icon={<FiMail className="text-gray-400" />}
+                  defaultValue={selectedShop?.email}
+                  readOnly
+                  className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Phone Number
+                </label>
+                <InputWithIcon
+                  type="tel"
+                  name="phoneNumber"
+                  icon={<FiPhone className="text-gray-400" />}
+                  defaultValue={selectedShop.phoneNumber}
+                  readOnly
+                  className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Location
+                </label>
+                <InputWithIcon
+                  type="text"
+                  name="location"
+                  icon={<FiMapPin className="text-gray-400" />}
+                  defaultValue={selectedShop.location}
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Business Name
+                </label>
+                <InputWithIcon
+                  type="text"
+                  name="businessName"
+                  icon={<FiBriefcase className="text-gray-400" />}
+                  defaultValue={selectedShop.businessName}
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Business Type
+                </label>
+                <InputWithIcon
+                  type="text"
+                  name="businessType"
+                  icon={<FiBox className="text-gray-400" />}
+                  defaultValue={selectedShop.businessType}
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Shop Type*
+                </label>
+                <select
+                  name="shopType"
+                  defaultValue={selectedShop.shopType || "normal"}
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm p-2"
+                >
+                  <option value="normal">Normal Shop</option>
+                  <option value="restaurant">Restaurant</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Account Status
+                </label>
+                <select
+                  name="accountStatus"
+                  defaultValue={selectedShop.accountStatus}
+                  required
+                  className="mt-1 border rounded-md p-2 block w-full border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Account Type
+                </label>
+                <select
+                  name="accountType"
+                  defaultValue={selectedShop.accountType}
+                  required
+                  className="mt-1 block border p-2 w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                >
+                  <option value="super admin">Super Admin</option>
+                  <option value="shop">Shop</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Stuff Sell Commission (%)
+                </label>
+                <InputWithIcon
+                  type="number"
+                  name="stuffCommission"
+                  icon={FaPercent}
+                  step="0.01"
+                  defaultValue={selectedShop.stuffCommission?.toString() || ""}
+                  placeholder="Enter commission percentage"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={updateShopMutation.isPending}
+                className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md disabled:opacity-50"
+              >
+                {updateShopMutation.isPending
+                  ? "Updating..."
+                  : "Update Sub Shop"}
+              </button>
+            </div>
+          </form>
         )}
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Full Name
-          </label>
-          <InputWithIcon
-            type="text"
-            name="fullName"
-            icon={<FiUser className="text-gray-400" />}
-            defaultValue={selectedShop?.fullName}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Email
-          </label>
-          <InputWithIcon
-            type="email"
-            name="email"
-            icon={<FiMail className="text-gray-400" />}
-            defaultValue={selectedShop?.email}
-            readOnly
-            className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Phone Number
-          </label>
-          <InputWithIcon
-            type="tel"
-            name="phoneNumber"
-            icon={<FiPhone className="text-gray-400" />}
-            defaultValue={selectedShop.phoneNumber}
-            readOnly
-            className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Location
-          </label>
-          <InputWithIcon
-            type="text"
-            name="location"
-            icon={<FiMapPin className="text-gray-400" />}
-            defaultValue={selectedShop.location}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Business Name
-          </label>
-          <InputWithIcon
-            type="text"
-            name="businessName"
-            icon={<FiBriefcase className="text-gray-400" />}
-            defaultValue={selectedShop.businessName}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Business Type
-          </label>
-          <InputWithIcon
-            type="text"
-            name="businessType"
-            icon={<FiBox className="text-gray-400" />}
-            defaultValue={selectedShop.businessType}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Shop Type*
-          </label>
-          <select
-            name="shopType"
-            defaultValue={selectedShop.shopType || "normal"}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm p-2"
-          >
-            <option value="normal">Normal Shop</option>
-            <option value="restaurant">Restaurant</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Account Status
-          </label>
-          <select
-            name="accountStatus"
-            defaultValue={selectedShop.accountStatus}
-            required
-            className="mt-1 border rounded-md p-2 block w-full border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-          >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Account Type
-          </label>
-          <select
-            name="accountType"
-            defaultValue={selectedShop.accountType}
-            required
-            className="mt-1 block border p-2 w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-          >
-            <option value="super admin">Super Admin</option>
-            <option value="shop">Shop</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Stuff Sell Commission (%)
-          </label>
-          <InputWithIcon
-            type="number"
-            name="stuffCommission"
-            icon={FaPercent}
-            step="0.01"
-            defaultValue={selectedShop.stuffCommission?.toString() || ""}
-            placeholder="Enter commission percentage"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
-          />
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={() => setShowEditModal(false)}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={updateShopMutation.isPending}
-          className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md disabled:opacity-50"
-        >
-          {updateShopMutation.isPending
-            ? "Updating..."
-            : "Update Sub Shop"}
-        </button>
-      </div>
-    </form>
-  )}
-</Modal>
+      </Modal>
     </div>
   );
 };

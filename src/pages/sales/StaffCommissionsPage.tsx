@@ -90,12 +90,8 @@ interface FilterParams {
 
 const StaffCommissionsPage: React.FC = () => {
   const { user } = useAuth();
-  const { hasPermission } = usePermission();
   const params = useParams<{ staffId?: string }>();
   const urlStaffId = params.staffId;
-
-  // Permission check (route-level protection already exists, this is for component-level verification)
-  const canViewCommissions = hasPermission(PERMISSIONS.SALES.VIEW_STAFF_COMMISSIONS);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);

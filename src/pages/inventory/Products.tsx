@@ -26,6 +26,8 @@ import InventoryFilters from "@/components/shared/InventoryFilters";
 import { useAuth } from "@/context/AuthContext";
 import money from "@/utils/money";
 import ProductImageSlider from "@/components/shared/ProductImageSlider";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 // Add this interface at the top
 
@@ -41,6 +43,13 @@ const Products: React.FC = () => {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
+  const { hasPermission } = usePermission();
+
+  // Permission checks
+  const canCreateProduct = hasPermission(PERMISSIONS.INVENTORY.CREATE_PRODUCT);
+  const canEditProduct = hasPermission(PERMISSIONS.INVENTORY.EDIT_PRODUCT);
+  const canDeleteProduct = hasPermission(PERMISSIONS.INVENTORY.DELETE_PRODUCT);
+
   const currentShopId = user?.child?.id ?? user?.id;
   const hasAppliedDefaultShop = useRef(false);
 
@@ -289,12 +298,14 @@ const Products: React.FC = () => {
           <h1 className="text-2xl font-semibold text-gray-800">Products</h1>
           <p className="text-sm text-gray-600">Manage your products</p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-brand-primary justify-center text-white rounded-md hover:bg-brand-hover flex items-center gap-2"
-        >
-          <FaPlus /> Add Product
-        </button>
+        {canCreateProduct && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2 bg-brand-primary justify-center text-white rounded-md hover:bg-brand-hover flex items-center gap-2"
+          >
+            <FaPlus /> Add Product
+          </button>
+        )}
       </div>
 
       {/* API Filters */}
@@ -450,8 +461,8 @@ const Products: React.FC = () => {
                     product?.images && product.images.length > 0
                       ? product.images
                       : product.productImage
-                      ? [product.productImage]
-                      : []
+                        ? [product.productImage]
+                        : []
                   }
                   variant="simple"
                   showDots={true}
@@ -474,20 +485,24 @@ const Products: React.FC = () => {
                   >
                     <FaEye className="w-5 h-5" />
                   </button>
-                  <button
-                    onClick={() => handleEdit(product)}
-                    className="p-2 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
-                    title="Edit Product"
-                  >
-                    <FaEdit className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(product.id)}
-                    className="p-2 bg-white rounded-full hover:bg-red-500 hover:text-white transition-colors"
-                    title="Delete Product"
-                  >
-                    <FaTrash className="w-5 h-5" />
-                  </button>
+                  {canEditProduct && (
+                    <button
+                      onClick={() => handleEdit(product)}
+                      className="p-2 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
+                      title="Edit Product"
+                    >
+                      <FaEdit className="w-5 h-5" />
+                    </button>
+                  )}
+                  {canDeleteProduct && (
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      className="p-2 bg-white rounded-full hover:bg-red-500 hover:text-white transition-colors"
+                      title="Delete Product"
+                    >
+                      <FaTrash className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -498,11 +513,10 @@ const Products: React.FC = () => {
                     {product.name}
                   </h3>
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      product.status === "active"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${product.status === "active"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                      }`}
                   >
                     {product.status}
                   </span>
@@ -543,8 +557,8 @@ const Products: React.FC = () => {
                             {product.discountType === "percentage"
                               ? `${product.discountAmount}%`
                               : money.format(
-                                  Number(product.discountAmount || 0)
-                                )}
+                                Number(product.discountAmount || 0)
+                              )}
                           </span>
                         </div>
                       )}
@@ -580,11 +594,10 @@ const Products: React.FC = () => {
                             [product.id]: variant.id,
                           })
                         }
-                        className={`w-8 h-8 rounded-full border-2 border-white object-cover ${
-                          selectedVariants[product.id] === variant.id
-                            ? "border-brand-primary"
-                            : ""
-                        }`}
+                        className={`w-8 h-8 rounded-full border-2 border-white object-cover ${selectedVariants[product.id] === variant.id
+                          ? "border-brand-primary"
+                          : ""
+                          }`}
                       />
                     ))}
                     {product.ProductVariants.length > 3 && (
@@ -700,8 +713,8 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
               product?.images && product.images.length > 0
                 ? product.images
                 : product.productImage
-                ? [product.productImage]
-                : []
+                  ? [product.productImage]
+                  : []
             }
             variant="with-thumbnails"
             showDots={true}
@@ -723,11 +736,10 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
                 {product.name}
               </h2>
               <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  product.status === "active"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                }`}
+                className={`px-3 py-1 rounded-full text-sm font-medium ${product.status === "active"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+                  }`}
               >
                 {product.status}
               </span>
@@ -786,12 +798,12 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
                 <p className="font-medium truncate">
                   {product.ProductVariants?.length > 0
                     ? [
-                        ...new Set(
-                          product.ProductVariants.map(
-                            (item) => item?.Color?.name
-                          )
-                        ),
-                      ].join(", ")
+                      ...new Set(
+                        product.ProductVariants.map(
+                          (item) => item?.Color?.name
+                        )
+                      ),
+                    ].join(", ")
                     : product.Color?.name}
                 </p>
               </div>
@@ -800,12 +812,12 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
                 <p className="font-medium truncate">
                   {product.ProductVariants?.length > 0
                     ? [
-                        ...new Set(
-                          product.ProductVariants.map(
-                            (item) => item?.Size?.name
-                          )
-                        ),
-                      ].join(", ")
+                      ...new Set(
+                        product.ProductVariants.map(
+                          (item) => item?.Size?.name
+                        )
+                      ),
+                    ].join(", ")
                     : product.Size?.name}
                 </p>
               </div>
@@ -848,8 +860,8 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
                       variant?.images && variant.images.length > 0
                         ? variant.images
                         : variant?.imageUrl
-                        ? [variant.imageUrl]
-                        : []
+                          ? [variant.imageUrl]
+                          : []
                     }
                     variant="with-thumbnails"
                     showDots={true}
@@ -889,11 +901,10 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
                       </button>
                     </div>
                     <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        variant.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${variant.status === "active"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                        }`}
                     >
                       {variant.status}
                     </span>
