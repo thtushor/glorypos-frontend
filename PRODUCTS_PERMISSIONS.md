@@ -1,10 +1,11 @@
 # Products (Inventory) Permission Implementation
 
 ## Overview
-Applied permission-based access control to the Products page to restrict product management actions based on user permissions.
+Applied permission-based access control to the Products page and AddProduct form to restrict product management actions and sensitive data visibility based on user permissions.
 
-## File Modified
-**`src/pages/inventory/Products.tsx`**
+## Files Modified
+- **`src/pages/inventory/Products.tsx`**
+- **`src/components/shared/AddProduct.tsx`**
 
 ## Permissions Applied
 
@@ -22,6 +23,11 @@ Applied permission-based access control to the Products page to restrict product
 - **Permission**: `PERMISSIONS.INVENTORY.DELETE_PRODUCT`
 - **Controls**: Delete button (trash icon) on product hover
 - **Action**: Deletes product after confirmation
+
+### 4. **VIEW_COST_PROFIT Permission** (NEW)
+- **Permission**: `PERMISSIONS.SALES.VIEW_COST_PROFIT`
+- **Controls**: Purchase Price field in AddProduct form
+- **Action**: Hides sensitive cost information from unauthorized users
 
 ## What's Always Visible
 - Page title "Products"
@@ -173,6 +179,60 @@ const Products: React.FC = () => {
 - Shows confirmation dialog
 - Permanently removes product
 - Invalidates product queries
+
+### 4. **AddProduct Form - Purchase Price Field**
+- **Permission**: `PERMISSIONS.SALES.VIEW_COST_PROFIT`
+- **Hidden Field**: Purchase Price input
+- **Reason**: Sensitive cost information should only be visible to authorized users
+- **Behavior**: 
+  - Users **with** permission see the purchase price field and can enter/edit cost data
+  - Users **without** permission don't see the purchase price field at all
+  - Form can still be submitted without purchase price (will use default value)
+
+## AddProduct Form Permission Control
+
+The AddProduct form (used for both creating and editing products) has an additional layer of permission control:
+
+```typescript
+function AddProduct({ productData, onClose }) {
+  const { hasPermission } = usePermission();
+  const canViewCostProfit = hasPermission(PERMISSIONS.SALES.VIEW_COST_PROFIT);
+
+  return (
+    <form>
+      {/* Other fields... */}
+      
+      {/* Purchase Price - Only visible with permission */}
+      {canViewCostProfit && (
+        <div>
+          <label>Purchase Price*</label>
+          <input name="purchasePrice" type="number" />
+        </div>
+      )}
+      
+      {/* Sales Price - Always visible */}
+      <div>
+        <label>Sales Price*</label>
+        <input name="salesPrice" type="number" />
+      </div>
+    </form>
+  );
+}
+```
+
+### Why Hide Purchase Price?
+
+1. **Cost Protection**: Purchase price is sensitive business information
+2. **Profit Margin Security**: Prevents unauthorized users from seeing profit margins
+3. **Competitive Advantage**: Keeps cost structure confidential
+4. **Role-Based Access**: Only managers/owners need to see cost data
+
+### Form Behavior Without Permission:
+
+- Purchase price field is completely hidden
+- Form layout adjusts automatically
+- All other fields remain functional
+- Product can still be created/edited (purchase price defaults to 0 or existing value)
 
 ## Testing Checklist
 

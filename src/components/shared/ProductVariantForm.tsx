@@ -13,6 +13,8 @@ import {
 } from "@/api/api";
 import { uploadFile } from "@/utils/utils";
 import Spinner from "../Spinner";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface ProductVariantFormProps {
   productId?: number;
@@ -37,6 +39,11 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
   onSuccess,
 }) => {
   const [variants, setVariants] = useState<VariantFormData[]>([]);
+  const { hasPermission } = usePermission();
+
+  // Permission check
+  const canAdjustStock = hasPermission(PERMISSIONS.INVENTORY.ADJUST_STOCK);
+
   // const [imagePreviews, setImagePreviews] = useState<string[][]>([]); // Removed: now derived
 
   // const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -328,10 +335,9 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
           disabled={!productId}
           type="button"
           className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm transition-all
-            ${
-              productId
-                ? "text-white bg-brand-primary hover:bg-brand-hover"
-                : "text-gray-500 bg-gray-100 cursor-not-allowed"
+            ${productId
+              ? "text-white bg-brand-primary hover:bg-brand-hover"
+              : "text-gray-500 bg-gray-100 cursor-not-allowed"
             }`}
         >
           <FaPlus className="mr-2 h-4 w-4" />
@@ -524,7 +530,7 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
                     {/* Quantity */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Quantity
+                        Quantity {!canAdjustStock && "(Read-only)"}
                       </label>
                       <input
                         type="number"
@@ -536,9 +542,11 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
                             Number(e.target.value)
                           )
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary"
+                        disabled={!canAdjustStock}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
                         placeholder="Enter quantity"
                         min="0"
+                        title={!canAdjustStock ? "You don't have permission to adjust stock" : ""}
                       />
                     </div>
 
@@ -578,9 +586,9 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
                       className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover shadow-sm disabled:opacity-50"
                     >
                       {createVariantMutation.isPending ||
-                      updateVariantMutation.isPending ||
-                      deleteVariantMutation.isPending ||
-                      isUplaodingImage[index] ? (
+                        updateVariantMutation.isPending ||
+                        deleteVariantMutation.isPending ||
+                        isUplaodingImage[index] ? (
                         <Spinner size="16px" color="#ffffff" className="mr-4" />
                       ) : variant.id ? (
                         "Update Variant"

@@ -32,6 +32,8 @@ import { ProductFormData } from "@/types/ProductType";
 import ProductVariantForm from "./ProductVariantForm";
 import ToggleSwitch from "./ToggleSwitch";
 import { useAuth } from "@/context/AuthContext";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 function AddProduct({
   productData,
@@ -42,6 +44,11 @@ function AddProduct({
 }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { hasPermission } = usePermission();
+
+  // Permission check
+  const canViewCostProfit = hasPermission(PERMISSIONS.SALES.VIEW_COST_PROFIT);
+
   const isRestaurent = user?.shopType === "restaurant";
   const currentShopId = user?.child?.id ?? user?.id;
   const [enableVariants, setEnableVariants] = useState(false);
@@ -619,21 +626,23 @@ function AddProduct({
         </div>
 
         {/* Prices */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Purchase Price*
-          </label>
-          <InputWithIcon
-            icon={FaDollarSign}
-            name="purchasePrice"
-            type="number"
-            step="0.01"
-            required
-            placeholder="Enter purchase price"
-            value={formData.purchasePrice?.toString()}
-            onChange={handleInputChange}
-          />
-        </div>
+        {canViewCostProfit && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Purchase Price*
+            </label>
+            <InputWithIcon
+              icon={FaDollarSign}
+              name="purchasePrice"
+              type="number"
+              step="0.01"
+              required
+              placeholder="Enter purchase price"
+              value={formData.purchasePrice?.toString()}
+              onChange={handleInputChange}
+            />
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -733,9 +742,8 @@ function AddProduct({
                 disabled={enableVariants}
                 className="flex-1"
                 placeholder="Enter stock quantity"
-                buttonContainerClassName={`${
-                  existingVariants?.length <= 0 ? "flex-1" : ""
-                }`}
+                buttonContainerClassName={`${existingVariants?.length <= 0 ? "flex-1" : ""
+                  }`}
                 value={formData.stock?.toString()}
                 onChange={handleInputChange}
               />
@@ -893,9 +901,9 @@ function AddProduct({
           disabled={createMutation.isPending || updateMutation.isPending}
         >
           {createMutation.isPending ||
-          updateMutation.isPending ||
-          isLoadingImage ||
-          isLoadingVariants ? (
+            updateMutation.isPending ||
+            isLoadingImage ||
+            isLoadingVariants ? (
             <Spinner size="16px" color="#ffffff" className="mx-4 my-1" />
           ) : (
             <>{formData.id || productId ? "Update" : "Create"} Product</>
