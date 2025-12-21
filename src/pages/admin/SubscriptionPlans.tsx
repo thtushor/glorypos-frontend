@@ -14,6 +14,8 @@ import InputWithIcon from "@/components/InputWithIcon";
 import { useAuth } from "@/context/AuthContext";
 import SubscriptionModal from "@/components/SubscriptionModal";
 import FloatingContactButtons from "@/components/FloatingContactButtons";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface SubscriptionPlan {
   id: number;
@@ -73,6 +75,9 @@ const handleStorageChange = (
 
 const SubscriptionPlans = () => {
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermission();
+  const canManageSubscriptions = hasPermission(PERMISSIONS.SUBSCRIPTIONS.MANAGE_SUBSCRIPTIONS);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<SubscriptionPlan | null>(
@@ -225,7 +230,7 @@ const SubscriptionPlans = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Subscription Plans</h1>
-        {!isShopUser && (
+        {!isShopUser && canManageSubscriptions && (
           <button
             onClick={() => {
               resetForm();
@@ -264,10 +269,9 @@ const SubscriptionPlans = () => {
                         px-4 py-2 text-sm font-medium
                         rounded-md shadow-md
                         transform transition-all duration-200
-                        ${
-                          subscribeMutation.isPending
-                            ? "bg-gray-300 cursor-not-allowed"
-                            : "bg-gradient-to-r from-brand-primary to-brand-hover text-white hover:scale-102 hover:shadow-lg active:scale-98"
+                        ${subscribeMutation.isPending
+                          ? "bg-gray-300 cursor-not-allowed"
+                          : "bg-gradient-to-r from-brand-primary to-brand-hover text-white hover:scale-102 hover:shadow-lg active:scale-98"
                         }
                         group
                       `}
@@ -296,7 +300,7 @@ const SubscriptionPlans = () => {
                         </>
                       )}
                     </button>
-                  ) : (
+                  ) : canManageSubscriptions ? (
                     <>
                       <button
                         onClick={() => {
@@ -304,17 +308,19 @@ const SubscriptionPlans = () => {
                           setIsModalOpen(true);
                         }}
                         className="p-2 text-gray-600 hover:text-brand-primary"
+                        title="Edit Plan"
                       >
                         <FaEdit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(plan)}
                         className="p-2 text-gray-600 hover:text-red-500"
+                        title="Delete Plan"
                       >
                         <FaTrash className="w-4 h-4" />
                       </button>
                     </>
-                  )}
+                  ) : null}
                 </div>
               </div>
 
@@ -362,11 +368,10 @@ const SubscriptionPlans = () => {
             <div className="px-6 py-4 bg-gray-50">
               <div className="flex items-center justify-between">
                 <span
-                  className={`px-2 py-1 text-xs rounded-full ${
-                    plan.status === "active"
+                  className={`px-2 py-1 text-xs rounded-full ${plan.status === "active"
                       ? "bg-green-100 text-green-800"
                       : "bg-gray-100 text-gray-800"
-                  }`}
+                    }`}
                 >
                   {plan.status}
                 </span>
