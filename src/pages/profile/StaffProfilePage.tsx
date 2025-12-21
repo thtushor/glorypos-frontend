@@ -34,7 +34,8 @@ import { CHILD_USERS_URL_PROFILE, CREATE_CHILD_USER_URL } from "@/api/api";
 import money from "@/utils/money";
 import { format } from "date-fns";
 import { useParams, Outlet, Link, useLocation } from "react-router-dom";
-import { PERMISSION_GROUPS, PERMISSION_TEMPLATES } from "@/config/permissions";
+import { PERMISSION_GROUPS, PERMISSION_TEMPLATES, PERMISSIONS } from "@/config/permissions";
+import { usePermission } from "@/hooks/usePermission";
 
 // Updated Permission type - now an array of permission keys
 type UserPermissions = string[];
@@ -118,6 +119,10 @@ interface UpdateFormData {
 
 const StaffProfilePage = () => {
     const queryClient = useQueryClient();
+    const { hasPermission } = usePermission();
+    const canEditChildUsers = hasPermission(PERMISSIONS.USERS.EDIT_CHILD_USER);
+    const canManagePermissions = hasPermission(PERMISSIONS.USERS.MANAGE_PERMISSIONS);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<Partial<UpdateFormData>>({});
@@ -323,50 +328,52 @@ const StaffProfilePage = () => {
                             </div>
 
                             <div className="flex gap-3">
-                                {!isEditing ? (
-                                    <button
-                                        onClick={() => setIsEditing(true)}
-                                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
-                                    >
-                                        <FaEdit /> Edit Profile
-                                    </button>
-                                ) : (
-                                    <>
+                                {canEditChildUsers && (
+                                    !isEditing ? (
                                         <button
-                                            onClick={() => {
-                                                setIsEditing(false);
-                                                setFormData({
-                                                    fullName: profile.fullName,
-                                                    phone: profile.phone || "",
-                                                    role: profile.role,
-                                                    status: profile.status,
-                                                    permissions: profile.permissions,
-                                                    baseSalary: parseFloat(profile.baseSalary),
-                                                    requiredDailyHours: profile.requiredDailyHours,
-                                                });
-                                                setPreviewImage(null);
-                                            }}
-                                            className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 font-semibold shadow-lg transition-all duration-300 flex items-center gap-2"
+                                            onClick={() => setIsEditing(true)}
+                                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
                                         >
-                                            <FaTimes /> Cancel
+                                            <FaEdit /> Edit Profile
                                         </button>
-                                        <button
-                                            onClick={handleSubmit}
-                                            disabled={updateProfileMutation.isPending}
-                                            className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 disabled:opacity-50"
-                                        >
-                                            {updateProfileMutation.isPending ? (
-                                                <>
-                                                    <FaSpinner className="animate-spin" />
-                                                    Saving...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <FaSave /> Save Changes
-                                                </>
-                                            )}
-                                        </button>
-                                    </>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => {
+                                                    setIsEditing(false);
+                                                    setFormData({
+                                                        fullName: profile.fullName,
+                                                        phone: profile.phone || "",
+                                                        role: profile.role,
+                                                        status: profile.status,
+                                                        permissions: profile.permissions,
+                                                        baseSalary: parseFloat(profile.baseSalary),
+                                                        requiredDailyHours: profile.requiredDailyHours,
+                                                    });
+                                                    setPreviewImage(null);
+                                                }}
+                                                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 font-semibold shadow-lg transition-all duration-300 flex items-center gap-2"
+                                            >
+                                                <FaTimes /> Cancel
+                                            </button>
+                                            <button
+                                                onClick={handleSubmit}
+                                                disabled={updateProfileMutation.isPending}
+                                                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 disabled:opacity-50"
+                                            >
+                                                {updateProfileMutation.isPending ? (
+                                                    <>
+                                                        <FaSpinner className="animate-spin" />
+                                                        Saving...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <FaSave /> Save Changes
+                                                    </>
+                                                )}
+                                            </button>
+                                        </>
+                                    )
                                 )}
                             </div>
                         </div>
@@ -611,149 +618,151 @@ const StaffProfilePage = () => {
                                         </div>
 
                                         {/* Permissions Management */}
-                                        <div className="pt-6 border-t-2 border-gray-100">
-                                            <div className="flex items-center justify-between mb-6">
-                                                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                                    <FaUserShield className="text-blue-600" />
-                                                    Permissions Management
-                                                </h3>
-                                                {isEditing && (
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => applyPermissionTemplate('ADMIN')}
-                                                            className="px-3 py-1.5 text-xs font-semibold bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition"
-                                                        >
-                                                            Admin Template
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => applyPermissionTemplate('MANAGER')}
-                                                            className="px-3 py-1.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
-                                                        >
-                                                            Manager Template
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => applyPermissionTemplate('CASHIER')}
-                                                            className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition"
-                                                        >
-                                                            Cashier Template
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setFormData({ ...formData, permissions: [] })}
-                                                            className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition"
-                                                        >
-                                                            Clear All
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
+                                        {canManagePermissions && (
+                                            <div className="pt-6 border-t-2 border-gray-100">
+                                                <div className="flex items-center justify-between mb-6">
+                                                    <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                                        <FaUserShield className="text-blue-600" />
+                                                        Permissions Management
+                                                    </h3>
+                                                    {isEditing && (
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => applyPermissionTemplate('ADMIN')}
+                                                                className="px-3 py-1.5 text-xs font-semibold bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition"
+                                                            >
+                                                                Admin Template
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => applyPermissionTemplate('MANAGER')}
+                                                                className="px-3 py-1.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
+                                                            >
+                                                                Manager Template
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => applyPermissionTemplate('CASHIER')}
+                                                                className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition"
+                                                            >
+                                                                Cashier Template
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setFormData({ ...formData, permissions: [] })}
+                                                                className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition"
+                                                            >
+                                                                Clear All
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
 
-                                            {/* Permission Groups */}
-                                            <div className="space-y-6">
-                                                {PERMISSION_GROUPS.map((group) => {
-                                                    const groupPermissions = group.permissions;
-                                                    const currentPermissions = Array.isArray(formData.permissions) ? formData.permissions : [];
-                                                    const selectedCount = groupPermissions.filter(p =>
-                                                        currentPermissions.includes(p.key)
-                                                    ).length;
-                                                    const totalCount = groupPermissions.length;
+                                                {/* Permission Groups */}
+                                                <div className="space-y-6">
+                                                    {PERMISSION_GROUPS.map((group) => {
+                                                        const groupPermissions = group.permissions;
+                                                        const currentPermissions = Array.isArray(formData.permissions) ? formData.permissions : [];
+                                                        const selectedCount = groupPermissions.filter(p =>
+                                                            currentPermissions.includes(p.key)
+                                                        ).length;
+                                                        const totalCount = groupPermissions.length;
 
-                                                    return (
-                                                        <div key={group.id} className="bg-gradient-to-br from-gray-50 to-white rounded-xl border-2 border-gray-200 overflow-hidden">
-                                                            {/* Group Header */}
-                                                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b-2 border-gray-200">
-                                                                <div className="flex items-center justify-between">
-                                                                    <div>
-                                                                        <h4 className="text-lg font-bold text-gray-900">{group.name}</h4>
-                                                                        <p className="text-sm text-gray-600 mt-1">{group.description}</p>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-3">
-                                                                        <span className="text-sm font-semibold text-gray-700 bg-white px-3 py-1 rounded-full border-2 border-gray-200">
-                                                                            {selectedCount} / {totalCount}
-                                                                        </span>
-                                                                        {isEditing && (
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => {
-                                                                                    const allGroupKeys = groupPermissions.map(p => p.key);
-                                                                                    const allSelected = allGroupKeys.every(key =>
-                                                                                        currentPermissions.includes(key)
-                                                                                    );
+                                                        return (
+                                                            <div key={group.id} className="bg-gradient-to-br from-gray-50 to-white rounded-xl border-2 border-gray-200 overflow-hidden">
+                                                                {/* Group Header */}
+                                                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b-2 border-gray-200">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div>
+                                                                            <h4 className="text-lg font-bold text-gray-900">{group.name}</h4>
+                                                                            <p className="text-sm text-gray-600 mt-1">{group.description}</p>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-3">
+                                                                            <span className="text-sm font-semibold text-gray-700 bg-white px-3 py-1 rounded-full border-2 border-gray-200">
+                                                                                {selectedCount} / {totalCount}
+                                                                            </span>
+                                                                            {isEditing && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        const allGroupKeys = groupPermissions.map(p => p.key);
+                                                                                        const allSelected = allGroupKeys.every(key =>
+                                                                                            currentPermissions.includes(key)
+                                                                                        );
 
-                                                                                    if (allSelected) {
-                                                                                        // Deselect all in this group
-                                                                                        setFormData({
-                                                                                            ...formData,
-                                                                                            permissions: currentPermissions.filter(
-                                                                                                p => allGroupKeys.indexOf(p as any) === -1
-                                                                                            ),
-                                                                                        });
-                                                                                    } else {
-                                                                                        // Select all in this group
-                                                                                        const newPermissions = new Set([
-                                                                                            ...currentPermissions,
-                                                                                            ...allGroupKeys,
-                                                                                        ]);
-                                                                                        setFormData({
-                                                                                            ...formData,
-                                                                                            permissions: Array.from(newPermissions),
-                                                                                        });
-                                                                                    }
-                                                                                }}
-                                                                                className="px-3 py-1 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                                                                            >
-                                                                                {selectedCount === totalCount ? 'Deselect All' : 'Select All'}
-                                                                            </button>
-                                                                        )}
+                                                                                        if (allSelected) {
+                                                                                            // Deselect all in this group
+                                                                                            setFormData({
+                                                                                                ...formData,
+                                                                                                permissions: currentPermissions.filter(
+                                                                                                    p => allGroupKeys.indexOf(p as any) === -1
+                                                                                                ),
+                                                                                            });
+                                                                                        } else {
+                                                                                            // Select all in this group
+                                                                                            const newPermissions = new Set([
+                                                                                                ...currentPermissions,
+                                                                                                ...allGroupKeys,
+                                                                                            ]);
+                                                                                            setFormData({
+                                                                                                ...formData,
+                                                                                                permissions: Array.from(newPermissions),
+                                                                                            });
+                                                                                        }
+                                                                                    }}
+                                                                                    className="px-3 py-1 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                                                                                >
+                                                                                    {selectedCount === totalCount ? 'Deselect All' : 'Select All'}
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
 
-                                                            {/* Group Permissions */}
-                                                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                                {groupPermissions.map((permission) => {
-                                                                    const isChecked = currentPermissions.includes(permission.key);
+                                                                {/* Group Permissions */}
+                                                                <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                                    {groupPermissions.map((permission) => {
+                                                                        const isChecked = currentPermissions.includes(permission.key);
 
-                                                                    return (
-                                                                        <label
-                                                                            key={permission.key}
-                                                                            className={`group relative flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${isChecked
-                                                                                ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-500 shadow-sm'
-                                                                                : 'bg-white border-gray-200 hover:border-gray-300'
-                                                                                } ${!isEditing ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-md'}`}
-                                                                        >
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                disabled={!isEditing}
-                                                                                checked={isChecked}
-                                                                                onChange={() => handlePermissionToggle(permission.key)}
-                                                                                className="mt-1 w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed"
-                                                                            />
-                                                                            <div className="flex-1 min-w-0">
-                                                                                <div className="flex items-center gap-2">
-                                                                                    <span className="text-sm font-bold text-gray-900">
-                                                                                        {permission.label}
-                                                                                    </span>
-                                                                                    {isChecked && (
-                                                                                        <FaCheckCircle className="text-green-600 text-xs flex-shrink-0" />
-                                                                                    )}
+                                                                        return (
+                                                                            <label
+                                                                                key={permission.key}
+                                                                                className={`group relative flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${isChecked
+                                                                                    ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-500 shadow-sm'
+                                                                                    : 'bg-white border-gray-200 hover:border-gray-300'
+                                                                                    } ${!isEditing ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-md'}`}
+                                                                            >
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    disabled={!isEditing}
+                                                                                    checked={isChecked}
+                                                                                    onChange={() => handlePermissionToggle(permission.key)}
+                                                                                    className="mt-1 w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed"
+                                                                                />
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        <span className="text-sm font-bold text-gray-900">
+                                                                                            {permission.label}
+                                                                                        </span>
+                                                                                        {isChecked && (
+                                                                                            <FaCheckCircle className="text-green-600 text-xs flex-shrink-0" />
+                                                                                        )}
+                                                                                    </div>
+                                                                                    <p className="text-xs text-gray-600 mt-1 leading-tight">
+                                                                                        {permission.description}
+                                                                                    </p>
                                                                                 </div>
-                                                                                <p className="text-xs text-gray-600 mt-1 leading-tight">
-                                                                                    {permission.description}
-                                                                                </p>
-                                                                            </div>
-                                                                        </label>
-                                                                    );
-                                                                })}
+                                                                            </label>
+                                                                        );
+                                                                    })}
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    );
-                                                })}
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </form>
                                 </div>
 

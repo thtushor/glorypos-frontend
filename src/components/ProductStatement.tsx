@@ -9,6 +9,8 @@ import Spinner from "./Spinner";
 
 import LogoSvg from "./icons/LogoSvg";
 import money from "@/utils/money";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface StatementItem {
   id: number;
@@ -127,6 +129,8 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
   searchKey,
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
+  const { hasPermission } = usePermission();
+  const canViewCostAndProfit = hasPermission(PERMISSIONS.SALES.VIEW_COST_PROFIT);
 
   // Build query parameters using useMemo (similar to POS.tsx)
   const queryParams = useMemo(() => {
@@ -198,17 +202,17 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
 
   const summary = apiSummary
     ? {
-        totalSales: apiSummary.totalRevenue,
-        totalProfit: apiSummary.totalProfit,
-        totalLoss: apiSummary.totalLoss,
-        totalTax: calculatedTax,
-      }
+      totalSales: apiSummary.totalRevenue,
+      totalProfit: apiSummary.totalProfit,
+      totalLoss: apiSummary.totalLoss,
+      totalTax: calculatedTax,
+    }
     : {
-        totalSales: 0,
-        totalProfit: 0,
-        totalLoss: 0,
-        totalTax: 0,
-      };
+      totalSales: 0,
+      totalProfit: 0,
+      totalLoss: 0,
+      totalTax: 0,
+    };
 
   // Helper function to determine if order is Self or Shop
   const getSaleType = (
@@ -217,20 +221,18 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
     if (item.Order.UserId === item.Product.UserId) {
       return {
         type: "Self",
-        name: `${
-          item.Order?.User?.businessName ||
+        name: `${item.Order?.User?.businessName ||
           item.Order?.User?.fullName ||
           "Unknown Shop"
-        }`,
+          }`,
       };
     }
     return {
       type: "Shop",
-      name: `${
-        item.Order?.User?.businessName ||
+      name: `${item.Order?.User?.businessName ||
         item.Order?.User?.fullName ||
         "Unknown Shop"
-      }`,
+        }`,
     };
   };
 
@@ -280,7 +282,7 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
               </div>
 
               {/* Summary Cards */}
-              <div className="grid grid-cols-4 gap-4 mb-6 print:gap-8">
+              <div className={`grid ${canViewCostAndProfit ? 'grid-cols-4' : 'grid-cols-2'} gap-4 mb-6 print:gap-8`}>
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <h3 className="text-sm font-medium text-blue-700">
                     Total Sales
@@ -289,22 +291,26 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                     {money.format(summary?.totalSales || 0)}
                   </p>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium text-green-700">
-                    Total Profit
-                  </h3>
-                  <p className="text-2xl print:!text-base font-bold text-green-800">
-                    {money.format(summary?.totalProfit || 0)}
-                  </p>
-                </div>
-                <div className="bg-red-50 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium text-red-700">
-                    Total Loss
-                  </h3>
-                  <p className="text-2xl print:!text-base font-bold text-red-800">
-                    {money.format(summary?.totalLoss || 0)}
-                  </p>
-                </div>
+                {canViewCostAndProfit && (
+                  <>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h3 className="text-sm font-medium text-green-700">
+                        Total Profit
+                      </h3>
+                      <p className="text-2xl print:!text-base font-bold text-green-800">
+                        {money.format(summary?.totalProfit || 0)}
+                      </p>
+                    </div>
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <h3 className="text-sm font-medium text-red-700">
+                        Total Loss
+                      </h3>
+                      <p className="text-2xl print:!text-base font-bold text-red-800">
+                        {money.format(summary?.totalLoss || 0)}
+                      </p>
+                    </div>
+                  </>
+                )}
                 <div className="bg-purple-50 p-4 rounded-lg">
                   <h3 className="text-sm font-medium text-purple-700">
                     Total Tax
@@ -334,18 +340,22 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                         Commission
                       </th>
                       <th className="px-2 py-1.5 text-right print:px-1">Qty</th>
-                      <th className="px-2 py-1.5 text-right print:px-1">
-                        Cost Price
-                      </th>
+                      {canViewCostAndProfit && (
+                        <th className="px-2 py-1.5 text-right print:px-1">
+                          Cost Price
+                        </th>
+                      )}
                       <th className="px-2 py-1.5 text-right print:px-1">
                         Unit Price
                       </th>
                       <th className="px-2 py-1.5 text-right print:px-1">
                         Sales Price
                       </th>
-                      <th className="px-2 py-1.5 text-right print:px-1">
-                        Profit
-                      </th>
+                      {canViewCostAndProfit && (
+                        <th className="px-2 py-1.5 text-right print:px-1">
+                          Profit
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -452,26 +462,30 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                             <td className="px-2 py-1.5 text-right">
                               {item.quantity}
                             </td>
-                            <td className="px-2 py-1.5 text-right whitespace-nowrap">
-                              {money.format(cost)}
-                            </td>
+                            {canViewCostAndProfit && (
+                              <td className="px-2 py-1.5 text-right whitespace-nowrap">
+                                {money.format(cost)}
+                              </td>
+                            )}
                             <td className="px-2 py-1.5 text-right whitespace-nowrap">
                               {money.format(Number(item.unitPrice))}
                             </td>
                             <td className="px-2 py-1.5 text-right whitespace-nowrap">
                               {money.format(sales)}
                             </td>
-                            <td className="px-2 py-1.5 text-right whitespace-nowrap">
-                              <span
-                                className={
-                                  profit >= 0
-                                    ? "text-green-600"
-                                    : "text-red-600"
-                                }
-                              >
-                                {money.format(profit)}
-                              </span>
-                            </td>
+                            {canViewCostAndProfit && (
+                              <td className="px-2 py-1.5 text-right whitespace-nowrap">
+                                <span
+                                  className={
+                                    profit >= 0
+                                      ? "text-green-600"
+                                      : "text-red-600"
+                                  }
+                                >
+                                  {money.format(profit)}
+                                </span>
+                              </td>
+                            )}
                           </tr>
                         );
                       })
@@ -485,26 +499,30 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                       <td className="pl-4 pr-2 py-2 text-right">
                         {totals?.quantity || 0}
                       </td>
-                      <td className="pl-4 pr-2 py-2 text-right">
-                        {money.format(totals?.cost || 0)}
-                      </td>
+                      {canViewCostAndProfit && (
+                        <td className="pl-4 pr-2 py-2 text-right">
+                          {money.format(totals?.cost || 0)}
+                        </td>
+                      )}
                       <td className="px-4 py-2"></td>
                       <td className="pl-4 pr-2 py-2 text-right">
                         {money.format(totals?.sales || 0)}
                       </td>
-                      <td className="pl-4 pr-2 py-2 text-right">
-                        <span
-                          className={
-                            totals?.sales - totals?.cost >= 0
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }
-                        >
-                          {money.format(
-                            (totals?.sales || 0) - (totals?.cost || 0)
-                          )}
-                        </span>
-                      </td>
+                      {canViewCostAndProfit && (
+                        <td className="pl-4 pr-2 py-2 text-right">
+                          <span
+                            className={
+                              totals?.sales - totals?.cost >= 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }
+                          >
+                            {money.format(
+                              (totals?.sales || 0) - (totals?.cost || 0)
+                            )}
+                          </span>
+                        </td>
+                      )}
                     </tr>
                   </tfoot>
                 </table>
