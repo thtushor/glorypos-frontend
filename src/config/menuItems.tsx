@@ -211,12 +211,12 @@ export const adminMenuItems: MenuItem[] = [
     path: "/subscriptions",
     icon: <FaCrown className="w-5 h-5" />,
   },
-  {
-    id: "users-child",
-    title: "Role",
-    path: "/users/child",
-    icon: <FaUser className="w-5 h-5" />,
-  },
+  // {
+  //   id: "users-child",
+  //   title: "Role",
+  //   path: "/users/child",
+  //   icon: <FaUser className="w-5 h-5" />,
+  // },
   {
     id: "coupons",
     title: "Coupons",
@@ -224,11 +224,17 @@ export const adminMenuItems: MenuItem[] = [
     icon: <FaTicketAlt className="w-5 h-5" />,
   },
   {
-    id: "payroll", // Added
-    title: "Payroll",
-    path: "/payroll",
-    icon: <FaMoneyCheckAlt className="w-5 h-5" />,
+    id: "edit-profile",
+    title: "Edit Profile",
+    path: "/edit-profile",
+    icon: <RiProfileFill className="w-5 h-5" />,
   },
+  // {
+  //   id: "payroll", // Added
+  //   title: "Payroll",
+  //   path: "/payroll",
+  //   icon: <FaMoneyCheckAlt className="w-5 h-5" />,
+  // },
 
   // {
   //   id: "reports",

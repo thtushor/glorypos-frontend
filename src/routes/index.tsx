@@ -146,6 +146,14 @@ const AppRoutes = () => {
         {/* Shop Only Routes */}
         <Route element={<AuthorizedRoute allowedRoles={["shop"]} />}>
           <Route
+            path="edit-shop"
+            element={
+              <PermissionRoute requiredPermission={PERMISSIONS.SETTINGS.EDIT_SHOP_PROFILE}>
+                <ProfilePage />
+              </PermissionRoute>
+            }
+          />
+          <Route
             path="users/child"
             element={
               <PermissionRoute requiredPermission={PERMISSIONS.USERS.VIEW_CHILD_USERS}>
