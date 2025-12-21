@@ -1,5 +1,5 @@
 // pages/payroll/LeaveHistory.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import AXIOS from "@/api/network/Axios";
@@ -7,6 +7,7 @@ import { PAYROLL_LEAVE_HISTORY, PAYROLL_LEAVE_UPDATE } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import { toast } from "react-toastify";
 import { FaCheck, FaTimes } from "react-icons/fa";
+import { useParams } from "react-router-dom";
 
 interface Leave {
   id: number;
@@ -57,11 +58,10 @@ const ConfirmationModal = ({
           <button
             onClick={onConfirm}
             disabled={isPending}
-            className={`px-4 py-2 text-white rounded flex items-center gap-2 disabled:opacity-70 ${
-              confirmColor === "green"
+            className={`px-4 py-2 text-white rounded flex items-center gap-2 disabled:opacity-70 ${confirmColor === "green"
                 ? "bg-green-600 hover:bg-green-700"
                 : "bg-red-600 hover:bg-red-700"
-            }`}
+              }`}
           >
             {isPending ? (
               <>
@@ -79,14 +79,24 @@ const ConfirmationModal = ({
 
 const LeaveHistory = () => {
   const queryClient = useQueryClient();
+  const params = useParams<{ staffId?: string }>();
+  const staffId = params.staffId;
+
   const [filters, setFilters] = useState({
     page: 1,
     pageSize: 10,
     status: "",
-    userId: "",
+    userId: staffId || "",
     startDate: "",
     endDate: "",
   });
+
+  // Update userId filter when staffId changes
+  useEffect(() => {
+    if (staffId && filters.userId !== staffId) {
+      setFilters(prev => ({ ...prev, userId: staffId, page: 1 }));
+    }
+  }, [staffId]);
 
   // === Modal States ===
   const [showApproveModal, setShowApproveModal] = useState(false);
@@ -135,9 +145,8 @@ const LeaveHistory = () => {
     };
     return (
       <span
-        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full capitalize ${
-          styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800"
-        }`}
+        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full capitalize ${styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800"
+          }`}
       >
         {status}
       </span>
@@ -200,7 +209,8 @@ const LeaveHistory = () => {
             onChange={(e) =>
               setFilters({ ...filters, userId: e.target.value, page: 1 })
             }
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+            disabled={!!staffId}
           />
         </div>
 

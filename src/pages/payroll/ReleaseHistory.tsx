@@ -1,5 +1,5 @@
 // src/pages/payroll/ReleaseHistory.tsx
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AXIOS from "@/api/network/Axios";
 import { PAYROLL_HISTORY } from "@/api/api";
@@ -10,6 +10,7 @@ import money from "@/utils/money";
 import { useReactToPrint } from "react-to-print";
 import { CHILD_USERS_URL, SUB_SHOPS_URL } from "@/api/api";
 import { useAuth } from "@/context/AuthContext";
+import { useParams } from "react-router-dom";
 
 interface Release {
   id: number;
@@ -123,6 +124,9 @@ interface SubShopResponse {
 
 const ReleaseHistory = () => {
   const { user } = useAuth();
+  const params = useParams<{ staffId?: string }>();
+  const staffId = params.staffId;
+
   const [filters, setFilters] = useState({
     page: 1,
     pageSize: 10,
@@ -130,11 +134,18 @@ const ReleaseHistory = () => {
     startDate: "",
     endDate: "",
     status: "",
-    userId: "",
+    userId: staffId || "",
     shopId: "",
     minAmount: "",
     maxAmount: "",
   });
+
+  // Update userId filter when staffId changes
+  useEffect(() => {
+    if (staffId && filters.userId !== staffId) {
+      setFilters(prev => ({ ...prev, userId: staffId, page: 1 }));
+    }
+  }, [staffId]);
 
   const [selectedPayslip, setSelectedPayslip] = useState<Release | null>(null);
   const payslipRef = useRef<HTMLDivElement>(null);
@@ -296,8 +307,8 @@ const ReleaseHistory = () => {
               onChange={(e) =>
                 setFilters({ ...filters, userId: e.target.value, page: 1 })
               }
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
-              disabled={loadingUsers}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed"
+              disabled={loadingUsers || !!staffId}
             >
               <option value="">
                 {loadingUsers ? "Loading employees..." : "All Employees"}

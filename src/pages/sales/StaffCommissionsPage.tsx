@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   FaSearch,
@@ -15,6 +15,7 @@ import { toast } from "react-toastify";
 import Spinner from "@/components/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import money from "@/utils/money";
+import { useParams } from "react-router-dom";
 
 interface CommissionItem {
   id: number;
@@ -87,12 +88,23 @@ interface FilterParams {
 
 const StaffCommissionsPage: React.FC = () => {
   const { user } = useAuth();
+  const params = useParams<{ staffId?: string }>();
+  const urlStaffId = params.staffId;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterParams>({
     page: 1,
     pageSize: 20,
+    staffId: urlStaffId ? Number(urlStaffId) : undefined,
   });
+
+  // Update staffId filter when URL param changes
+  useEffect(() => {
+    if (urlStaffId && filters.staffId !== Number(urlStaffId)) {
+      setFilters(prev => ({ ...prev, staffId: Number(urlStaffId), page: 1 }));
+    }
+  }, [urlStaffId]);
 
   // Fetch Shops
   const { data: shopData, isLoading: isLoadingShops } = useQuery({
@@ -205,13 +217,13 @@ const StaffCommissionsPage: React.FC = () => {
   const summary = commissionsData?.data?.summary || commissionsData?.summary;
   const pagination = commissionsData?.data?.pagination ||
     commissionsData?.pagination || {
-      page: filters.page,
-      pageSize: filters.pageSize,
-      totalPages: 0,
-      totalItems: 0,
-      hasNextPage: false,
-      hasPreviousPage: false,
-    };
+    page: filters.page,
+    pageSize: filters.pageSize,
+    totalPages: 0,
+    totalItems: 0,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  };
 
   // Calculate totals for table footer
   const totals = dataArray?.reduce(
@@ -270,11 +282,10 @@ const StaffCommissionsPage: React.FC = () => {
           </form>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 border rounded-lg transition-colors ${
-              showFilters
+            className={`p-2 border rounded-lg transition-colors ${showFilters
                 ? "bg-brand-primary text-white"
                 : "hover:bg-gray-50 text-gray-600"
-            }`}
+              }`}
             title="Toggle Filters"
           >
             <FaFilter className="w-5 h-5" />
@@ -391,7 +402,7 @@ const StaffCommissionsPage: React.FC = () => {
                     e.target.value ? Number(e.target.value) : ""
                   )
                 }
-                disabled={isLoadingStaff}
+                disabled={isLoadingStaff || !!urlStaffId}
                 className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">All Staff</option>
@@ -667,13 +678,12 @@ const StaffCommissionsPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            item.order.paymentStatus === "completed"
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.order.paymentStatus === "completed"
                               ? "bg-green-100 text-green-800"
                               : item.order.paymentStatus === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
                         >
                           {item.order.paymentStatus}
                         </span>

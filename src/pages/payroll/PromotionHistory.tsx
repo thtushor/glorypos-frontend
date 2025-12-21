@@ -1,11 +1,12 @@
 // pages/payroll/PromotionHistory.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import AXIOS from "@/api/network/Axios";
 import { PAYROLL_PROMOTION_HISTORY } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import { FaUser, FaCalendarAlt } from "react-icons/fa";
+import { useParams } from "react-router-dom";
 
 interface SalaryHistory {
   id: number;
@@ -34,14 +35,24 @@ interface Pagination {
 }
 
 const PromotionHistory = () => {
+  const params = useParams<{ staffId?: string }>();
+  const staffId = params.staffId;
+
   const [filters, setFilters] = useState({
     page: 1,
     pageSize: 10,
     status: "",
-    userId: "",
+    userId: staffId || "",
     startDate: "",
     endDate: "",
   });
+
+  // Update userId filter when staffId changes
+  useEffect(() => {
+    if (staffId && filters.userId !== staffId) {
+      setFilters(prev => ({ ...prev, userId: staffId, page: 1 }));
+    }
+  }, [staffId]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["promotion-history", filters],
@@ -67,9 +78,8 @@ const PromotionHistory = () => {
     };
     return (
       <span
-        className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full capitalize ${
-          styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800"
-        }`}
+        className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full capitalize ${styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800"
+          }`}
       >
         {status}
       </span>
@@ -109,7 +119,8 @@ const PromotionHistory = () => {
             onChange={(e) =>
               setFilters({ ...filters, userId: e.target.value, page: 1 })
             }
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+            disabled={!!staffId}
           />
         </div>
 

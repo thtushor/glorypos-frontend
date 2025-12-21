@@ -1,5 +1,5 @@
 // src/pages/payroll/AdvanceSalaryHistory.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import AXIOS from "@/api/network/Axios";
@@ -21,6 +21,7 @@ import {
 } from "react-icons/fa";
 import { FiUser } from "react-icons/fi";
 import { useAuth } from "@/context/AuthContext";
+import { useParams } from "react-router-dom";
 
 interface AdvanceSalary {
   id: number;
@@ -130,11 +131,10 @@ const ConfirmationModal = ({
           <button
             onClick={onConfirm}
             disabled={isPending}
-            className={`px-4 py-2 text-white rounded flex items-center gap-2 disabled:opacity-70 ${
-              confirmColor === "green"
+            className={`px-4 py-2 text-white rounded flex items-center gap-2 disabled:opacity-70 ${confirmColor === "green"
                 ? "bg-green-600 hover:bg-green-700"
                 : "bg-red-600 hover:bg-red-700"
-            }`}
+              }`}
           >
             {isPending ? (
               <>
@@ -153,14 +153,24 @@ const ConfirmationModal = ({
 const AdvanceSalaryHistory = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const params = useParams<{ staffId?: string }>();
+  const staffId = params.staffId;
+
   const [filters, setFilters] = useState({
     page: 1,
     pageSize: 10,
     status: "",
-    userId: "",
+    userId: staffId || "",
     salaryMonth: "",
     shopId: "",
   });
+
+  // Update userId filter when staffId changes
+  useEffect(() => {
+    if (staffId && filters.userId !== staffId) {
+      setFilters(prev => ({ ...prev, userId: staffId, page: 1 }));
+    }
+  }, [staffId]);
 
   // === Modal States ===
   const [showApproveModal, setShowApproveModal] = useState(false);
@@ -265,9 +275,8 @@ const AdvanceSalaryHistory = () => {
     };
     return (
       <span
-        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full capitalize ${
-          styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800"
-        }`}
+        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full capitalize ${styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800"
+          }`}
       >
         {status.toLowerCase()}
       </span>
@@ -368,8 +377,8 @@ const AdvanceSalaryHistory = () => {
             onChange={(e) =>
               setFilters({ ...filters, userId: e.target.value, page: 1 })
             }
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition"
-            disabled={loadingUsers}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed"
+            disabled={loadingUsers || !!staffId}
           >
             <option value="">
               {loadingUsers ? "Loading employees..." : "All Employees"}
@@ -481,9 +490,9 @@ const AdvanceSalaryHistory = () => {
                         <FaCalendarAlt className="text-emerald-600" />
                         {advance.salaryMonth
                           ? format(
-                              new Date(`${advance.salaryMonth}-01`),
-                              "MMMM yyyy"
-                            )
+                            new Date(`${advance.salaryMonth}-01`),
+                            "MMMM yyyy"
+                          )
                           : advance.salaryMonth}
                       </div>
                     </td>
