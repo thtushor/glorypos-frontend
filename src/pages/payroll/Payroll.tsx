@@ -17,6 +17,8 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import ReleaseSalaryForm from "./ReleaseSalaryForm";
 import AdvanceSalaryForm from "./AdvanceSalaryForm"; // Added this import
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 const Payroll = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -25,6 +27,12 @@ const Payroll = () => {
   const [showHolidayModal, setShowHolidayModal] = useState(false);
   const queryClient = useQueryClient();
   const location = useLocation();
+  const { hasPermission } = usePermission();
+
+  // Permission checks
+  const canReleaseSalary = hasPermission(PERMISSIONS.PAYROLL.RELEASE_SALARY);
+  const canApproveAdvanceSalary = hasPermission(PERMISSIONS.PAYROLL.APPROVE_ADVANCE_SALARY);
+  const canCreateUser = hasPermission(PERMISSIONS.USERS.CREATE_CHILD_USER);
 
   const navItems = [
     { name: "Payroll", path: "/payroll", icon: FaMoneyBillWave },
@@ -63,21 +71,25 @@ const Payroll = () => {
           Payroll Management
         </h1>
         <div className="flex md:flex-row flex-col gap-2">
-          <button
-            onClick={() => setShowReleaseSalaryModal(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
-          >
-            <FaPlus className="w-4 h-4" />
-            Release Salary
-          </button>
+          {canReleaseSalary && (
+            <button
+              onClick={() => setShowReleaseSalaryModal(true)}
+              className="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
+            >
+              <FaPlus className="w-4 h-4" />
+              Release Salary
+            </button>
+          )}
 
-          <button
-            onClick={() => setShowAdvanceSalaryModal(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
-          >
-            <FaPlus className="w-4 h-4" />
-            Advance Salary
-          </button>
+          {canApproveAdvanceSalary && (
+            <button
+              onClick={() => setShowAdvanceSalaryModal(true)}
+              className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
+            >
+              <FaPlus className="w-4 h-4" />
+              Advance Salary
+            </button>
+          )}
 
           {/* <button
             onClick={() => setShowReleaseSalaryModal(true)}
@@ -86,13 +98,16 @@ const Payroll = () => {
             <FaPlus className="w-4 h-4" />
             Loan
           </button> */}
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 text-sm justify-center font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover transition-colors flex items-center gap-2"
-          >
-            <FaPlus className="w-4 h-4" />
-            Add Employee
-          </button>
+
+          {canCreateUser && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-4 py-2 text-sm justify-center font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover transition-colors flex items-center gap-2"
+            >
+              <FaPlus className="w-4 h-4" />
+              Add Employee
+            </button>
+          )}
 
           <button
             onClick={() => setShowHolidayModal(true)}
