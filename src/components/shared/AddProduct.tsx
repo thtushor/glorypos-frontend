@@ -46,8 +46,9 @@ function AddProduct({
   const { user } = useAuth();
   const { hasPermission } = usePermission();
 
-  // Permission check
+  // Permission checks
   const canViewCostProfit = hasPermission(PERMISSIONS.SALES.VIEW_COST_PROFIT);
+  const canAdjustStock = hasPermission(PERMISSIONS.INVENTORY.ADJUST_STOCK);
 
   const isRestaurent = user?.shopType === "restaurant";
   const currentShopId = user?.child?.id ?? user?.id;
@@ -731,7 +732,7 @@ function AddProduct({
         <div className="flex items-center justify-between mb-2">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Stock{enableVariants ? "" : "*"}
+              Stock{enableVariants ? "" : "*"} {!canAdjustStock && !enableVariants && "(Read-only)"}
             </label>
             <div className="flex items-center gap-2">
               <InputWithIcon
@@ -739,13 +740,14 @@ function AddProduct({
                 name="stock"
                 type="number"
                 required={!enableVariants}
-                disabled={enableVariants}
+                disabled={enableVariants || !canAdjustStock}
                 className="flex-1"
-                placeholder="Enter stock quantity"
+                placeholder={!canAdjustStock ? "No permission to adjust stock" : "Enter stock quantity"}
                 buttonContainerClassName={`${existingVariants?.length <= 0 ? "flex-1" : ""
                   }`}
                 value={formData.stock?.toString()}
                 onChange={handleInputChange}
+                title={!canAdjustStock ? "You don't have permission to adjust stock" : ""}
               />
               {existingVariants?.length <= 0 && (
                 <div className="flex flex-col">
