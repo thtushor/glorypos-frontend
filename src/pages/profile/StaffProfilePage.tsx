@@ -123,14 +123,12 @@ const StaffProfilePage = () => {
     const { user } = useAuth();
     const profileId = params.id || user?.child?.id
 
-    console.log({ user })
-
     const { data: profileResponse, isLoading } = useQuery({
         queryKey: ["staff-profile", profileId],
         queryFn: async () => {
             const url = CHILD_USERS_URL_PROFILE.replace(":id", String(profileId));
             const response = await AXIOS.get(url);
-            const profileData = response.data.data;
+            const profileData = response.data;
             setFormData({
                 fullName: profileData.fullName,
                 phone: profileData.phone || "",
@@ -204,7 +202,7 @@ const StaffProfilePage = () => {
         );
     }
 
-    const profile = profileResponse?.data as StaffProfileData;
+    const profile = profileResponse as StaffProfileData;
 
     if (!profile) return null;
 
@@ -477,7 +475,9 @@ const StaffProfilePage = () => {
                                         <FaMoneyBillWave className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                                         <input
                                             type="number"
-                                            disabled={!isEditing}
+                                            readOnly
+
+                                            disabled={true}
                                             value={formData?.baseSalary || ""}
                                             onChange={(e) =>
                                                 setFormData((prev) => ({
