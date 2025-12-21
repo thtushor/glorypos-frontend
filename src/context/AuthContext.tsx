@@ -21,6 +21,7 @@ interface User {
   child: {
     email: string;
     id?: number;
+    permissions: string[]
   } | null;
   parentShop: any | null;
   shopType?: "normal" | "restaurant";
