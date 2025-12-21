@@ -8,6 +8,8 @@ import Spinner from "@/components/Spinner";
 import InputWithIcon from "@/components/InputWithIcon";
 import Modal from "@/components/Modal";
 import InventoryFilters from "@/components/shared/InventoryFilters";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface User {
   id: number;
@@ -34,6 +36,9 @@ interface SizeFormData {
 
 const Sizes = () => {
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermission();
+  const canManageSizes = hasPermission(PERMISSIONS.INVENTORY.MANAGE_SIZES);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<SizeFormData>({
     id: undefined,
@@ -146,16 +151,18 @@ const Sizes = () => {
           <h1 className="text-2xl font-semibold text-gray-800">Sizes</h1>
           <p className="text-sm text-gray-600">Manage your product sizes</p>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setIsModalOpen(true);
-          }}
-          className="flex justify-center items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
-        >
-          <FaPlus className="w-4 h-4" />
-          <span>Add Size</span>
-        </button>
+        {canManageSizes && (
+          <button
+            onClick={() => {
+              resetForm();
+              setIsModalOpen(true);
+            }}
+            className="flex justify-center items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
+          >
+            <FaPlus className="w-4 h-4" />
+            <span>Add Size</span>
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -217,11 +224,10 @@ const Sizes = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          size.status === "active"
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${size.status === "active"
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
-                        }`}
+                          }`}
                       >
                         {size.status}
                       </span>
@@ -240,18 +246,24 @@ const Sizes = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-3">
-                        <button
-                          onClick={() => handleEdit(size)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <FaEdit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(size.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <FaTrash className="w-4 h-4" />
-                        </button>
+                        {canManageSizes && (
+                          <>
+                            <button
+                              onClick={() => handleEdit(size)}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Edit Size"
+                            >
+                              <FaEdit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(size.id)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Delete Size"
+                            >
+                              <FaTrash className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -298,7 +310,7 @@ const Sizes = () => {
               className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm"
               rows={3}
               placeholder="Enter size description"
-              // required
+            // required
             />
           </div>
 

@@ -8,6 +8,8 @@ import Spinner from "@/components/Spinner";
 import InputWithIcon from "@/components/InputWithIcon";
 import Modal from "@/components/Modal";
 import InventoryFilters from "@/components/shared/InventoryFilters";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface User {
   id: number;
@@ -34,6 +36,9 @@ interface BrandFormData {
 
 const Brands = () => {
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermission();
+  const canManageBrands = hasPermission(PERMISSIONS.INVENTORY.MANAGE_BRANDS);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<BrandFormData>({
     id: undefined,
@@ -144,16 +149,18 @@ const Brands = () => {
           <h1 className="text-2xl font-semibold text-gray-800">Brands</h1>
           <p className="text-sm text-gray-600">Manage your product brands</p>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setIsModalOpen(true);
-          }}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
-        >
-          <FaPlus className="w-4 h-4" />
-          <span>Add Brand</span>
-        </button>
+        {canManageBrands && (
+          <button
+            onClick={() => {
+              resetForm();
+              setIsModalOpen(true);
+            }}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
+          >
+            <FaPlus className="w-4 h-4" />
+            <span>Add Brand</span>
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -226,11 +233,10 @@ const Brands = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          brand.status === "active"
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${brand.status === "active"
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
-                        }`}
+                          }`}
                       >
                         {brand.status}
                       </span>
@@ -249,18 +255,24 @@ const Brands = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-3">
-                        <button
-                          onClick={() => handleEdit(brand)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <FaEdit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(brand.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <FaTrash className="w-4 h-4" />
-                        </button>
+                        {canManageBrands && (
+                          <>
+                            <button
+                              onClick={() => handleEdit(brand)}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Edit Brand"
+                            >
+                              <FaEdit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(brand.id)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Delete Brand"
+                            >
+                              <FaTrash className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -307,7 +319,7 @@ const Brands = () => {
               className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm"
               rows={3}
               placeholder="Enter brand description"
-              // required
+            // required
             />
           </div>
 

@@ -8,6 +8,8 @@ import Spinner from "@/components/Spinner";
 import InputWithIcon from "@/components/InputWithIcon";
 import Modal from "@/components/Modal";
 import InventoryFilters from "@/components/shared/InventoryFilters";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface User {
   id: number;
@@ -36,6 +38,9 @@ interface ColorFormData {
 
 const Colors = () => {
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermission();
+  const canManageColors = hasPermission(PERMISSIONS.INVENTORY.MANAGE_COLORS);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<ColorFormData>({
     id: undefined,
@@ -149,16 +154,18 @@ const Colors = () => {
           <h1 className="text-2xl font-semibold text-gray-800">Colors</h1>
           <p className="text-sm text-gray-600">Manage your product colors</p>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setIsModalOpen(true);
-          }}
-          className="flex justify-center items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
-        >
-          <FaPlus className="w-4 h-4" />
-          <span>Add Color</span>
-        </button>
+        {canManageColors && (
+          <button
+            onClick={() => {
+              resetForm();
+              setIsModalOpen(true);
+            }}
+            className="flex justify-center items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
+          >
+            <FaPlus className="w-4 h-4" />
+            <span>Add Color</span>
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -232,11 +239,10 @@ const Colors = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          color.status === "active"
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${color.status === "active"
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
-                        }`}
+                          }`}
                       >
                         {color.status}
                       </span>
@@ -255,18 +261,24 @@ const Colors = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-3">
-                        <button
-                          onClick={() => handleEdit(color)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <FaEdit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(color.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <FaTrash className="w-4 h-4" />
-                        </button>
+                        {canManageColors && (
+                          <>
+                            <button
+                              onClick={() => handleEdit(color)}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Edit Color"
+                            >
+                              <FaEdit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(color.id)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Delete Color"
+                            >
+                              <FaTrash className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -338,7 +350,7 @@ const Colors = () => {
               className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm"
               rows={3}
               placeholder="Enter color description"
-              // required
+            // required
             />
           </div>
 

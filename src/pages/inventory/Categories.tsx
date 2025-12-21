@@ -11,6 +11,8 @@ import {
 import Spinner from "@/components/Spinner";
 import InputWithIcon from "@/components/InputWithIcon";
 import InventoryFilters from "@/components/shared/InventoryFilters";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface User {
   id: number;
@@ -37,6 +39,11 @@ interface CategoryFormData {
 
 const Categories = () => {
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermission();
+
+  // Permission checks
+  const canManageCategories = hasPermission(PERMISSIONS.INVENTORY.MANAGE_CATEGORIES);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState<CategoryFormData>({
@@ -151,16 +158,18 @@ const Categories = () => {
             Manage your product categories
           </p>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setIsModalOpen(true);
-          }}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
-        >
-          <FaPlus className="w-4 h-4" />
-          <span>Add Category</span>
-        </button>
+        {canManageCategories && (
+          <button
+            onClick={() => {
+              resetForm();
+              setIsModalOpen(true);
+            }}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
+          >
+            <FaPlus className="w-4 h-4" />
+            <span>Add Category</span>
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -231,11 +240,10 @@ const Categories = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          category.status === "active"
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${category.status === "active"
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
-                        }`}
+                          }`}
                       >
                         {category.status}
                       </span>
@@ -254,18 +262,24 @@ const Categories = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-3">
-                        <button
-                          onClick={() => handleEdit(category)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <FaEdit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(category.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <FaTrash className="w-4 h-4" />
-                        </button>
+                        {canManageCategories && (
+                          <>
+                            <button
+                              onClick={() => handleEdit(category)}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Edit Category"
+                            >
+                              <FaEdit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(category.id)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Delete Category"
+                            >
+                              <FaTrash className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -321,7 +335,7 @@ const Categories = () => {
                   className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm"
                   rows={3}
                   placeholder="Enter category description"
-                  // required
+                // required
                 />
               </div>
 

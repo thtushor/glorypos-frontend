@@ -8,6 +8,8 @@ import Spinner from "@/components/Spinner";
 import InputWithIcon from "@/components/InputWithIcon";
 import Modal from "@/components/Modal";
 import InventoryFilters from "@/components/shared/InventoryFilters";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface User {
   id: number;
@@ -34,6 +36,9 @@ interface UnitFormData {
 
 const Units = () => {
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermission();
+  const canManageUnits = hasPermission(PERMISSIONS.INVENTORY.MANAGE_UNITS);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<UnitFormData>({
     id: undefined,
@@ -144,16 +149,18 @@ const Units = () => {
           <h1 className="text-2xl font-semibold text-gray-800">Units</h1>
           <p className="text-sm text-gray-600">Manage your product units</p>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setIsModalOpen(true);
-          }}
-          className="flex justify-center items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
-        >
-          <FaPlus className="w-4 h-4" />
-          <span>Add Unit</span>
-        </button>
+        {canManageUnits && (
+          <button
+            onClick={() => {
+              resetForm();
+              setIsModalOpen(true);
+            }}
+            className="flex justify-center items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
+          >
+            <FaPlus className="w-4 h-4" />
+            <span>Add Unit</span>
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -222,11 +229,10 @@ const Units = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          unit.status === "active"
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${unit.status === "active"
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
-                        }`}
+                          }`}
                       >
                         {unit.status}
                       </span>
@@ -245,18 +251,24 @@ const Units = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-3">
-                        <button
-                          onClick={() => handleEdit(unit)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <FaEdit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(unit.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <FaTrash className="w-4 h-4" />
-                        </button>
+                        {canManageUnits && (
+                          <>
+                            <button
+                              onClick={() => handleEdit(unit)}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Edit Unit"
+                            >
+                              <FaEdit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(unit.id)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Delete Unit"
+                            >
+                              <FaTrash className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
