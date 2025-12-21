@@ -102,6 +102,7 @@ interface StaffProfileData {
     parent: Parent;
     financials: Financials;
     currentMonthSalary: CurrentMonthSalary;
+    imageUrl?: string;
 }
 
 interface UpdateFormData {
@@ -112,6 +113,7 @@ interface UpdateFormData {
     permissions: UserPermissions;
     baseSalary: number;
     requiredDailyHours: number;
+    imageUrl?: string;
 }
 
 const StaffProfilePage = () => {
@@ -185,10 +187,22 @@ const StaffProfilePage = () => {
         const file = event.target.files?.[0];
         if (file) {
             try {
+                // Show preview immediately
                 setPreviewImage(URL.createObjectURL(file));
+
+                // Upload the file
                 const imageUrl = await uploadFile(file);
-                // Handle image upload if needed
-                toast.success("Image uploaded successfully");
+
+                if (imageUrl) {
+                    // Update formData with the uploaded image URL
+                    setFormData(prev => ({
+                        ...prev,
+                        imageUrl: imageUrl
+                    }));
+                    toast.success("Image uploaded successfully");
+                } else {
+                    throw new Error("Failed to get image URL");
+                }
             } catch (error) {
                 toast.error("Failed to upload image");
                 console.log(error);
@@ -257,7 +271,7 @@ const StaffProfilePage = () => {
                             <div className="relative group">
                                 <div className="w-40 h-40 rounded-full overflow-hidden border-8 border-white shadow-2xl bg-white">
                                     <FallbackAvatar
-                                        src={previewImage || profile.parent?.image || "/default-avatar.png"}
+                                        src={previewImage || profile?.imageUrl || "/default-avatar.png"}
                                         alt={profile.fullName}
                                         className="w-full h-full object-cover"
                                     />
