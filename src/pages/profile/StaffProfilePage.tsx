@@ -8,57 +8,146 @@ import {
     FaEnvelope,
     FaPhone,
     FaMapMarkerAlt,
-    FaBuilding,
-    FaBriefcase,
     FaCamera,
     FaSpinner,
-    FaPercent,
+    FaMoneyBillWave,
+    FaClock,
+    FaChartLine,
+    FaCalendarAlt,
+    FaEdit,
+    FaSave,
+    FaTimes,
+    FaBuilding,
+    FaBriefcase,
+    FaUserShield,
+    FaCheckCircle,
+    FaTimesCircle,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
 import { uploadFile } from "@/utils/utils";
 import FallbackAvatar from "@/components/shared/FallbackAvatar";
+import { CHILD_USERS_URL_PROFILE, CREATE_CHILD_USER_URL } from "@/api/api";
+import money from "@/utils/money";
+import { format } from "date-fns";
+import { useParams } from "react-router-dom";
 
-interface ProfileData {
+interface Permission {
+    canEdit: boolean;
+    canDelete: boolean;
+    canViewReports: boolean;
+}
+
+interface Parent {
     id: number;
     fullName: string;
     email: string;
     phoneNumber: string;
     location: string;
-    businessName?: string;
-    businessType?: string;
-    image?: string;
-    accountType: "admin" | "shop";
-    stuffCommission?: number;
+    businessName: string;
+    businessType: string;
+    image: string | null;
+}
+
+interface Financials {
+    totalSales: number;
+    totalCommission: number;
+    advanceSalary: {
+        totalTaken: number;
+        totalRepaid: number;
+        outstanding: number;
+    };
+    leaveSummary: {
+        totalDaysThisYear: number;
+        requestsCount: number;
+    };
+    salaryDetails: {
+        totalPaidLifetime: number;
+    };
+    currentBaseSalary: string;
+    lastSalaryUpdate: string;
+    salaryStatus: string;
+}
+
+interface CurrentMonthSalary {
+    salaryMonth: string;
+    baseSalary: number;
+    totalWorkingDays: number;
+    totalWeekendDays: number;
+    totalHolidayDays: number;
+    totalLeaveDays: number;
+    grossSalary: number;
+    netAttendanceSalary: number;
+    totalSales: number;
+    totalCommission: number;
+    totalPayable: number;
+    currentMonthRemainingDue: number;
+    status: string;
+}
+
+interface StaffProfileData {
+    id: number;
+    fullName: string;
+    email: string;
+    phone: string | null;
+    role: string;
+    status: "active" | "inactive";
+    permissions: Permission;
+    parentUserId: number;
+    baseSalary: string;
+    requiredDailyHours: number;
+    createdAt: string;
+    updatedAt: string;
+    parent: Parent;
+    financials: Financials;
+    currentMonthSalary: CurrentMonthSalary;
+}
+
+interface UpdateFormData {
+    fullName: string;
+    phone: string;
+    role: string;
+    status: "active" | "inactive";
+    permissions: Permission;
+    baseSalary: number;
+    requiredDailyHours: number;
 }
 
 const StaffProfilePage = () => {
     const queryClient = useQueryClient();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState<Partial<ProfileData>>({});
+    const [formData, setFormData] = useState<Partial<UpdateFormData>>({});
     const [previewImage, setPreviewImage] = useState<string | null>(null);
 
+    const params = useParams<{ id: string }>();
     const { user } = useAuth();
-    // Use child ID if available (staff), otherwise fallback to user ID
-    const profileId = user?.child?.id || user?.id;
+    const profileId = params.id || user?.child?.id
 
-    const { data: profileData, isLoading } = useQuery<ProfileData>({
+    console.log({ user })
+
+    const { data: profileResponse, isLoading } = useQuery({
         queryKey: ["staff-profile", profileId],
         queryFn: async () => {
-            const response = await AXIOS.get(`/single-user/${profileId}`);
-            setFormData(response.data);
+            const url = CHILD_USERS_URL_PROFILE.replace(":id", String(profileId));
+            const response = await AXIOS.get(url);
+            const profileData = response.data.data;
+            setFormData({
+                fullName: profileData.fullName,
+                phone: profileData.phone || "",
+                role: profileData.role,
+                status: profileData.status,
+                permissions: profileData.permissions,
+                baseSalary: parseFloat(profileData.baseSalary),
+                requiredDailyHours: profileData.requiredDailyHours,
+            });
             return response.data;
         },
         enabled: !!profileId,
     });
 
     const updateProfileMutation = useMutation({
-        mutationFn: async (data: FormData) => {
-            await AXIOS.post(`/profile/?userId=${profileId}`, data, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
+        mutationFn: async (data: UpdateFormData) => {
+            await AXIOS.post(`${CREATE_CHILD_USER_URL}/${profileId}`, data);
         },
         onSuccess: () => {
             toast.success("Profile updated successfully");
@@ -80,14 +169,10 @@ const StaffProfilePage = () => {
         const file = event.target.files?.[0];
         if (file) {
             try {
-                // Show preview immediately
                 setPreviewImage(URL.createObjectURL(file));
-
-                // Upload the file and get the URL
                 const imageUrl = await uploadFile(file);
-
-                // Update form data with the returned URL
-                setFormData((prev) => ({ ...prev, image: imageUrl }));
+                // Handle image upload if needed
+                toast.success("Image uploaded successfully");
             } catch (error) {
                 toast.error("Failed to upload image");
                 console.log(error);
@@ -98,283 +183,433 @@ const StaffProfilePage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        updateProfileMutation.mutate(formData as UpdateFormData);
+    };
 
-        // Convert formData to FormData format
-        const submitData = new FormData();
-
-        if (formData.fullName) submitData.append("fullName", formData.fullName);
-        if (formData.phoneNumber)
-            submitData.append("phoneNumber", formData.phoneNumber);
-        if (formData.location) submitData.append("location", formData.location);
-        if (formData.businessName)
-            submitData.append("businessName", formData.businessName);
-        if (formData.businessType)
-            submitData.append("businessType", formData.businessType);
-        if (formData.image) submitData.append("image", formData.image);
-
-        // Handle stuffCommission
-        if (
-            formData.stuffCommission !== undefined &&
-            formData.stuffCommission !== null
-        ) {
-            submitData.append("stuffCommission", formData.stuffCommission.toString());
-        }
-
-        updateProfileMutation.mutate(submitData);
+    const handlePermissionChange = (key: keyof Permission) => {
+        setFormData({
+            ...formData,
+            permissions: {
+                ...formData.permissions!,
+                [key]: !formData.permissions![key],
+            },
+        });
     };
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center h-64">
+            <div className="flex justify-center items-center h-screen">
                 <Spinner color="#32cd32" size="40px" />
             </div>
         );
     }
 
-    const profile = profileData;
+    const profile = profileResponse?.data as StaffProfileData;
 
     if (!profile) return null;
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8">
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                {/* Profile Header */}
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-12 relative">
-                    <div className="absolute inset-0 bg-black/20"></div>
-                    <div className="relative z-10 flex flex-col items-center">
-                        <div className="relative group">
-                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                                <FallbackAvatar
-                                    src={previewImage || profile?.image || "/default-avatar.png"}
-                                    alt={profile?.fullName}
-                                    className="w-full h-full object-cover"
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4">
+            <div className="max-w-7xl mx-auto space-y-6">
+                {/* Header Card */}
+                <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+                    <div className="relative h-48 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+                        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
+                        <div className="absolute -bottom-20 left-8 z-10">
+                            <div className="relative group">
+                                <div className="w-40 h-40 rounded-full overflow-hidden border-8 border-white shadow-2xl bg-white">
+                                    <FallbackAvatar
+                                        src={previewImage || profile.parent?.image || "/default-avatar.png"}
+                                        alt={profile.fullName}
+                                        className="w-full h-full object-cover"
+                                    />
+                                    {isEditing && (
+                                        <div
+                                            onClick={handleImageClick}
+                                            className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                        >
+                                            <FaCamera className="text-white text-3xl" />
+                                        </div>
+                                    )}
+                                </div>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
                                 />
-                                {isEditing && (
-                                    <div
-                                        onClick={handleImageClick}
-                                        className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="pt-24 pb-8 px-8">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div>
+                                <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                                    {profile.fullName}
+                                </h1>
+                                <div className="flex items-center gap-4 flex-wrap">
+                                    <span className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg">
+                                        <FaUserShield className="mr-2" />
+                                        {profile.role}
+                                    </span>
+                                    <span
+                                        className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg ${profile.status === "active"
+                                            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+                                            : "bg-gradient-to-r from-red-500 to-pink-500 text-white"
+                                            }`}
                                     >
-                                        <FaCamera className="text-white text-2xl" />
-                                    </div>
+                                        {profile.status === "active" ? (
+                                            <FaCheckCircle className="mr-2" />
+                                        ) : (
+                                            <FaTimesCircle className="mr-2" />
+                                        )}
+                                        {profile.status}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                {!isEditing ? (
+                                    <button
+                                        onClick={() => setIsEditing(true)}
+                                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+                                    >
+                                        <FaEdit /> Edit Profile
+                                    </button>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                setIsEditing(false);
+                                                setFormData({
+                                                    fullName: profile.fullName,
+                                                    phone: profile.phone || "",
+                                                    role: profile.role,
+                                                    status: profile.status,
+                                                    permissions: profile.permissions,
+                                                    baseSalary: parseFloat(profile.baseSalary),
+                                                    requiredDailyHours: profile.requiredDailyHours,
+                                                });
+                                                setPreviewImage(null);
+                                            }}
+                                            className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 font-semibold shadow-lg transition-all duration-300 flex items-center gap-2"
+                                        >
+                                            <FaTimes /> Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleSubmit}
+                                            disabled={updateProfileMutation.isPending}
+                                            className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 disabled:opacity-50"
+                                        >
+                                            {updateProfileMutation.isPending ? (
+                                                <>
+                                                    <FaSpinner className="animate-spin" />
+                                                    Saving...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <FaSave /> Save Changes
+                                                </>
+                                            )}
+                                        </button>
+                                    </>
                                 )}
                             </div>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                className="hidden"
-                                accept="image/*"
-                                onChange={handleImageChange}
-                            />
                         </div>
-                        <h1 className="text-white text-xl sm:text-3xl font-bold mt-4">
-                            {profile.fullName}
-                        </h1>
-                        <p className="text-white/80 mt-2 capitalize">
-                            {profile.accountType}
+                    </div>
+                </div>
+
+                {/* Financial Overview Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div className="flex items-center justify-between mb-4">
+                            <FaMoneyBillWave className="text-4xl opacity-80" />
+                            <span className="text-sm font-semibold bg-white/20 px-3 py-1 rounded-full">
+                                Lifetime
+                            </span>
+                        </div>
+                        <h3 className="text-sm font-medium opacity-90 mb-1">Total Earned</h3>
+                        <p className="text-3xl font-bold">
+                            {money.format(profile.financials.salaryDetails.totalPaidLifetime)}
+                        </p>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div className="flex items-center justify-between mb-4">
+                            <FaChartLine className="text-4xl opacity-80" />
+                            <span className="text-sm font-semibold bg-white/20 px-3 py-1 rounded-full">
+                                Sales
+                            </span>
+                        </div>
+                        <h3 className="text-sm font-medium opacity-90 mb-1">Total Commission</h3>
+                        <p className="text-3xl font-bold">
+                            {money.format(profile.financials.totalCommission)}
+                        </p>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div className="flex items-center justify-between mb-4">
+                            <FaCalendarAlt className="text-4xl opacity-80" />
+                            <span className="text-sm font-semibold bg-white/20 px-3 py-1 rounded-full">
+                                This Year
+                            </span>
+                        </div>
+                        <h3 className="text-sm font-medium opacity-90 mb-1">Leave Days</h3>
+                        <p className="text-3xl font-bold">
+                            {profile.financials.leaveSummary.totalDaysThisYear}
+                        </p>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div className="flex items-center justify-between mb-4">
+                            <FaMoneyBillWave className="text-4xl opacity-80" />
+                            <span className="text-sm font-semibold bg-white/20 px-3 py-1 rounded-full">
+                                Advance
+                            </span>
+                        </div>
+                        <h3 className="text-sm font-medium opacity-90 mb-1">Outstanding</h3>
+                        <p className="text-3xl font-bold">
+                            {money.format(profile.financials.advanceSalary.outstanding)}
                         </p>
                     </div>
                 </div>
 
-                {/* Profile Content */}
-                <div className="px-8 py-6">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Full Name */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Full Name
-                                </label>
-                                <div className="relative">
-                                    <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        disabled={!isEditing}
-                                        value={formData?.fullName || ""}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                fullName: e.target.value,
-                                            }))
-                                        }
-                                        className="pl-10 w-full py-[6px] rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
-                                    />
-                                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Personal Information */}
+                    <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl p-8">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                                <FaUser className="text-white" />
                             </div>
+                            Personal Information
+                        </h2>
 
-                            {/* Email */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Email
-                                </label>
-                                <div className="relative">
-                                    <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                    <input
-                                        type="email"
-                                        disabled
-                                        value={profile?.email}
-                                        className="pl-10 w-full py-[6px] rounded-md border border-gray-300 bg-gray-50 text-gray-500"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Phone Number */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Phone Number
-                                </label>
-                                <div className="relative">
-                                    <FaPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                    <input
-                                        type="tel"
-                                        disabled={!isEditing}
-                                        value={formData?.phoneNumber || ""}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                phoneNumber: e.target.value,
-                                            }))
-                                        }
-                                        className="pl-10 w-full py-[6px] rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Location */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Location
-                                </label>
-                                <div className="relative">
-                                    <FaMapMarkerAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        disabled={!isEditing}
-                                        value={formData?.location || ""}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                location: e.target.value,
-                                            }))
-                                        }
-                                        className="pl-10 w-full py-[6px] rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Business Fields (Only for shop role) */}
-                            {profile.accountType === "shop" && (
-                                <>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Business Name
-                                        </label>
-                                        <div className="relative">
-                                            <FaBuilding className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                            <input
-                                                type="text"
-                                                disabled={!isEditing}
-                                                value={formData?.businessName || ""}
-                                                onChange={(e) =>
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        businessName: e.target.value,
-                                                    }))
-                                                }
-                                                className="pl-10 w-full py-[6px] rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
-                                            />
-                                        </div>
+                        <form className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Full Name
+                                    </label>
+                                    <div className="relative">
+                                        <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            disabled={!isEditing}
+                                            value={formData?.fullName || ""}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    fullName: e.target.value,
+                                                }))
+                                            }
+                                            className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                        />
                                     </div>
+                                </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Business Type
-                                        </label>
-                                        <div className="relative">
-                                            <FaBriefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                            <input
-                                                type="text"
-                                                disabled={!isEditing}
-                                                value={formData?.businessType || ""}
-                                                onChange={(e) =>
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        businessType: e.target.value,
-                                                    }))
-                                                }
-                                                className="pl-10 w-full py-[6px] rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
-                                            />
-                                        </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Email
+                                    </label>
+                                    <div className="relative">
+                                        <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="email"
+                                            disabled
+                                            value={profile?.email}
+                                            className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 bg-gray-50 text-gray-500"
+                                        />
                                     </div>
+                                </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Stuff Sell Commission (%)
-                                        </label>
-                                        <div className="relative">
-                                            <FaPercent className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                disabled={!isEditing}
-                                                value={formData?.stuffCommission?.toString() || ""}
-                                                onChange={(e) =>
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        stuffCommission: e.target.value
-                                                            ? Number(e.target.value)
-                                                            : undefined,
-                                                    }))
-                                                }
-                                                placeholder="Enter commission percentage"
-                                                className="pl-10 w-full py-[6px] rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
-                                            />
-                                        </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Phone Number
+                                    </label>
+                                    <div className="relative">
+                                        <FaPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="tel"
+                                            disabled={!isEditing}
+                                            value={formData?.phone || ""}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    phone: e.target.value,
+                                                }))
+                                            }
+                                            className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                        />
                                     </div>
-                                </>
-                            )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Role
+                                    </label>
+                                    <div className="relative">
+                                        <FaUserShield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
+                                        <select
+                                            disabled={!isEditing}
+                                            value={formData?.role || ""}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    role: e.target.value,
+                                                }))
+                                            }
+                                            className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300 appearance-none"
+                                        >
+                                            <option value="manager">Manager</option>
+                                            <option value="cashier">Cashier</option>
+                                            <option value="staff">Staff</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Base Salary
+                                    </label>
+                                    <div className="relative">
+                                        <FaMoneyBillWave className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="number"
+                                            disabled={!isEditing}
+                                            value={formData?.baseSalary || ""}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    baseSalary: Number(e.target.value),
+                                                }))
+                                            }
+                                            className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Daily Hours Required
+                                    </label>
+                                    <div className="relative">
+                                        <FaClock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="number"
+                                            disabled={!isEditing}
+                                            value={formData?.requiredDailyHours || ""}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    requiredDailyHours: Number(e.target.value),
+                                                }))
+                                            }
+                                            className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Permissions */}
+                            <div className="pt-6 border-t-2 border-gray-100">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4">Permissions</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {Object.entries(formData.permissions || {}).map(([key, value]) => (
+                                        <label
+                                            key={key}
+                                            className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${value
+                                                ? "bg-green-50 border-green-500"
+                                                : "bg-gray-50 border-gray-200"
+                                                } ${!isEditing ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"}`}
+                                        >
+                                            <span className="text-sm font-semibold text-gray-700">
+                                                {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
+                                            </span>
+                                            <input
+                                                type="checkbox"
+                                                disabled={!isEditing}
+                                                checked={value}
+                                                onChange={() => handlePermissionChange(key as keyof Permission)}
+                                                className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
+                                            />
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Parent Business & Current Month Salary */}
+                    <div className="space-y-6">
+                        {/* Parent Business */}
+                        <div className="bg-white rounded-2xl shadow-xl p-6">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                                    <FaBuilding className="text-white text-sm" />
+                                </div>
+                                Parent Business
+                            </h2>
+                            <div className="space-y-4">
+                                <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                                    <FaBuilding className="text-purple-600 mt-1" />
+                                    <div>
+                                        <p className="text-sm text-gray-600">Business Name</p>
+                                        <p className="font-semibold text-gray-900">{profile.parent.businessName}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                                    <FaBriefcase className="text-purple-600 mt-1" />
+                                    <div>
+                                        <p className="text-sm text-gray-600">Business Type</p>
+                                        <p className="font-semibold text-gray-900">{profile.parent.businessType}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                                    <FaMapMarkerAlt className="text-purple-600 mt-1" />
+                                    <div>
+                                        <p className="text-sm text-gray-600">Location</p>
+                                        <p className="font-semibold text-gray-900">{profile.parent.location}</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex justify-center sm:justify-end gap-2 sm:gap-4 mt-8">
-                            {isEditing ? (
-                                <>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setIsEditing(false);
-                                            setFormData(profile);
-                                            setPreviewImage(null);
-                                        }}
-                                        className="sm:px-6 px-4 py-2 text-xs whitespace-nowrap border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={updateProfileMutation.isPending}
-                                        className="sm:px-6 px-4 py-2 text-xs whitespace-nowrap bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-                                    >
-                                        {updateProfileMutation.isPending ? (
-                                            <>
-                                                <FaSpinner className="animate-spin" />
-                                                Updating...
-                                            </>
-                                        ) : (
-                                            "Save Changes"
-                                        )}
-                                    </button>
-                                </>
-                            ) : (
-                                <button
-                                    type="button"
-                                    onClick={() => setIsEditing(true)}
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                >
-                                    Edit Profile
-                                </button>
-                            )}
+                        {/* Current Month Salary */}
+                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
+                            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                <FaCalendarAlt />
+                                Current Month ({format(new Date(profile.currentMonthSalary.salaryMonth), "MMM yyyy")})
+                            </h2>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center pb-2 border-b border-white/20">
+                                    <span className="text-sm opacity-90">Base Salary</span>
+                                    <span className="font-bold">{money.format(profile.currentMonthSalary.baseSalary)}</span>
+                                </div>
+                                <div className="flex justify-between items-center pb-2 border-b border-white/20">
+                                    <span className="text-sm opacity-90">Commission</span>
+                                    <span className="font-bold">{money.format(profile.currentMonthSalary.totalCommission)}</span>
+                                </div>
+                                <div className="flex justify-between items-center pb-2 border-b border-white/20">
+                                    <span className="text-sm opacity-90">Working Days</span>
+                                    <span className="font-bold">{profile.currentMonthSalary.totalWorkingDays}</span>
+                                </div>
+                                <div className="flex justify-between items-center pb-2 border-b border-white/20">
+                                    <span className="text-sm opacity-90">Leave Days</span>
+                                    <span className="font-bold">{profile.currentMonthSalary.totalLeaveDays}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-2 bg-white/10 rounded-lg p-3 mt-3">
+                                    <span className="font-semibold">Total Payable</span>
+                                    <span className="text-2xl font-bold">{money.format(profile.currentMonthSalary.totalPayable)}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-white/10 rounded-lg p-3">
+                                    <span className="font-semibold">Remaining Due</span>
+                                    <span className="text-xl font-bold">{money.format(profile.currentMonthSalary.currentMonthRemainingDue)}</span>
+                                </div>
+                            </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>

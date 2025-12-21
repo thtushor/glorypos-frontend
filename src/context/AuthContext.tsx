@@ -62,6 +62,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [isInitializing, setIsInitializing] = useState(true);
   const navigate = useNavigate();
 
+
+  const userEmail = user?.child ? user?.child?.email : user?.email;
+
   // Get profile query
   const {
     data: profileData,
@@ -75,7 +78,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     ],
     queryFn: async () => {
       const { access_token } = getCookiesAsObject();
-      if (!access_token || !user?.email) {
+      const email = user?.child ? user?.child?.email : user?.email
+      if (!access_token || !email) {
         navigate("/login");
         setUser(null);
         localStorage.removeItem("user");
@@ -84,7 +88,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       const response = await AXIOS.get(PROFILE_URL, {
         params: {
-          email: user?.child ? user?.child?.email : user?.email,
+          email: email,
         },
       });
 
@@ -93,8 +97,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
       return response.data;
     },
-    enabled: !!(user?.child ? user?.child?.email : user?.email),
+    enabled: !!(userEmail),
   });
+
+
 
   useEffect(() => {
     if (error) {
@@ -109,6 +115,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     if (isSuccess) {
       if (profileData) {
+        console.log("setUser data at - line 118", { user: profileData })
         setUser(profileData);
         localStorage.setItem("user", JSON.stringify(profileData));
       }
@@ -126,6 +133,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     onSuccess: (response: any) => {
       if (response.status) {
         const { user, token } = response.data;
+        console.log({ user, token })
+        console.log("setUser data at - line  137", { user: user })
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
         document.cookie = `access_token=${token}; path=/`;
@@ -172,6 +181,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
+      console.log("setUser data at - line 183", { user: storedUser })
       setUser(JSON.parse(storedUser));
     }
     setIsInitializing(false);

@@ -32,6 +32,7 @@ interface StockAlertResponse {
 
 const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const { user, logout } = useAuth();
+  console.log({ user })
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   // const [notifications] = useState([
@@ -113,11 +114,10 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                     >
                       <div className="flex items-start gap-3">
                         <div
-                          className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${
-                            alert.status === "out_of_stock"
+                          className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${alert.status === "out_of_stock"
                               ? "bg-red-500"
                               : "bg-yellow-500"
-                          }`}
+                            }`}
                         />
                         <div>
                           <p className="text-sm font-medium text-gray-800">
@@ -128,11 +128,10 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                           </p>
                           <div className="flex items-center gap-2 mt-1">
                             <span
-                              className={`text-xs px-2 py-0.5 rounded ${
-                                alert.status === "out_of_stock"
+                              className={`text-xs px-2 py-0.5 rounded ${alert.status === "out_of_stock"
                                   ? "bg-red-100 text-red-700"
                                   : "bg-yellow-100 text-yellow-700"
-                              }`}
+                                }`}
                             >
                               {alert.currentStock} in stock
                             </span>
