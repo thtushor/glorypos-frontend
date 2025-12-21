@@ -21,7 +21,9 @@ import {
 } from "react-icons/fa";
 import { FiUser } from "react-icons/fi";
 import { useAuth } from "@/context/AuthContext";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface AdvanceSalary {
   id: number;
@@ -132,8 +134,8 @@ const ConfirmationModal = ({
             onClick={onConfirm}
             disabled={isPending}
             className={`px-4 py-2 text-white rounded flex items-center gap-2 disabled:opacity-70 ${confirmColor === "green"
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-red-600 hover:bg-red-700"
+              ? "bg-green-600 hover:bg-green-700"
+              : "bg-red-600 hover:bg-red-700"
               }`}
           >
             {isPending ? (
@@ -151,6 +153,9 @@ const ConfirmationModal = ({
 };
 
 const AdvanceSalaryHistory = () => {
+  const { hasPermission } = usePermission();
+  const canViewOtherProfiles = hasPermission(PERMISSIONS.STAFF_PROFILE.VIEW_OTHER_PROFILES);
+
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const params = useParams<{ staffId?: string }>();
@@ -463,9 +468,18 @@ const AdvanceSalaryHistory = () => {
                           <FaUser className="text-emerald-600" size={16} />
                         </div>
                         <div>
-                          <div className="font-semibold text-gray-900">
-                            {advance.UserRole.fullName}
-                          </div>
+                          {canViewOtherProfiles ? (
+                            <Link
+                              to={`/staff-profile/${advance.UserRole.id}/profile`}
+                              className="font-semibold text-brand-primary hover:text-brand-hover hover:underline transition-colors"
+                            >
+                              {advance.UserRole.fullName}
+                            </Link>
+                          ) : (
+                            <div className="font-semibold text-gray-900">
+                              {advance.UserRole.fullName}
+                            </div>
+                          )}
                           <div className="text-sm text-gray-600">
                             {advance.UserRole.email}
                           </div>

@@ -25,8 +25,10 @@ import {
 import Spinner from "@/components/Spinner";
 import Modal from "@/components/Modal";
 import { format } from "date-fns";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import debounce from "lodash/debounce";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 import AttendanceForm from "./AttendanceForm";
 import LeaveForm from "./LeaveForm";
 import PromotionForm from "./PromotionForm";
@@ -93,6 +95,9 @@ interface ChildUsersResponse {
 
 // === MAIN COMPONENT ===
 const PayrollMain = () => {
+  const { hasPermission } = usePermission();
+  const canViewOtherProfiles = hasPermission(PERMISSIONS.STAFF_PROFILE.VIEW_OTHER_PROFILES);
+
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [selectedUser, setSelectedUser] = useState<ChildUser | null>(null);
 
@@ -362,19 +367,18 @@ const PayrollMain = () => {
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1">
                       <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-medium text-center ${
-                          user.attendanceType === "absent"
-                            ? "bg-red-100 text-red-800"
-                            : user.attendanceType === "present"
+                        className={`inline-block px-2 py-1 rounded text-xs font-medium text-center ${user.attendanceType === "absent"
+                          ? "bg-red-100 text-red-800"
+                          : user.attendanceType === "present"
                             ? "bg-green-100 text-green-800"
                             : "bg-blue-100 text-blue-800"
-                        }`}
+                          }`}
                       >
                         {user.attendanceType === "absent"
                           ? "Absent"
                           : user.attendanceType === "present"
-                          ? "Present"
-                          : "Working"}
+                            ? "Present"
+                            : "Working"}
                         {user.isHalfDay && " (½)"}
                       </span>
                       <div className="text-xs text-gray-500 text-nowrap">
@@ -385,7 +389,16 @@ const PayrollMain = () => {
 
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="font-medium">{user.fullName}</span>
+                      {canViewOtherProfiles ? (
+                        <Link
+                          to={`/staff-profile/${user.id}/profile`}
+                          className="font-medium text-brand-primary hover:text-brand-hover hover:underline transition-colors"
+                        >
+                          {user.fullName}
+                        </Link>
+                      ) : (
+                        <span className="font-medium">{user.fullName}</span>
+                      )}
                       <span className="text-sm text-gray-500 text-nowrap">
                         {user.email}
                       </span>
@@ -407,11 +420,10 @@ const PayrollMain = () => {
 
                   <td className="px-6 py-4">
                     <span
-                      className={`px-2 py-1 rounded-md text-xs font-medium ${
-                        user.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
+                      className={`px-2 py-1 rounded-md text-xs font-medium ${user.status === "active"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                        }`}
                     >
                       {user.status}
                     </span>
@@ -525,11 +537,10 @@ const PayrollMain = () => {
               <button
                 key={p}
                 onClick={() => handlePageChange(p)}
-                className={`px-3 py-1 border rounded-md ${
-                  p === page
-                    ? "bg-brand-primary text-white hover:bg-brand-hover"
-                    : "hover:bg-gray-50"
-                }`}
+                className={`px-3 py-1 border rounded-md ${p === page
+                  ? "bg-brand-primary text-white hover:bg-brand-hover"
+                  : "hover:bg-gray-50"
+                  }`}
               >
                 {p}
               </button>

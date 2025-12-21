@@ -10,7 +10,9 @@ import money from "@/utils/money";
 import { useReactToPrint } from "react-to-print";
 import { CHILD_USERS_URL, SUB_SHOPS_URL } from "@/api/api";
 import { useAuth } from "@/context/AuthContext";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface Release {
   id: number;
@@ -123,6 +125,9 @@ interface SubShopResponse {
 }
 
 const ReleaseHistory = () => {
+  const { hasPermission } = usePermission();
+  const canViewOtherProfiles = hasPermission(PERMISSIONS.STAFF_PROFILE.VIEW_OTHER_PROFILES);
+
   const { user } = useAuth();
   const params = useParams<{ staffId?: string }>();
   const staffId = params.staffId;
@@ -466,9 +471,18 @@ const ReleaseHistory = () => {
                     {/* Employee */}
                     <td className="px-6 py-5 whitespace-nowrap">
                       <div>
-                        <div className="font-semibold text-gray-900">
-                          {item.UserRole.fullName}
-                        </div>
+                        {canViewOtherProfiles ? (
+                          <Link
+                            to={`/staff-profile/${item.UserRole.id}/profile`}
+                            className="font-semibold text-brand-primary hover:text-brand-hover hover:underline transition-colors"
+                          >
+                            {item.UserRole.fullName}
+                          </Link>
+                        ) : (
+                          <div className="font-semibold text-gray-900">
+                            {item.UserRole.fullName}
+                          </div>
+                        )}
                         <div className="text-sm text-gray-600">
                           {item.UserRole.email}
                         </div>

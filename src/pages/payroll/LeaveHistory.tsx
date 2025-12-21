@@ -7,7 +7,9 @@ import { PAYROLL_LEAVE_HISTORY, PAYROLL_LEAVE_UPDATE } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import { toast } from "react-toastify";
 import { FaCheck, FaTimes } from "react-icons/fa";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface Leave {
   id: number;
@@ -59,8 +61,8 @@ const ConfirmationModal = ({
             onClick={onConfirm}
             disabled={isPending}
             className={`px-4 py-2 text-white rounded flex items-center gap-2 disabled:opacity-70 ${confirmColor === "green"
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-red-600 hover:bg-red-700"
+              ? "bg-green-600 hover:bg-green-700"
+              : "bg-red-600 hover:bg-red-700"
               }`}
           >
             {isPending ? (
@@ -78,6 +80,9 @@ const ConfirmationModal = ({
 };
 
 const LeaveHistory = () => {
+  const { hasPermission } = usePermission();
+  const canViewOtherProfiles = hasPermission(PERMISSIONS.STAFF_PROFILE.VIEW_OTHER_PROFILES);
+
   const queryClient = useQueryClient();
   const params = useParams<{ staffId?: string }>();
   const staffId = params.staffId;
@@ -283,9 +288,18 @@ const LeaveHistory = () => {
                   <tr key={leave.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div>
-                        <div className="text-sm text-green-500 font-bold">
-                          {leave.employee.fullName}
-                        </div>
+                        {canViewOtherProfiles ? (
+                          <Link
+                            to={`/staff-profile/${leave.employee.id}/profile`}
+                            className="text-sm text-brand-primary hover:text-brand-hover hover:underline font-bold transition-colors"
+                          >
+                            {leave.employee.fullName}
+                          </Link>
+                        ) : (
+                          <div className="text-sm text-green-500 font-bold">
+                            {leave.employee.fullName}
+                          </div>
+                        )}
                         <div className="text-xs text-gray-500">
                           {leave.employee.email}
                         </div>

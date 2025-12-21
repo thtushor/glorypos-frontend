@@ -6,7 +6,9 @@ import AXIOS from "@/api/network/Axios";
 import { PAYROLL_PROMOTION_HISTORY } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import { FaUser, FaCalendarAlt } from "react-icons/fa";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface SalaryHistory {
   id: number;
@@ -35,6 +37,9 @@ interface Pagination {
 }
 
 const PromotionHistory = () => {
+  const { hasPermission } = usePermission();
+  const canViewOtherProfiles = hasPermission(PERMISSIONS.STAFF_PROFILE.VIEW_OTHER_PROFILES);
+
   const params = useParams<{ staffId?: string }>();
   const staffId = params.staffId;
 
@@ -192,9 +197,18 @@ const PromotionHistory = () => {
                       <div className="flex items-center gap-2">
                         <FaUser className="text-gray-400" size={14} />
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {item.UserRole.fullName}
-                          </div>
+                          {canViewOtherProfiles ? (
+                            <Link
+                              to={`/staff-profile/${item.UserRole.id}/profile`}
+                              className="text-sm font-medium text-brand-primary hover:text-brand-hover hover:underline transition-colors"
+                            >
+                              {item.UserRole.fullName}
+                            </Link>
+                          ) : (
+                            <div className="text-sm font-medium text-gray-900">
+                              {item.UserRole.fullName}
+                            </div>
+                          )}
                           <div className="text-xs text-gray-500">
                             {item.UserRole.email}
                           </div>
