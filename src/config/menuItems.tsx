@@ -21,49 +21,58 @@ import {
 } from "react-icons/fa";
 import { MdSubscriptions } from "react-icons/md";
 import { RiProfileFill } from "react-icons/ri";
+import { PERMISSIONS } from "./permissions";
+import { MenuItem } from "@/types/menu";
 
-export const menuItems = [
+export const menuItems: MenuItem[] = [
   {
     id: "dashboard",
     title: "Dashboard",
     path: "/dashboard",
     icon: <FaHome className="w-5 h-5" />,
+    permission: PERMISSIONS.DASHBOARD.VIEW,
   },
   {
     id: "sales",
     title: "Sales",
     path: "/sales",
     icon: <FaShoppingCart className="w-5 h-5" />,
+    permission: PERMISSIONS.SALES.VIEW_POS,
     submenu: [
       {
         id: "pos",
         title: "POS",
         path: "/sales/pos",
         icon: <FaFileInvoice className="w-5 h-5" />,
+        permission: PERMISSIONS.SALES.VIEW_POS,
       },
       {
         id: "orders",
         title: "Orders",
         path: "/sales/orders",
         icon: <FaBoxOpen className="w-5 h-5" />,
+        permission: PERMISSIONS.SALES.VIEW_ORDERS,
       },
       {
         id: "statement",
         title: "Product Statement",
         path: "/sales/product-statement",
         icon: <FaChartLine className="w-5 h-5" />,
+        permission: PERMISSIONS.SALES.VIEW_PRODUCT_STATEMENT,
       },
       {
         id: "staff-commissions",
         title: "Staff Commissions",
         path: "/sales/staff-commissions",
         icon: <FaChartLine className="w-5 h-5" />,
+        permission: PERMISSIONS.SALES.VIEW_STAFF_COMMISSIONS,
       },
       {
         id: "sales-report",
         title: "Sales Report",
         path: "/sales/sales-report",
         icon: <FaCalculator className="w-5 h-5" />,
+        permission: PERMISSIONS.SALES.VIEW_SALES_REPORT,
       },
     ],
   },
@@ -72,18 +81,21 @@ export const menuItems = [
     title: "Inventory",
     path: "/inventory",
     icon: <FaWarehouse className="w-5 h-5" />,
+    permission: PERMISSIONS.INVENTORY.VIEW_PRODUCTS,
     submenu: [
       {
         id: "products",
         title: "Products",
         path: "/inventory/products",
         icon: <FaBoxOpen className="w-5 h-5" />,
+        permission: PERMISSIONS.INVENTORY.VIEW_PRODUCTS,
       },
       {
         id: "categories",
         title: "Categories",
         path: "/inventory/categories",
         icon: <FaTags className="w-5 h-5" />,
+        permission: PERMISSIONS.INVENTORY.VIEW_CATEGORIES,
       },
       // {
       //   id: "suppliers",
@@ -96,24 +108,28 @@ export const menuItems = [
         title: "Brands",
         path: "/inventory/brands",
         icon: <FaTags className="w-5 h-5" />,
+        permission: PERMISSIONS.INVENTORY.VIEW_BRANDS,
       },
       {
         id: "units",
         title: "Units",
         path: "/inventory/units",
         icon: <FaRuler className="w-5 h-5" />,
+        permission: PERMISSIONS.INVENTORY.VIEW_UNITS,
       },
       {
         id: "sizes",
         title: "Sizes",
         path: "/inventory/sizes",
         icon: <FaRulerHorizontal className="w-5 h-5" />,
+        permission: PERMISSIONS.INVENTORY.VIEW_SIZES,
       },
       {
         id: "colors",
         title: "Colors",
         path: "/inventory/colors",
         icon: <FaPalette className="w-5 h-5" />,
+        permission: PERMISSIONS.INVENTORY.VIEW_COLORS,
       },
     ],
   },
@@ -122,6 +138,7 @@ export const menuItems = [
     title: "Other Shops",
     path: "/other-shops",
     icon: <FaStore className="w-5 h-5" />,
+    permission: PERMISSIONS.SHOPS.VIEW_OTHER_SHOPS,
   },
 
   {
@@ -129,40 +146,46 @@ export const menuItems = [
     title: "Subscriptions",
     path: "/subscriptions",
     icon: <FaCrown className="w-5 h-5" />,
+    permission: PERMISSIONS.SUBSCRIPTIONS.VIEW_SUBSCRIPTIONS,
   },
   {
     id: "users-child",
     title: "Role",
     path: "/users/child",
     icon: <FaUser className="w-5 h-5" />,
+    permission: PERMISSIONS.USERS.VIEW_CHILD_USERS,
   },
   {
     id: "payroll", // Added
     title: "Payroll",
     path: "/payroll",
     icon: <FaMoneyCheckAlt className="w-5 h-5" />,
+    permission: PERMISSIONS.PAYROLL.VIEW_PAYROLL,
   },
   {
     id: "edit-shop",
     title: "Edit Shop",
     path: "/edit-shop",
     icon: <RiProfileFill className="w-5 h-5" />,
+    permission: PERMISSIONS.SETTINGS.EDIT_SHOP_PROFILE,
   },
   {
     id: "staff-profile",
     title: "Staff Profile",
     path: "/staff-profile/:staffId",
     icon: <RiProfileFill className="w-5 h-5" />,
+    permission: PERMISSIONS.STAFF_PROFILE.VIEW_OWN_PROFILE,
   },
   {
     id: "settings",
     title: "Settings",
     path: "/settings",
     icon: <FaCog className="w-5 h-5" />,
+    permission: PERMISSIONS.SETTINGS.VIEW_SETTINGS,
   },
 ];
 
-export const adminMenuItems = [
+export const adminMenuItems: MenuItem[] = [
   {
     id: "dashboard",
     title: "Dashboard",

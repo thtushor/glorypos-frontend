@@ -48,6 +48,8 @@ import AdvanceSalaryHistory from "@/pages/payroll/AdvanceSalaryHistory";
 import money, { CurrencyPresets } from "@/utils/money";
 import { useEffect } from "react";
 import SalesReportPage from "@/pages/SalesReportPage";
+import PermissionRoute from "@/components/PermissionRoute";
+import { PERMISSIONS } from "@/config/permissions";
 
 const AppRoutes = () => {
   const { isLoadingProfile, user } = useAuth();
@@ -90,71 +92,279 @@ const AppRoutes = () => {
               user?.accountType === "super admin" ? (
                 <AdminDashboard />
               ) : (
-                <Dashboard />
+                <PermissionRoute requiredPermission={PERMISSIONS.DASHBOARD.VIEW}>
+                  <Dashboard />
+                </PermissionRoute>
               )
             }
           />
-          <Route path="payroll" element={<Payroll />}>
+          <Route
+            path="payroll"
+            element={
+              <PermissionRoute requiredPermission={PERMISSIONS.PAYROLL.VIEW_PAYROLL}>
+                <Payroll />
+              </PermissionRoute>
+            }
+          >
             <Route index element={<PayrollMain />} />
-            <Route path="leave-history" element={<LeaveHistory />} />
+            <Route
+              path="leave-history"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.PAYROLL.VIEW_LEAVE_HISTORY}>
+                  <LeaveHistory />
+                </PermissionRoute>
+              }
+            />
             <Route path="holiday-history" element={<HolidayHistory />} />
-            <Route path="promotion-history" element={<PromotionHistory />} />
-            <Route path="salary-history" element={<ReleaseHistory />} />
+            <Route
+              path="promotion-history"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.PAYROLL.VIEW_PROMOTION_HISTORY}>
+                  <PromotionHistory />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="salary-history"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.PAYROLL.VIEW_SALARY_HISTORY}>
+                  <ReleaseHistory />
+                </PermissionRoute>
+              }
+            />
             <Route
               path="advance-salary-history"
-              element={<AdvanceSalaryHistory />}
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.PAYROLL.VIEW_ADVANCE_SALARY}>
+                  <AdvanceSalaryHistory />
+                </PermissionRoute>
+              }
             />
           </Route>
         </Route>
 
         {/* Shop Only Routes */}
         <Route element={<AuthorizedRoute allowedRoles={["shop"]} />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="other-shops" element={<OtherShops />} />
+          <Route
+            path="dashboard"
+            element={
+              <PermissionRoute requiredPermission={PERMISSIONS.DASHBOARD.VIEW}>
+                <Dashboard />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path="other-shops"
+            element={
+              <PermissionRoute requiredPermission={PERMISSIONS.SHOPS.VIEW_OTHER_SHOPS}>
+                <OtherShops />
+              </PermissionRoute>
+            }
+          />
           <Route path="sales">
-            <Route path="pos" element={<POS />} />
-            <Route path="orders" element={<Orders />} />
+            <Route
+              path="pos"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.SALES.VIEW_POS}>
+                  <POS />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="orders"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.SALES.VIEW_ORDERS}>
+                  <Orders />
+                </PermissionRoute>
+              }
+            />
             <Route
               path="product-statement"
-              element={<ProductStatementPage />}
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.SALES.VIEW_PRODUCT_STATEMENT}>
+                  <ProductStatementPage />
+                </PermissionRoute>
+              }
             />
             <Route
               path="staff-commissions"
-              element={<StaffCommissionsPage />}
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.SALES.VIEW_STAFF_COMMISSIONS}>
+                  <StaffCommissionsPage />
+                </PermissionRoute>
+              }
             />
-            <Route path="sales-report" element={<SalesReportPage />} />
+            <Route
+              path="sales-report"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.SALES.VIEW_SALES_REPORT}>
+                  <SalesReportPage />
+                </PermissionRoute>
+              }
+            />
           </Route>
           <Route path="inventory">
-            <Route path="products" element={<Products />} />
+            <Route
+              path="products"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.INVENTORY.VIEW_PRODUCTS}>
+                  <Products />
+                </PermissionRoute>
+              }
+            />
             <Route path="suppliers" element={<Suppliers />} />
-            <Route path="categories" element={<Categories />} />
-            <Route path="brands" element={<Brands />} />
-            <Route path="units" element={<Units />} />
-            <Route path="sizes" element={<Sizes />} />
-            <Route path="colors" element={<Colors />} />
+            <Route
+              path="categories"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.INVENTORY.VIEW_CATEGORIES}>
+                  <Categories />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="brands"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.INVENTORY.VIEW_BRANDS}>
+                  <Brands />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="units"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.INVENTORY.VIEW_UNITS}>
+                  <Units />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="sizes"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.INVENTORY.VIEW_SIZES}>
+                  <Sizes />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="colors"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.INVENTORY.VIEW_COLORS}>
+                  <Colors />
+                </PermissionRoute>
+              }
+            />
           </Route>
           <Route path="reports" element={<Reports />} />
           {/* <Route path="settings" element={<Settings />} /> */}
-          <Route path="settings" element={<SubscriptionLimits />} />
+          <Route
+            path="settings"
+            element={
+              <PermissionRoute requiredPermission={PERMISSIONS.SETTINGS.VIEW_SETTINGS}>
+                <SubscriptionLimits />
+              </PermissionRoute>
+            }
+          />
         </Route>
 
         {/* Admin Only Routes */}
         <Route
           element={<AuthorizedRoute allowedRoles={["super admin", "shop"]} />}
         >
-          <Route path="subscriptions" element={<SubscriptionPlans />} />
-          <Route path="users/child" element={<ChildUsers />} />
-          <Route path="edit-shop" element={<ProfilePage />} />
-          <Route path="staff-profile/:staffId" element={<StaffProfilePage />}>
+          <Route
+            path="subscriptions"
+            element={
+              <PermissionRoute requiredPermission={PERMISSIONS.SUBSCRIPTIONS.VIEW_SUBSCRIPTIONS}>
+                <SubscriptionPlans />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path="users/child"
+            element={
+              <PermissionRoute requiredPermission={PERMISSIONS.USERS.VIEW_CHILD_USERS}>
+                <ChildUsers />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path="edit-shop"
+            element={
+              <PermissionRoute requiredPermission={PERMISSIONS.SETTINGS.EDIT_SHOP_PROFILE}>
+                <ProfilePage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path="staff-profile/:staffId"
+            element={
+              <PermissionRoute
+                requiredAnyPermissions={[
+                  PERMISSIONS.STAFF_PROFILE.VIEW_OWN_PROFILE,
+                  PERMISSIONS.STAFF_PROFILE.VIEW_OTHER_PROFILES
+                ]}
+              >
+                <StaffProfilePage />
+              </PermissionRoute>
+            }
+          >
             <Route index element={<Navigate to="profile" replace />} />
             <Route path="profile" element={<div />} />
-            <Route path="salary-history" element={<ReleaseHistory />} />
-            <Route path="advance-salary-history" element={<AdvanceSalaryHistory />} />
-            <Route path="promotion-history" element={<PromotionHistory />} />
-            <Route path="leave-history" element={<LeaveHistory />} />
-            <Route path="orders" element={<Orders />} />
-            <Route path="product-statement" element={<ProductStatementPage />} />
-            <Route path="staff-commissions" element={<StaffCommissionsPage />} />
+            <Route
+              path="salary-history"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.PAYROLL.VIEW_SALARY_HISTORY}>
+                  <ReleaseHistory />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="advance-salary-history"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.PAYROLL.VIEW_ADVANCE_SALARY}>
+                  <AdvanceSalaryHistory />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="promotion-history"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.PAYROLL.VIEW_PROMOTION_HISTORY}>
+                  <PromotionHistory />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="leave-history"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.PAYROLL.VIEW_LEAVE_HISTORY}>
+                  <LeaveHistory />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="orders"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.SALES.VIEW_ORDERS}>
+                  <Orders />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="product-statement"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.SALES.VIEW_PRODUCT_STATEMENT}>
+                  <ProductStatementPage />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="staff-commissions"
+              element={
+                <PermissionRoute requiredPermission={PERMISSIONS.SALES.VIEW_STAFF_COMMISSIONS}>
+                  <StaffCommissionsPage />
+                </PermissionRoute>
+              }
+            />
           </Route>
         </Route>
 

@@ -9,6 +9,8 @@ import { useAuth } from "@/context/AuthContext";
 import FallbackAvatar from "./shared/FallbackAvatar";
 import AXIOS from "@/api/network/Axios";
 import { SUB_SHOPS_URL } from "@/api/api";
+import { checkPermission } from "@/utils/permissionHelpers";
+import { MenuItem } from "@/types/menu";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -161,19 +163,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       </div>
 
       <nav className="mt-4 flex-1 min-h-0 overflow-y-auto pb-10">
-        {(user?.accountType === "shop" ? menuItems : adminMenuItems).map(
-          (item: {
-            id: string;
-            title: string;
-            path: string;
-            icon: JSX.Element;
-            submenu?: Array<{
-              id: string;
-              title: string;
-              path: string;
-              icon: JSX.Element;
-            }>;
-          }) => {
+        {(user?.accountType === "shop" ? menuItems : adminMenuItems)
+          .filter((item) => {
+            // Filter menu items based on permissions
+            if (!item.permission) return true; // No permission required
+            return checkPermission(user, item.permission);
+          })
+          .map((item: MenuItem) => {
 
 
             if (!Boolean(user?.child?.id) && item.id === "staff-profile") {
@@ -184,9 +180,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
               item.path = `/staff-profile/${user.child.id}`;
             }
 
+            // Filter submenu items based on permissions
+            const filteredSubmenu = item.submenu?.filter((subItem) => {
+              if (!subItem.permission) return true;
+              return checkPermission(user, subItem.permission);
+            });
+
+            // Don't show parent menu if all submenu items are filtered out
+            if (item.submenu && filteredSubmenu?.length === 0) {
+              return null;
+            }
+
             return (
               <div key={item.id}>
-                {item.submenu ? (
+                {filteredSubmenu && filteredSubmenu.length > 0 ? (
                   // Menu with submenu
                   <div>
                     <button
@@ -217,7 +224,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                         }`}
                     >
                       <div className="pl-4 py-2 space-y-1">
-                        {item.submenu.map((subItem) => (
+                        {filteredSubmenu.map((subItem) => (
                           <NavLink
                             key={subItem.id}
                             to={subItem.path}
@@ -255,7 +262,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           }
 
 
-        )}
+          )}
       </nav>
     </div>
   );
