@@ -36,6 +36,8 @@ import { FaUserGear } from "react-icons/fa6";
 import { useAuth } from "@/context/AuthContext";
 import Invoice from "../Invoice";
 import { CartItem } from "@/types/cartItemType";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 export interface CartAdjustments {
   tax: {
@@ -102,14 +104,19 @@ function ShoppingCart({
   onCloseBarcodeScanner?: () => void;
   initialCustomerInfo?: { name: string; phone: string };
   orderId?: number;
-  initialKOTInfo?:{
+  initialKOTInfo?: {
     tableNumber: string,
     specialInstructions: string,
     guestCount: number,
   }
-  initialPaymentInfo?:PartialPayment;
+  initialPaymentInfo?: PartialPayment;
 }) {
   const { user } = useAuth();
+  const { hasPermission } = usePermission();
+
+  // Permission checks
+  const canCreateOrder = hasPermission(PERMISSIONS.SALES.CREATE_ORDER);
+  const canEditOrder = hasPermission(PERMISSIONS.SALES.EDIT_ORDER);
 
   const [customerInfo, setCustomerInfo] = useState({
     name: initialCustomerInfo?.name || "",
@@ -220,10 +227,10 @@ function ShoppingCart({
         adjustments.discountAdjustments[item.id] ||
         (item.discountType && Number(item.discountAmount || 0) > 0
           ? {
-              type:
-                (item.discountType as "percentage" | "amount") || "percentage",
-              value: Number(item.discountAmount || 0),
-            }
+            type:
+              (item.discountType as "percentage" | "amount") || "percentage",
+            value: Number(item.discountAmount || 0),
+          }
           : null);
 
       if (discount && discount.value > 0) {
@@ -398,10 +405,10 @@ function ShoppingCart({
       const paymentMethod = isMixed
         ? "mixed"
         : partialPayment.cashAmount > 0
-        ? "cash"
-        : partialPayment.cardAmount > 0
-        ? "card"
-        : "mobile_banking";
+          ? "cash"
+          : partialPayment.cardAmount > 0
+            ? "card"
+            : "mobile_banking";
 
       const orderData: any = {
         tableNumber: kotData.tableNumber,
@@ -443,8 +450,8 @@ function ShoppingCart({
         ...(selectedStaffId === "self-sell"
           ? { stuffId: undefined }
           : selectedStaffId
-          ? { stuffId: selectedStaffId }
-          : {}),
+            ? { stuffId: selectedStaffId }
+            : {}),
       };
 
       // Add partial payment amounts if mixed payment
@@ -484,7 +491,7 @@ function ShoppingCart({
       queryClient.invalidateQueries({ queryKey: ["stock-alerts"] });
     },
     onError: (error: any) => {
-      toast.error(error?.message|| error?.error|| "Failed to create order");
+      toast.error(error?.message || error?.error || "Failed to create order");
     },
   });
 
@@ -590,23 +597,22 @@ function ShoppingCart({
     setCustomerInfo(initialCustomerInfo || { name: "", phone: "" });
   }, [initialCustomerInfo]);
 
-  useEffect(()=>{
-    if(!initialKOTInfo) return;
+  useEffect(() => {
+    if (!initialKOTInfo) return;
     setKotData(initialKOTInfo);
-  },[initialKOTInfo])
+  }, [initialKOTInfo])
 
-  useEffect(()=>{
-    if(!initialPaymentInfo) return;
+  useEffect(() => {
+    if (!initialPaymentInfo) return;
     setPartialPayment(initialPaymentInfo);
-  },[initialPaymentInfo])
+  }, [initialPaymentInfo])
 
 
   return (
     <>
       <div
-        className={` bg-white  rounded-lg shadow flex flex-col xl:flex ${
-          showMobileCart ? "flex" : "hidden"
-        }`}
+        className={` bg-white  rounded-lg shadow flex flex-col xl:flex ${showMobileCart ? "flex" : "hidden"
+          }`}
       >
         {/* Mobile Cart Header */}
         <div className="xl:hidden flex items-center justify-between p-4 border-b">
@@ -693,15 +699,15 @@ function ShoppingCart({
                           {item?.selectedVariant?.Category?.name
                             ? item?.selectedVariant?.Category?.name
                             : item?.Category?.name && (
-                                <span className="flex items-center gap-1">
-                                  <span className="font-medium text-gray-600">
-                                    Category:
-                                  </span>
-                                  {item?.selectedVariant?.Category?.name
-                                    ? item?.selectedVariant?.Category?.name
-                                    : item?.Category?.name}
+                              <span className="flex items-center gap-1">
+                                <span className="font-medium text-gray-600">
+                                  Category:
                                 </span>
-                              )}
+                                {item?.selectedVariant?.Category?.name
+                                  ? item?.selectedVariant?.Category?.name
+                                  : item?.Category?.name}
+                              </span>
+                            )}
 
                           {/* Brand */}
                           {item?.Brand?.name && (
@@ -717,24 +723,24 @@ function ShoppingCart({
                           {item?.selectedVariant?.Color?.name
                             ? item?.selectedVariant?.Color?.name
                             : item?.Color?.name && (
-                                <span className="flex items-center gap-1">
-                                  <span className="font-medium text-gray-600">
-                                    Color:
-                                  </span>
-                                  <span
-                                    className="w-3 h-3 rounded-full border"
-                                    style={{
-                                      backgroundColor: item?.selectedVariant
-                                        ?.Color?.code
-                                        ? item?.selectedVariant?.Color?.code
-                                        : item?.Color?.code,
-                                    }}
-                                  />
-                                  {item?.selectedVariant?.Color?.name
-                                    ? item?.selectedVariant?.Color?.name
-                                    : item?.Color?.name}
+                              <span className="flex items-center gap-1">
+                                <span className="font-medium text-gray-600">
+                                  Color:
                                 </span>
-                              )}
+                                <span
+                                  className="w-3 h-3 rounded-full border"
+                                  style={{
+                                    backgroundColor: item?.selectedVariant
+                                      ?.Color?.code
+                                      ? item?.selectedVariant?.Color?.code
+                                      : item?.Color?.code,
+                                  }}
+                                />
+                                {item?.selectedVariant?.Color?.name
+                                  ? item?.selectedVariant?.Color?.name
+                                  : item?.Color?.name}
+                              </span>
+                            )}
                         </div>
                       </div>
 
@@ -749,7 +755,7 @@ function ShoppingCart({
                             <input
                               type="text"
                               inputMode="decimal"
-                              
+                              disabled={!canEditOrder}
                               value={getNumericValue(salesPrice)}
                               onChange={(e) => {
                                 const filtered = filterNumericInput(
@@ -775,7 +781,7 @@ function ShoppingCart({
                                   formatCurrency(parsed)
                                 );
                               }}
-                              className=" w-[100px] min-w-0 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                              className=" w-[100px] min-w-0 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                           </div>
                         </div>
@@ -789,6 +795,7 @@ function ShoppingCart({
                             <input
                               type="text"
                               inputMode="decimal"
+                              disabled={!canEditOrder}
                               value={getNumericValue(discount.value)}
                               onChange={(e) => {
                                 const filtered = filterNumericInput(
@@ -836,10 +843,11 @@ function ShoppingCart({
                                   formatCurrency(finalValue)
                                 );
                               }}
-                              className="w-[50px] px-2 py-1 text-xs border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                              className="w-[50px] px-2 py-1 text-xs border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                             <select
                               value={discount.type}
+                              disabled={!canEditOrder}
                               onChange={(e) => {
                                 updateItemDiscount(
                                   item.id || 0,
@@ -847,7 +855,7 @@ function ShoppingCart({
                                   discount.value
                                 );
                               }}
-                              className="text-xs border-y border-r rounded-r bg-gray-50 px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                              className="text-xs border-y border-r rounded-r bg-gray-50 px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                             >
                               <option value="percentage">%</option>
                               <option value="amount">฿</option>
@@ -1118,6 +1126,7 @@ function ShoppingCart({
             onClick={handlePaymentClick}
             className="w-full flex items-center justify-center gap-2 px-4 py-3.5 sm:py-3 bg-brand-primary text-white rounded-md active:bg-brand-hover hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors mb-4 text-base sm:text-sm touch-manipulation"
             disabled={
+              !canCreateOrder ||
               createOrderMutation.isPending ||
               selectedStaffId === null ||
               cart.length === 0
@@ -1163,11 +1172,10 @@ function ShoppingCart({
           {/* Self Sell Option - Prominent */}
           <button
             onClick={() => handleStaffSelect("self-sell")}
-            className={`w-full text-left p-4 border-2 rounded-lg transition-all hover:shadow-md ${
-              selectedStaffId === "self-sell"
-                ? "border-brand-primary bg-brand-primary/5 shadow-sm"
-                : "border-gray-200 hover:border-gray-300 bg-white"
-            }`}
+            className={`w-full text-left p-4 border-2 rounded-lg transition-all hover:shadow-md ${selectedStaffId === "self-sell"
+              ? "border-brand-primary bg-brand-primary/5 shadow-sm"
+              : "border-gray-200 hover:border-gray-300 bg-white"
+              }`}
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
@@ -1291,11 +1299,10 @@ function ShoppingCart({
                 <button
                   key={staff.id}
                   onClick={() => handleStaffSelect(staff.id)}
-                  className={`relative text-left p-3 border-2 rounded-lg transition-all hover:shadow-md hover:scale-[1.02] ${
-                    selectedStaffId === staff.id
-                      ? "border-brand-primary bg-brand-primary/10 shadow-md ring-2 ring-brand-primary/20"
-                      : "border-gray-200 hover:border-gray-300 bg-white"
-                  }`}
+                  className={`relative text-left p-3 border-2 rounded-lg transition-all hover:shadow-md hover:scale-[1.02] ${selectedStaffId === staff.id
+                    ? "border-brand-primary bg-brand-primary/10 shadow-md ring-2 ring-brand-primary/20"
+                    : "border-gray-200 hover:border-gray-300 bg-white"
+                    }`}
                 >
                   {selectedStaffId === staff.id && (
                     <div className="absolute top-1.5 right-1.5">
@@ -1498,18 +1505,16 @@ function ShoppingCart({
           <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
             <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
               <div
-                className={`p-2 sm:p-3 rounded-lg transition-all ${
-                  partialPayment.cashAmount > 0
-                    ? "bg-green-100 border-2 border-green-400 shadow-sm"
-                    : "bg-transparent"
-                }`}
+                className={`p-2 sm:p-3 rounded-lg transition-all ${partialPayment.cashAmount > 0
+                  ? "bg-green-100 border-2 border-green-400 shadow-sm"
+                  : "bg-transparent"
+                  }`}
               >
                 <p
-                  className={`text-xs mb-1 ${
-                    partialPayment.cashAmount > 0
-                      ? "text-green-700 font-semibold"
-                      : "text-gray-500"
-                  }`}
+                  className={`text-xs mb-1 ${partialPayment.cashAmount > 0
+                    ? "text-green-700 font-semibold"
+                    : "text-gray-500"
+                    }`}
                 >
                   Cash
                   {partialPayment.cashAmount > 0 && (
@@ -1517,28 +1522,25 @@ function ShoppingCart({
                   )}
                 </p>
                 <p
-                  className={`text-base sm:text-lg font-semibold ${
-                    partialPayment.cashAmount > 0
-                      ? "text-green-700"
-                      : "text-gray-900"
-                  }`}
+                  className={`text-base sm:text-lg font-semibold ${partialPayment.cashAmount > 0
+                    ? "text-green-700"
+                    : "text-gray-900"
+                    }`}
                 >
                   {money.format(partialPayment.cashAmount)}
                 </p>
               </div>
               <div
-                className={`p-2 sm:p-3 rounded-lg transition-all ${
-                  partialPayment.cardAmount > 0
-                    ? "bg-blue-100 border-2 border-blue-400 shadow-sm"
-                    : "bg-transparent"
-                }`}
+                className={`p-2 sm:p-3 rounded-lg transition-all ${partialPayment.cardAmount > 0
+                  ? "bg-blue-100 border-2 border-blue-400 shadow-sm"
+                  : "bg-transparent"
+                  }`}
               >
                 <p
-                  className={`text-xs mb-1 ${
-                    partialPayment.cardAmount > 0
-                      ? "text-blue-700 font-semibold"
-                      : "text-gray-500"
-                  }`}
+                  className={`text-xs mb-1 ${partialPayment.cardAmount > 0
+                    ? "text-blue-700 font-semibold"
+                    : "text-gray-500"
+                    }`}
                 >
                   Card
                   {partialPayment.cardAmount > 0 && (
@@ -1546,28 +1548,25 @@ function ShoppingCart({
                   )}
                 </p>
                 <p
-                  className={`text-base sm:text-lg font-semibold ${
-                    partialPayment.cardAmount > 0
-                      ? "text-blue-700"
-                      : "text-gray-900"
-                  }`}
+                  className={`text-base sm:text-lg font-semibold ${partialPayment.cardAmount > 0
+                    ? "text-blue-700"
+                    : "text-gray-900"
+                    }`}
                 >
                   {money.format(partialPayment.cardAmount)}
                 </p>
               </div>
               <div
-                className={`p-2 sm:p-3 rounded-lg transition-all ${
-                  partialPayment.walletAmount > 0
-                    ? "bg-purple-100 border-2 border-purple-400 shadow-sm"
-                    : "bg-transparent"
-                }`}
+                className={`p-2 sm:p-3 rounded-lg transition-all ${partialPayment.walletAmount > 0
+                  ? "bg-purple-100 border-2 border-purple-400 shadow-sm"
+                  : "bg-transparent"
+                  }`}
               >
                 <p
-                  className={`text-xs mb-1 ${
-                    partialPayment.walletAmount > 0
-                      ? "text-purple-700 font-semibold"
-                      : "text-gray-500"
-                  }`}
+                  className={`text-xs mb-1 ${partialPayment.walletAmount > 0
+                    ? "text-purple-700 font-semibold"
+                    : "text-gray-500"
+                    }`}
                 >
                   Wallet
                   {partialPayment.walletAmount > 0 && (
@@ -1575,11 +1574,10 @@ function ShoppingCart({
                   )}
                 </p>
                 <p
-                  className={`text-base sm:text-lg font-semibold ${
-                    partialPayment.walletAmount > 0
-                      ? "text-purple-700"
-                      : "text-gray-900"
-                  }`}
+                  className={`text-base sm:text-lg font-semibold ${partialPayment.walletAmount > 0
+                    ? "text-purple-700"
+                    : "text-gray-900"
+                    }`}
                 >
                   {money.format(partialPayment.walletAmount)}
                 </p>
@@ -1591,13 +1589,12 @@ function ShoppingCart({
                   Total Paid:
                 </span>
                 <span
-                  className={`text-lg sm:text-xl font-bold ${
-                    isPaymentComplete
-                      ? "text-green-600"
-                      : isPaymentOver
+                  className={`text-lg sm:text-xl font-bold ${isPaymentComplete
+                    ? "text-green-600"
+                    : isPaymentOver
                       ? "text-yellow-600"
                       : "text-gray-900"
-                  }`}
+                    }`}
                 >
                   {money.format(paymentTotal)}
                 </span>
@@ -1608,9 +1605,8 @@ function ShoppingCart({
                     Remaining:
                   </span>
                   <span
-                    className={`text-base sm:text-lg font-semibold ${
-                      isPaymentOver ? "text-yellow-600" : "text-red-600"
-                    }`}
+                    className={`text-base sm:text-lg font-semibold ${isPaymentOver ? "text-yellow-600" : "text-red-600"
+                      }`}
                   >
                     {isPaymentOver
                       ? `+${money.format(Math.abs(paymentRemaining))}`
@@ -1629,31 +1625,28 @@ function ShoppingCart({
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <button
                 onClick={() => handleQuickPayment("cash")}
-                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${
-                  partialPayment.cashAmount > 0 &&
+                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${partialPayment.cashAmount > 0 &&
                   partialPayment.cardAmount === 0 &&
                   partialPayment.walletAmount === 0
-                    ? "bg-green-100 border-green-400 shadow-md"
-                    : "bg-green-50 border-green-200 active:bg-green-100 hover:bg-green-100 hover:border-green-300"
-                }`}
+                  ? "bg-green-100 border-green-400 shadow-md"
+                  : "bg-green-50 border-green-200 active:bg-green-100 hover:bg-green-100 hover:border-green-300"
+                  }`}
               >
                 <FaMoneyBill
-                  className={`text-xl sm:text-2xl ${
-                    partialPayment.cashAmount > 0 &&
+                  className={`text-xl sm:text-2xl ${partialPayment.cashAmount > 0 &&
                     partialPayment.cardAmount === 0 &&
                     partialPayment.walletAmount === 0
-                      ? "text-green-700"
-                      : "text-green-600"
-                  }`}
+                    ? "text-green-700"
+                    : "text-green-600"
+                    }`}
                 />
                 <span
-                  className={`text-xs sm:text-sm font-medium ${
-                    partialPayment.cashAmount > 0 &&
+                  className={`text-xs sm:text-sm font-medium ${partialPayment.cashAmount > 0 &&
                     partialPayment.cardAmount === 0 &&
                     partialPayment.walletAmount === 0
-                      ? "text-green-800"
-                      : "text-green-700"
-                  }`}
+                    ? "text-green-800"
+                    : "text-green-700"
+                    }`}
                 >
                   Cash
                   {partialPayment.cashAmount > 0 &&
@@ -1665,31 +1658,28 @@ function ShoppingCart({
               </button>
               <button
                 onClick={() => handleQuickPayment("card")}
-                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${
-                  partialPayment.cardAmount > 0 &&
+                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${partialPayment.cardAmount > 0 &&
                   partialPayment.cashAmount === 0 &&
                   partialPayment.walletAmount === 0
-                    ? "bg-blue-100 border-blue-400 shadow-md"
-                    : "bg-blue-50 border-blue-200 active:bg-blue-100 hover:bg-blue-100 hover:border-blue-300"
-                }`}
+                  ? "bg-blue-100 border-blue-400 shadow-md"
+                  : "bg-blue-50 border-blue-200 active:bg-blue-100 hover:bg-blue-100 hover:border-blue-300"
+                  }`}
               >
                 <FaCreditCard
-                  className={`text-xl sm:text-2xl ${
-                    partialPayment.cardAmount > 0 &&
+                  className={`text-xl sm:text-2xl ${partialPayment.cardAmount > 0 &&
                     partialPayment.cashAmount === 0 &&
                     partialPayment.walletAmount === 0
-                      ? "text-blue-700"
-                      : "text-blue-600"
-                  }`}
+                    ? "text-blue-700"
+                    : "text-blue-600"
+                    }`}
                 />
                 <span
-                  className={`text-xs sm:text-sm font-medium ${
-                    partialPayment.cardAmount > 0 &&
+                  className={`text-xs sm:text-sm font-medium ${partialPayment.cardAmount > 0 &&
                     partialPayment.cashAmount === 0 &&
                     partialPayment.walletAmount === 0
-                      ? "text-blue-800"
-                      : "text-blue-700"
-                  }`}
+                    ? "text-blue-800"
+                    : "text-blue-700"
+                    }`}
                 >
                   Card
                   {partialPayment.cardAmount > 0 &&
@@ -1701,31 +1691,28 @@ function ShoppingCart({
               </button>
               <button
                 onClick={() => handleQuickPayment("mobile_banking")}
-                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${
-                  partialPayment.walletAmount > 0 &&
+                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${partialPayment.walletAmount > 0 &&
                   partialPayment.cashAmount === 0 &&
                   partialPayment.cardAmount === 0
-                    ? "bg-purple-100 border-purple-400 shadow-md"
-                    : "bg-purple-50 border-purple-200 active:bg-purple-100 hover:bg-purple-100 hover:border-purple-300"
-                }`}
+                  ? "bg-purple-100 border-purple-400 shadow-md"
+                  : "bg-purple-50 border-purple-200 active:bg-purple-100 hover:bg-purple-100 hover:border-purple-300"
+                  }`}
               >
                 <FaWallet
-                  className={`text-xl sm:text-2xl ${
-                    partialPayment.walletAmount > 0 &&
+                  className={`text-xl sm:text-2xl ${partialPayment.walletAmount > 0 &&
                     partialPayment.cashAmount === 0 &&
                     partialPayment.cardAmount === 0
-                      ? "text-purple-700"
-                      : "text-purple-600"
-                  }`}
+                    ? "text-purple-700"
+                    : "text-purple-600"
+                    }`}
                 />
                 <span
-                  className={`text-xs sm:text-sm font-medium ${
-                    partialPayment.walletAmount > 0 &&
+                  className={`text-xs sm:text-sm font-medium ${partialPayment.walletAmount > 0 &&
                     partialPayment.cashAmount === 0 &&
                     partialPayment.cardAmount === 0
-                      ? "text-purple-800"
-                      : "text-purple-700"
-                  }`}
+                    ? "text-purple-800"
+                    : "text-purple-700"
+                    }`}
                 >
                   Wallet
                   {partialPayment.walletAmount > 0 &&
@@ -1746,25 +1733,22 @@ function ShoppingCart({
 
             {/* Cash Payment */}
             <div
-              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${
-                partialPayment.cashAmount > 0
-                  ? "bg-green-50 border-green-300"
-                  : "bg-transparent border-transparent"
-              }`}
+              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${partialPayment.cashAmount > 0
+                ? "bg-green-50 border-green-300"
+                : "bg-transparent border-transparent"
+                }`}
             >
               <label
-                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${
-                  partialPayment.cashAmount > 0
-                    ? "text-green-700"
-                    : "text-gray-700"
-                }`}
+                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${partialPayment.cashAmount > 0
+                  ? "text-green-700"
+                  : "text-gray-700"
+                  }`}
               >
                 <FaMoneyBill
-                  className={`text-sm sm:text-base ${
-                    partialPayment.cashAmount > 0
-                      ? "text-green-600"
-                      : "text-green-500"
-                  }`}
+                  className={`text-sm sm:text-base ${partialPayment.cashAmount > 0
+                    ? "text-green-600"
+                    : "text-green-500"
+                    }`}
                 />
                 Cash Amount
                 {partialPayment.cashAmount > 0 && (
@@ -1828,25 +1812,22 @@ function ShoppingCart({
 
             {/* Card Payment */}
             <div
-              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${
-                partialPayment.cardAmount > 0
-                  ? "bg-blue-50 border-blue-300"
-                  : "bg-transparent border-transparent"
-              }`}
+              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${partialPayment.cardAmount > 0
+                ? "bg-blue-50 border-blue-300"
+                : "bg-transparent border-transparent"
+                }`}
             >
               <label
-                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${
-                  partialPayment.cardAmount > 0
-                    ? "text-blue-700"
-                    : "text-gray-700"
-                }`}
+                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${partialPayment.cardAmount > 0
+                  ? "text-blue-700"
+                  : "text-gray-700"
+                  }`}
               >
                 <FaCreditCard
-                  className={`text-sm sm:text-base ${
-                    partialPayment.cardAmount > 0
-                      ? "text-blue-600"
-                      : "text-blue-500"
-                  }`}
+                  className={`text-sm sm:text-base ${partialPayment.cardAmount > 0
+                    ? "text-blue-600"
+                    : "text-blue-500"
+                    }`}
                 />
                 Card Amouns
                 {partialPayment.cardAmount > 0 && (
@@ -1860,7 +1841,7 @@ function ShoppingCart({
                   ฿
                 </span>
                 <input
-                
+
                   type="text"
                   inputMode="decimal"
                   value={
@@ -1911,25 +1892,22 @@ function ShoppingCart({
 
             {/* Wallet Payment */}
             <div
-              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${
-                partialPayment.walletAmount > 0
-                  ? "bg-purple-50 border-purple-300"
-                  : "bg-transparent border-transparent"
-              }`}
+              className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${partialPayment.walletAmount > 0
+                ? "bg-purple-50 border-purple-300"
+                : "bg-transparent border-transparent"
+                }`}
             >
               <label
-                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${
-                  partialPayment.walletAmount > 0
-                    ? "text-purple-700"
-                    : "text-gray-700"
-                }`}
+                className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${partialPayment.walletAmount > 0
+                  ? "text-purple-700"
+                  : "text-gray-700"
+                  }`}
               >
                 <FaWallet
-                  className={`text-sm sm:text-base ${
-                    partialPayment.walletAmount > 0
-                      ? "text-purple-600"
-                      : "text-purple-500"
-                  }`}
+                  className={`text-sm sm:text-base ${partialPayment.walletAmount > 0
+                    ? "text-purple-600"
+                    : "text-purple-500"
+                    }`}
                 />
                 <span className="hidden sm:inline">
                   Wallet/Mobile Banking Amount
@@ -1999,19 +1977,19 @@ function ShoppingCart({
           {(partialPayment.cashAmount > 0 ||
             partialPayment.cardAmount > 0 ||
             partialPayment.walletAmount > 0) && (
-            <button
-              onClick={() => {
-                setPartialPayment({
-                  cashAmount: 0,
-                  cardAmount: 0,
-                  walletAmount: 0,
-                });
-              }}
-              className="w-full py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              Clear All
-            </button>
-          )}
+              <button
+                onClick={() => {
+                  setPartialPayment({
+                    cashAmount: 0,
+                    cardAmount: 0,
+                    walletAmount: 0,
+                  });
+                }}
+                className="w-full py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Clear All
+              </button>
+            )}
 
           {/* add a input number for  */}
 
@@ -2034,11 +2012,10 @@ function ShoppingCart({
               <button
                 onClick={handleProcessPrintKOT}
                 disabled={!isPaymentComplete || createOrderMutation.isPending}
-                className={`flex-1 px-4 py-3.5 sm:py-3 text-white rounded-lg font-medium transition-all text-base sm:text-sm touch-manipulation ${
-                  isPaymentComplete
-                    ? "bg-brand-primary active:bg-brand-hover hover:bg-brand-hover shadow-lg active:shadow-xl hover:shadow-xl"
-                    : "bg-gray-400 cursor-not-allowed"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`flex-1 px-4 py-3.5 sm:py-3 text-white rounded-lg font-medium transition-all text-base sm:text-sm touch-manipulation ${isPaymentComplete
+                  ? "bg-brand-primary active:bg-brand-hover hover:bg-brand-hover shadow-lg active:shadow-xl hover:shadow-xl"
+                  : "bg-gray-400 cursor-not-allowed"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {createOrderMutation.isPending ? (
                   <div className="flex items-center justify-center gap-2">
@@ -2056,11 +2033,10 @@ function ShoppingCart({
             <button
               onClick={handleProcessPayment}
               disabled={!isPaymentComplete || createOrderMutation.isPending}
-              className={`flex-1 px-4 py-3.5 sm:py-3 text-white rounded-lg font-medium transition-all text-base sm:text-sm touch-manipulation ${
-                isPaymentComplete
-                  ? "bg-brand-primary active:bg-brand-hover hover:bg-brand-hover shadow-lg active:shadow-xl hover:shadow-xl"
-                  : "bg-gray-400 cursor-not-allowed"
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              className={`flex-1 px-4 py-3.5 sm:py-3 text-white rounded-lg font-medium transition-all text-base sm:text-sm touch-manipulation ${isPaymentComplete
+                ? "bg-brand-primary active:bg-brand-hover hover:bg-brand-hover shadow-lg active:shadow-xl hover:shadow-xl"
+                : "bg-gray-400 cursor-not-allowed"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {createOrderMutation.isPending ? (
                 <div className="flex items-center justify-center gap-2">
@@ -2079,31 +2055,28 @@ function ShoppingCart({
           {/* Validation Messages */}
           {!isPaymentComplete && paymentTotal > 0 && (
             <div
-              className={`p-3 rounded-lg ${
-                isPaymentOver
-                  ? "bg-yellow-50 border border-yellow-200"
-                  : "bg-red-50 border border-red-200"
-              }`}
+              className={`p-3 rounded-lg ${isPaymentOver
+                ? "bg-yellow-50 border border-yellow-200"
+                : "bg-red-50 border border-red-200"
+                }`}
             >
               <div className="flex items-start gap-2">
                 <FaExclamationCircle
-                  className={`mt-0.5 ${
-                    isPaymentOver ? "text-yellow-600" : "text-red-600"
-                  }`}
+                  className={`mt-0.5 ${isPaymentOver ? "text-yellow-600" : "text-red-600"
+                    }`}
                 />
                 <div className="flex-1">
                   <p
-                    className={`text-sm font-medium ${
-                      isPaymentOver ? "text-yellow-800" : "text-red-800"
-                    }`}
+                    className={`text-sm font-medium ${isPaymentOver ? "text-yellow-800" : "text-red-800"
+                      }`}
                   >
                     {isPaymentOver
                       ? `Payment exceeds total by ${money.format(
-                          paymentTotal - total
-                        )}. Please adjust amounts.`
+                        paymentTotal - total
+                      )}. Please adjust amounts.`
                       : `Payment incomplete. Please add ${money.format(
-                          paymentRemaining
-                        )} more to complete the payment.`}
+                        paymentRemaining
+                      )} more to complete the payment.`}
                   </p>
                 </div>
               </div>
