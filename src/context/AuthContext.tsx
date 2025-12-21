@@ -60,12 +60,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   });
 
   const [isInitializing, setIsInitializing] = useState(true);
+  const [justLoggedIn, setJustLoggedIn] = useState(false); // Track if user just logged in
   const navigate = useNavigate();
-
 
   const userEmail = user?.child ? user?.child?.email : user?.email;
 
-  // Get profile query
+  // Get profile query - only used to refresh data from localStorage
   const {
     data: profileData,
     isLoading,
@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     ],
     queryFn: async () => {
       const { access_token } = getCookiesAsObject();
-      const email = user?.child ? user?.child?.email : user?.email
+      const email = user?.child ? user?.child?.email : user?.email;
       if (!access_token || !email) {
         navigate("/login");
         setUser(null);
@@ -97,10 +97,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
       return response.data;
     },
-    enabled: !!(userEmail),
+    enabled: !!(userEmail) && !justLoggedIn, // Don't fetch if user just logged in
   });
-
-
 
   useEffect(() => {
     if (error) {
@@ -111,18 +109,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [error]);
 
-  // Update user when profile data changes
+  // Update user when profile data changes (only when loading from localStorage, not after login)
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && !justLoggedIn) {
       if (profileData) {
-        console.log("setUser data at - line 118", { user: profileData })
+        console.log("setUser data from profile query", { user: profileData });
         setUser(profileData);
         localStorage.setItem("user", JSON.stringify(profileData));
       }
     }
 
     setIsInitializing(false);
-  }, [profileData, isSuccess]);
+  }, [profileData, isSuccess, justLoggedIn]);
 
   // Login mutation
   const loginMutation = useMutation({
@@ -133,8 +131,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     onSuccess: (response: any) => {
       if (response.status) {
         const { user, token } = response.data;
-        console.log({ user, token })
-        console.log("setUser data at - line  137", { user: user })
+        console.log({ user, token });
+        console.log("setUser data from login", { user: user });
+
+        // Set flag to prevent profile query from overriding this data
+        setJustLoggedIn(true);
+
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
         document.cookie = `access_token=${token}; path=/`;
@@ -146,6 +148,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setTimeout(() => {
           console.log("navigating to dashboard....");
           navigate("/dashboard");
+          // Reset flag after navigation
+          setTimeout(() => setJustLoggedIn(false), 500);
         }, 2000);
       } else {
         toast.error(response.message || "Login failed");
@@ -181,7 +185,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      console.log("setUser data at - line 183", { user: storedUser })
+      console.log("Loading user from localStorage", { user: storedUser });
       setUser(JSON.parse(storedUser));
     }
     setIsInitializing(false);

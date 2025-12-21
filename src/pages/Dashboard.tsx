@@ -67,7 +67,7 @@ const Dashboard: React.FC = () => {
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
 
-  const defaultShopId = user?.child?.id ?? user?.id;
+  const defaultShopId = user?.id;
 
   const [dateRange, setDateRange] = useState({
     startDate: new Date(new Date().setDate(new Date().getDate() - 7)) // Previous 7 days
@@ -412,9 +412,8 @@ const Dashboard: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div
-                      className={`text-sm ${
-                        product.profit >= 0 ? "text-green-600" : "text-red-600"
-                      }`}
+                      className={`text-sm ${product.profit >= 0 ? "text-green-600" : "text-red-600"
+                        }`}
                     >
                       {money.format(product.profit)}
                     </div>
@@ -434,8 +433,8 @@ const Dashboard: React.FC = () => {
         open={showMobileCart}
         cartItemsCount={0}
         icon={<img src="/barcodescanner.gif" className="w-8 h-8 rounded-sm" />}
-        // icon={<BiBarcode className="w-8 h-8 animate-pulse" />}
-        // cartItemsCount={cartItemsCount}
+      // icon={<BiBarcode className="w-8 h-8 animate-pulse" />}
+      // cartItemsCount={cartItemsCount}
       />
 
       <Modal
@@ -446,7 +445,7 @@ const Dashboard: React.FC = () => {
         }}
         className="!max-w-[95vw]"
         titleContainerClassName="!mb-0"
-        // useInnerModal={true}
+      // useInnerModal={true}
       >
         <DashBoardProduct initialBarcodeOpen={true} />
       </Modal>
