@@ -33,7 +33,7 @@ interface StockAlertResponse {
 const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const { user, logout } = useAuth();
 
-  const hasAccessStaff = user?.child?.id ? true : false;
+  // const hasAccessStaff = user?.child?.id ? true : false;
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 

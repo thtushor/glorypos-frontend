@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import AXIOS from "@/api/network/Axios";
 import { PAYROLL_HISTORY } from "@/api/api";
 import Spinner from "@/components/Spinner";
-import { FaCalendarAlt, FaUserCheck, FaPrint, FaEye, FaBuilding } from "react-icons/fa";
+import { FaCalendarAlt, FaPrint, FaEye, FaBuilding } from "react-icons/fa";
 import { FiUser } from "react-icons/fi";
 import money from "@/utils/money";
 import { useReactToPrint } from "react-to-print";
