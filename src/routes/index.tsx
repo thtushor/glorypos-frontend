@@ -145,7 +145,14 @@ const AppRoutes = () => {
           <Route path="subscriptions" element={<SubscriptionPlans />} />
           <Route path="users/child" element={<ChildUsers />} />
           <Route path="edit-shop" element={<ProfilePage />} />
-          <Route path="staff-profile" element={<StaffProfilePage />} />
+          <Route path="staff-profile/:id" element={<StaffProfilePage />}>
+            <Route index element={<Navigate to="profile" replace />} />
+            <Route path="profile" element={<div />} />
+            <Route path="salary-history" element={<ReleaseHistory />} />
+            <Route path="advance-salary-history" element={<AdvanceSalaryHistory />} />
+            <Route path="promotion-history" element={<PromotionHistory />} />
+            <Route path="leave-history" element={<LeaveHistory />} />
+          </Route>
         </Route>
 
         {/* Super Admin Only Routes */}

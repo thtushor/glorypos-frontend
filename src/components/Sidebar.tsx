@@ -173,74 +173,88 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
               path: string;
               icon: JSX.Element;
             }>;
-          }) => (
-            <div key={item.id}>
-              {item.submenu ? (
-                // Menu with submenu
-                <div>
-                  <button
-                    onClick={() => toggleMenu(item.id)}
-                    className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors duration-200 ${isMenuActive(item.path)
-                      ? "text-brand-primary"
-                      : "text-gray-700 hover:text-brand-primary hover:bg-gray-50"
-                      }`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <span className="text-gray-500">{item.icon}</span>
-                      {isOpen && <span>{item.title}</span>}
-                    </div>
-                    {isOpen && (
-                      <span
-                        className={`transform transition-transform duration-200 text-gray-500 ${expandedMenus.includes(item.id) ? "rotate-180" : ""
-                          }`}
-                      >
-                        <FaChevronDown className="h-3 w-3" />
-                      </span>
-                    )}
-                  </button>
-                  {/* Submenu with animation */}
-                  <div
-                    className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen && expandedMenus.includes(item.id)
-                      ? "max-h-96 opacity-100"
-                      : "max-h-0 opacity-0"
-                      }`}
-                  >
-                    <div className="pl-4 py-2 space-y-1">
-                      {item.submenu.map((subItem) => (
-                        <NavLink
-                          key={subItem.id}
-                          to={subItem.path}
-                          className={({ isActive }) =>
-                            `flex items-center space-x-4 px-4 py-2 text-sm rounded-md transition-colors duration-200 ${isActive
-                              ? "text-brand-primary bg-brand-primary/10"
-                              : "text-gray-700 hover:text-brand-primary hover:bg-gray-50"
-                            }`
-                          }
+          }) => {
+
+
+            if (!user?.child?.id && item.id === "sub-shops") {
+              return null;
+            }
+
+            if (user?.child?.id && item.id === "staff-profile") {
+              item.path = `/staff-profile/${user.child.id}`;
+            }
+
+            return (
+              <div key={item.id}>
+                {item.submenu ? (
+                  // Menu with submenu
+                  <div>
+                    <button
+                      onClick={() => toggleMenu(item.id)}
+                      className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors duration-200 ${isMenuActive(item.path)
+                        ? "text-brand-primary"
+                        : "text-gray-700 hover:text-brand-primary hover:bg-gray-50"
+                        }`}
+                    >
+                      <div className="flex items-center space-x-4">
+                        <span className="text-gray-500">{item.icon}</span>
+                        {isOpen && <span>{item.title}</span>}
+                      </div>
+                      {isOpen && (
+                        <span
+                          className={`transform transition-transform duration-200 text-gray-500 ${expandedMenus.includes(item.id) ? "rotate-180" : ""
+                            }`}
                         >
-                          <span className="text-gray-500">{subItem.icon}</span>
-                          <span>{subItem.title}</span>
-                        </NavLink>
-                      ))}
+                          <FaChevronDown className="h-3 w-3" />
+                        </span>
+                      )}
+                    </button>
+                    {/* Submenu with animation */}
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen && expandedMenus.includes(item.id)
+                        ? "max-h-96 opacity-100"
+                        : "max-h-0 opacity-0"
+                        }`}
+                    >
+                      <div className="pl-4 py-2 space-y-1">
+                        {item.submenu.map((subItem) => (
+                          <NavLink
+                            key={subItem.id}
+                            to={subItem.path}
+                            className={({ isActive }) =>
+                              `flex items-center space-x-4 px-4 py-2 text-sm rounded-md transition-colors duration-200 ${isActive
+                                ? "text-brand-primary bg-brand-primary/10"
+                                : "text-gray-700 hover:text-brand-primary hover:bg-gray-50"
+                              }`
+                            }
+                          >
+                            <span className="text-gray-500">{subItem.icon}</span>
+                            <span>{subItem.title}</span>
+                          </NavLink>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                // Single menu item
-                <NavLink
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `flex items-center space-x-4 px-4 py-2 text-sm transition-colors duration-200 ${isActive
-                      ? "text-brand-primary bg-brand-primary/10"
-                      : "text-gray-700 hover:text-brand-primary hover:bg-gray-50"
-                    }`
-                  }
-                >
-                  <span className="text-gray-500">{item.icon}</span>
-                  {isOpen && <span>{item.title}</span>}
-                </NavLink>
-              )}
-            </div>
-          )
+                ) : (
+                  // Single menu item
+                  <NavLink
+                    to={item.path}
+                    className={({ isActive }) =>
+                      `flex items-center space-x-4 px-4 py-2 text-sm transition-colors duration-200 ${isActive
+                        ? "text-brand-primary bg-brand-primary/10"
+                        : "text-gray-700 hover:text-brand-primary hover:bg-gray-50"
+                      }`
+                    }
+                  >
+                    <span className="text-gray-500">{item.icon}</span>
+                    {isOpen && <span>{item.title}</span>}
+                  </NavLink>
+                )}
+              </div>
+            )
+          }
+
+
         )}
       </nav>
     </div>

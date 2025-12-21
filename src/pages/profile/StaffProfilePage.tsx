@@ -22,6 +22,7 @@ import {
     FaUserShield,
     FaCheckCircle,
     FaTimesCircle,
+    FaMoneyBill,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
 import { uploadFile } from "@/utils/utils";
@@ -29,7 +30,7 @@ import FallbackAvatar from "@/components/shared/FallbackAvatar";
 import { CHILD_USERS_URL_PROFILE, CREATE_CHILD_USER_URL } from "@/api/api";
 import money from "@/utils/money";
 import { format } from "date-fns";
-import { useParams } from "react-router-dom";
+import { useParams, Outlet, Link, useLocation } from "react-router-dom";
 
 interface Permission {
     canEdit: boolean;
@@ -121,6 +122,7 @@ const StaffProfilePage = () => {
 
     const params = useParams<{ id: string }>();
     const { user } = useAuth();
+    const location = useLocation();
     const profileId = params.id || user?.child?.id
 
     const { data: profileResponse, isLoading } = useQuery({
@@ -194,6 +196,14 @@ const StaffProfilePage = () => {
         });
     };
 
+    const navItems = [
+        { name: "Profile", path: `/staff-profile/${profileId}/profile`, icon: FaUser },
+        { name: "Salary History", path: `/staff-profile/${profileId}/salary-history`, icon: FaMoneyBillWave },
+        { name: "Advance Salary History", path: `/staff-profile/${profileId}/advance-salary-history`, icon: FaMoneyBill },
+        { name: "Promotion History", path: `/staff-profile/${profileId}/promotion-history`, icon: FaChartLine },
+        { name: "Leave History", path: `/staff-profile/${profileId}/leave-history`, icon: FaCalendarAlt },
+    ];
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-screen">
@@ -205,6 +215,8 @@ const StaffProfilePage = () => {
     const profile = profileResponse as StaffProfileData;
 
     if (!profile) return null;
+
+    const isProfileTab = location.pathname.endsWith('/profile');
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4">
@@ -374,241 +386,290 @@ const StaffProfilePage = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Personal Information */}
-                    <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl p-8">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
-                                <FaUser className="text-white" />
-                            </div>
-                            Personal Information
-                        </h2>
+                {/* NAVIGATION TABS */}
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div className="border-b border-gray-200">
+                        <nav
+                            className="flex space-x-8 overflow-x-auto px-8 pb-1"
+                            aria-label="Staff Profile Navigation"
+                        >
+                            {navItems.map((tab) => {
+                                const Icon = tab.icon;
+                                const isActive = location.pathname === tab.path;
 
-                        <form className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Full Name
-                                    </label>
-                                    <div className="relative">
-                                        <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="text"
-                                            disabled={!isEditing}
-                                            value={formData?.fullName || ""}
-                                            onChange={(e) =>
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    fullName: e.target.value,
-                                                }))
+                                return (
+                                    <Link
+                                        key={tab.name}
+                                        to={tab.path}
+                                        className={`
+                                            group relative py-4 px-1 whitespace-nowrap border-b-2 font-medium text-sm transition-all duration-200
+                                            flex items-center gap-2
+                                            ${isActive
+                                                ? "border-blue-600 text-blue-600"
+                                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                                             }
-                                            className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                        `}
+                                    >
+                                        <Icon
+                                            className={`w-4 h-4 transition-colors ${isActive
+                                                ? "text-blue-600"
+                                                : "text-gray-400 group-hover:text-gray-600"
+                                                }`}
                                         />
-                                    </div>
-                                </div>
+                                        <span>{tab.name}</span>
 
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Email
-                                    </label>
-                                    <div className="relative">
-                                        <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="email"
-                                            disabled
-                                            value={profile?.email}
-                                            className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 bg-gray-50 text-gray-500"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Phone Number
-                                    </label>
-                                    <div className="relative">
-                                        <FaPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="tel"
-                                            disabled={!isEditing}
-                                            value={formData?.phone || ""}
-                                            onChange={(e) =>
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    phone: e.target.value,
-                                                }))
-                                            }
-                                            className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Role
-                                    </label>
-                                    <div className="relative">
-                                        <FaUserShield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
-                                        <select
-                                            disabled={!isEditing}
-                                            value={formData?.role || ""}
-                                            onChange={(e) =>
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    role: e.target.value,
-                                                }))
-                                            }
-                                            className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300 appearance-none"
-                                        >
-                                            <option value="manager">Manager</option>
-                                            <option value="cashier">Cashier</option>
-                                            <option value="staff">Staff</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Base Salary
-                                    </label>
-                                    <div className="relative">
-                                        <FaMoneyBillWave className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="number"
-                                            readOnly
-
-                                            disabled={true}
-                                            value={formData?.baseSalary || ""}
-                                            onChange={(e) =>
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    baseSalary: Number(e.target.value),
-                                                }))
-                                            }
-                                            className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Daily Hours Required
-                                    </label>
-                                    <div className="relative">
-                                        <FaClock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="number"
-                                            disabled={!isEditing}
-                                            value={formData?.requiredDailyHours || ""}
-                                            onChange={(e) =>
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    requiredDailyHours: Number(e.target.value),
-                                                }))
-                                            }
-                                            className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Permissions */}
-                            <div className="pt-6 border-t-2 border-gray-100">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4">Permissions</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {Object.entries(formData.permissions || {}).map(([key, value]) => (
-                                        <label
-                                            key={key}
-                                            className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${value
-                                                ? "bg-green-50 border-green-500"
-                                                : "bg-gray-50 border-gray-200"
-                                                } ${!isEditing ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"}`}
-                                        >
-                                            <span className="text-sm font-semibold text-gray-700">
-                                                {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
-                                            </span>
-                                            <input
-                                                type="checkbox"
-                                                disabled={!isEditing}
-                                                checked={value}
-                                                onChange={() => handlePermissionChange(key as keyof Permission)}
-                                                className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
-                                            />
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        </form>
+                                        {isActive && (
+                                            <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
+                                        )}
+                                    </Link>
+                                );
+                            })}
+                        </nav>
                     </div>
 
-                    {/* Parent Business & Current Month Salary */}
-                    <div className="space-y-6">
-                        {/* Parent Business */}
-                        <div className="bg-white rounded-2xl shadow-xl p-6">
-                            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                                    <FaBuilding className="text-white text-sm" />
-                                </div>
-                                Parent Business
-                            </h2>
-                            <div className="space-y-4">
-                                <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
-                                    <FaBuilding className="text-purple-600 mt-1" />
-                                    <div>
-                                        <p className="text-sm text-gray-600">Business Name</p>
-                                        <p className="font-semibold text-gray-900">{profile.parent.businessName}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
-                                    <FaBriefcase className="text-purple-600 mt-1" />
-                                    <div>
-                                        <p className="text-sm text-gray-600">Business Type</p>
-                                        <p className="font-semibold text-gray-900">{profile.parent.businessType}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
-                                    <FaMapMarkerAlt className="text-purple-600 mt-1" />
-                                    <div>
-                                        <p className="text-sm text-gray-600">Location</p>
-                                        <p className="font-semibold text-gray-900">{profile.parent.location}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    {/* TAB CONTENT */}
+                    <div className="p-8">
+                        {isProfileTab ? (
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* Personal Information */}
+                                <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl p-8">
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                                            <FaUser className="text-white" />
+                                        </div>
+                                        Personal Information
+                                    </h2>
 
-                        {/* Current Month Salary */}
-                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
-                            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                <FaCalendarAlt />
-                                Current Month ({format(new Date(profile.currentMonthSalary.salaryMonth), "MMM yyyy")})
-                            </h2>
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center pb-2 border-b border-white/20">
-                                    <span className="text-sm opacity-90">Base Salary</span>
-                                    <span className="font-bold">{money.format(profile.currentMonthSalary.baseSalary)}</span>
+                                    <form className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                    Full Name
+                                                </label>
+                                                <div className="relative">
+                                                    <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        type="text"
+                                                        disabled={!isEditing}
+                                                        value={formData?.fullName || ""}
+                                                        onChange={(e) =>
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                fullName: e.target.value,
+                                                            }))
+                                                        }
+                                                        className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                    Email
+                                                </label>
+                                                <div className="relative">
+                                                    <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        type="email"
+                                                        disabled
+                                                        value={profile?.email}
+                                                        className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 bg-gray-50 text-gray-500"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                    Phone Number
+                                                </label>
+                                                <div className="relative">
+                                                    <FaPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        type="tel"
+                                                        disabled={!isEditing}
+                                                        value={formData?.phone || ""}
+                                                        onChange={(e) =>
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                phone: e.target.value,
+                                                            }))
+                                                        }
+                                                        className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                    Role
+                                                </label>
+                                                <div className="relative">
+                                                    <FaUserShield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
+                                                    <select
+                                                        disabled={!isEditing}
+                                                        value={formData?.role || ""}
+                                                        onChange={(e) =>
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                role: e.target.value,
+                                                            }))
+                                                        }
+                                                        className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300 appearance-none"
+                                                    >
+                                                        <option value="manager">Manager</option>
+                                                        <option value="cashier">Cashier</option>
+                                                        <option value="staff">Staff</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                    Base Salary
+                                                </label>
+                                                <div className="relative">
+                                                    <FaMoneyBillWave className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        type="number"
+                                                        readOnly
+
+                                                        disabled={true}
+                                                        value={formData?.baseSalary || ""}
+                                                        onChange={(e) =>
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                baseSalary: Number(e.target.value),
+                                                            }))
+                                                        }
+                                                        className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                    Daily Hours Required
+                                                </label>
+                                                <div className="relative">
+                                                    <FaClock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        type="number"
+                                                        disabled={!isEditing}
+                                                        value={formData?.requiredDailyHours || ""}
+                                                        onChange={(e) =>
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                requiredDailyHours: Number(e.target.value),
+                                                            }))
+                                                        }
+                                                        className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Permissions */}
+                                        <div className="pt-6 border-t-2 border-gray-100">
+                                            <h3 className="text-lg font-bold text-gray-900 mb-4">Permissions</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                {Object.entries(formData.permissions || {}).map(([key, value]) => (
+                                                    <label
+                                                        key={key}
+                                                        className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${value
+                                                            ? "bg-green-50 border-green-500"
+                                                            : "bg-gray-50 border-gray-200"
+                                                            } ${!isEditing ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"}`}
+                                                    >
+                                                        <span className="text-sm font-semibold text-gray-700">
+                                                            {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
+                                                        </span>
+                                                        <input
+                                                            type="checkbox"
+                                                            disabled={!isEditing}
+                                                            checked={value}
+                                                            onChange={() => handlePermissionChange(key as keyof Permission)}
+                                                            className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
+                                                        />
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </form>
                                 </div>
-                                <div className="flex justify-between items-center pb-2 border-b border-white/20">
-                                    <span className="text-sm opacity-90">Commission</span>
-                                    <span className="font-bold">{money.format(profile.currentMonthSalary.totalCommission)}</span>
-                                </div>
-                                <div className="flex justify-between items-center pb-2 border-b border-white/20">
-                                    <span className="text-sm opacity-90">Working Days</span>
-                                    <span className="font-bold">{profile.currentMonthSalary.totalWorkingDays}</span>
-                                </div>
-                                <div className="flex justify-between items-center pb-2 border-b border-white/20">
-                                    <span className="text-sm opacity-90">Leave Days</span>
-                                    <span className="font-bold">{profile.currentMonthSalary.totalLeaveDays}</span>
-                                </div>
-                                <div className="flex justify-between items-center pt-2 bg-white/10 rounded-lg p-3 mt-3">
-                                    <span className="font-semibold">Total Payable</span>
-                                    <span className="text-2xl font-bold">{money.format(profile.currentMonthSalary.totalPayable)}</span>
-                                </div>
-                                <div className="flex justify-between items-center bg-white/10 rounded-lg p-3">
-                                    <span className="font-semibold">Remaining Due</span>
-                                    <span className="text-xl font-bold">{money.format(profile.currentMonthSalary.currentMonthRemainingDue)}</span>
+
+                                {/* Parent Business & Current Month Salary */}
+                                <div className="space-y-6">
+                                    {/* Parent Business */}
+                                    <div className="bg-white rounded-2xl shadow-xl p-6">
+                                        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                                                <FaBuilding className="text-white text-sm" />
+                                            </div>
+                                            Parent Business
+                                        </h2>
+                                        <div className="space-y-4">
+                                            <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                                                <FaBuilding className="text-purple-600 mt-1" />
+                                                <div>
+                                                    <p className="text-sm text-gray-600">Business Name</p>
+                                                    <p className="font-semibold text-gray-900">{profile.parent.businessName}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                                                <FaBriefcase className="text-purple-600 mt-1" />
+                                                <div>
+                                                    <p className="text-sm text-gray-600">Business Type</p>
+                                                    <p className="font-semibold text-gray-900">{profile.parent.businessType}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                                                <FaMapMarkerAlt className="text-purple-600 mt-1" />
+                                                <div>
+                                                    <p className="text-sm text-gray-600">Location</p>
+                                                    <p className="font-semibold text-gray-900">{profile.parent.location}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Current Month Salary */}
+                                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
+                                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                            <FaCalendarAlt />
+                                            Current Month ({format(new Date(profile.currentMonthSalary.salaryMonth), "MMM yyyy")})
+                                        </h2>
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-center pb-2 border-b border-white/20">
+                                                <span className="text-sm opacity-90">Base Salary</span>
+                                                <span className="font-bold">{money.format(profile.currentMonthSalary.baseSalary)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center pb-2 border-b border-white/20">
+                                                <span className="text-sm opacity-90">Commission</span>
+                                                <span className="font-bold">{money.format(profile.currentMonthSalary.totalCommission)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center pb-2 border-b border-white/20">
+                                                <span className="text-sm opacity-90">Working Days</span>
+                                                <span className="font-bold">{profile.currentMonthSalary.totalWorkingDays}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center pb-2 border-b border-white/20">
+                                                <span className="text-sm opacity-90">Leave Days</span>
+                                                <span className="font-bold">{profile.currentMonthSalary.totalLeaveDays}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center pt-2 bg-white/10 rounded-lg p-3 mt-3">
+                                                <span className="font-semibold">Total Payable</span>
+                                                <span className="text-2xl font-bold">{money.format(profile.currentMonthSalary.totalPayable)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center bg-white/10 rounded-lg p-3">
+                                                <span className="font-semibold">Remaining Due</span>
+                                                <span className="text-xl font-bold">{money.format(profile.currentMonthSalary.currentMonthRemainingDue)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            <Outlet />
+                        )}
                     </div>
                 </div>
             </div>

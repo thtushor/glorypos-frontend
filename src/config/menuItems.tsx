@@ -151,7 +151,7 @@ export const menuItems = [
   {
     id: "staff-profile",
     title: "Staff Profile",
-    path: "/staff-profile",
+    path: "/staff-profile/:id",
     icon: <RiProfileFill className="w-5 h-5" />,
   },
   {
