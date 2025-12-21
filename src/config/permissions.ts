@@ -83,6 +83,7 @@ export const PERMISSIONS = {
         VIEW_OWN_PROFILE: 'view_own_profile',
         VIEW_OTHER_PROFILES: 'view_other_profiles',
         EDIT_PROFILE: 'edit_profile',
+        EDIT_PERMISSIONS: 'edit_permissions',
     },
 } as const;
 
@@ -198,6 +199,7 @@ export const PERMISSION_GROUPS = [
             { key: PERMISSIONS.STAFF_PROFILE.VIEW_OWN_PROFILE, label: 'View Own Profile', description: 'View own profile page' },
             { key: PERMISSIONS.STAFF_PROFILE.VIEW_OTHER_PROFILES, label: 'View Other Profiles', description: 'View other staff profiles' },
             { key: PERMISSIONS.STAFF_PROFILE.EDIT_PROFILE, label: 'Edit Profile', description: 'Edit profile information' },
+            { key: PERMISSIONS.STAFF_PROFILE.EDIT_PERMISSIONS, label: 'Edit Permissions', description: 'Modify staff permissions and access control' },
         ],
     },
 ] as const;
@@ -254,6 +256,7 @@ export const PERMISSION_TEMPLATES = {
         PERMISSIONS.PAYROLL.APPROVE_LEAVE,
         PERMISSIONS.STAFF_PROFILE.VIEW_OWN_PROFILE,
         PERMISSIONS.STAFF_PROFILE.VIEW_OTHER_PROFILES,
+        PERMISSIONS.STAFF_PROFILE.EDIT_PERMISSIONS,
     ],
     CASHIER: [
         PERMISSIONS.DASHBOARD.VIEW,
