@@ -487,6 +487,7 @@ function ShoppingCart({
         salesPriceAdjustments: {},
         discountAdjustments: {},
       });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stock-alerts"] });
     },

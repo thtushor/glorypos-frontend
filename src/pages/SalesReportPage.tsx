@@ -168,7 +168,7 @@ export default function SalesReportPage() {
   const defaultFilters: SalesReportFilters = {
     startDate: thirtyDaysAgo.toISOString(),
     endDate: today.toISOString(),
-    shopId: user?.child?.id?.toString() ?? user?.id?.toString() ?? "",
+    shopId: user?.id?.toString() ?? "",
     productSearch: "",
     categoryId: "",
     brandId: "",
@@ -187,6 +187,7 @@ export default function SalesReportPage() {
   } = useQuery<SalesReportResponse>({
     queryKey: ["sales-report", filters],
     queryFn: () => fetchSalesReport(filters),
+    enabled: !!user?.id
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
@@ -409,7 +410,7 @@ export default function SalesReportPage() {
           </div>
 
           {/* Model No */}
-    <div>
+          <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">
               Model No
             </label>
@@ -616,7 +617,7 @@ export default function SalesReportPage() {
                             const width =
                               maxSales > 0
                                 ? (Number(cat.salesAmount || 0) / maxSales) *
-                                  100
+                                100
                                 : 0;
                             return (
                               <div
@@ -685,7 +686,7 @@ export default function SalesReportPage() {
                             const width =
                               maxSales > 0
                                 ? (Number(brand.salesAmount || 0) / maxSales) *
-                                  100
+                                100
                                 : 0;
                             return (
                               <div
@@ -755,7 +756,7 @@ export default function SalesReportPage() {
                               SKU: {row.sku}
                             </span>
                             <span className="text-[11px] text-gray-500">
-                              Model Name: {row.modelNo||"N/A"}
+                              Model Name: {row.modelNo || "N/A"}
                             </span>
                             <span className="text-[11px] text-gray-400">
                               {row.categoryName} • {row.brandName}
@@ -855,7 +856,7 @@ export default function SalesReportPage() {
       )}
 
       {/* Hidden Modal import usage to avoid TS removal warning */}
-      <Modal isOpen={false} onClose={() => {}}>
+      <Modal isOpen={false} onClose={() => { }}>
         <div />
       </Modal>
     </div>
