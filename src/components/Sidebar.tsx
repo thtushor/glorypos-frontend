@@ -176,7 +176,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           }) => {
 
 
-            if (!user?.child?.id && item.id === "sub-shops") {
+            if (!Boolean(user?.child?.id) && item.id === "staff-profile") {
               return null;
             }
 

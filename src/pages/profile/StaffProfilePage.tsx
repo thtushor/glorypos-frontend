@@ -23,6 +23,9 @@ import {
     FaCheckCircle,
     FaTimesCircle,
     FaMoneyBill,
+    FaShoppingCart,
+    FaFileAlt,
+    FaPercent,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
 import { uploadFile } from "@/utils/utils";
@@ -120,10 +123,10 @@ const StaffProfilePage = () => {
     const [formData, setFormData] = useState<Partial<UpdateFormData>>({});
     const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-    const params = useParams<{ id: string }>();
+    const params = useParams<{ staffId: string }>();
     const { user } = useAuth();
     const location = useLocation();
-    const profileId = params.id || user?.child?.id
+    const profileId = params.staffId || user?.child?.id
 
     const { data: profileResponse, isLoading } = useQuery({
         queryKey: ["staff-profile", profileId],
@@ -202,6 +205,9 @@ const StaffProfilePage = () => {
         { name: "Advance Salary History", path: `/staff-profile/${profileId}/advance-salary-history`, icon: FaMoneyBill },
         { name: "Promotion History", path: `/staff-profile/${profileId}/promotion-history`, icon: FaChartLine },
         { name: "Leave History", path: `/staff-profile/${profileId}/leave-history`, icon: FaCalendarAlt },
+        { name: "Orders", path: `/staff-profile/${profileId}/orders`, icon: FaShoppingCart },
+        { name: "Product Statement", path: `/staff-profile/${profileId}/product-statement`, icon: FaFileAlt },
+        { name: "Staff Commissions", path: `/staff-profile/${profileId}/staff-commissions`, icon: FaPercent },
     ];
 
     if (isLoading) {
