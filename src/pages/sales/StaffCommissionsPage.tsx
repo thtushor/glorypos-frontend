@@ -16,6 +16,8 @@ import Spinner from "@/components/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import money from "@/utils/money";
 import { useParams } from "react-router-dom";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface CommissionItem {
   id: number;
@@ -88,8 +90,12 @@ interface FilterParams {
 
 const StaffCommissionsPage: React.FC = () => {
   const { user } = useAuth();
+  const { hasPermission } = usePermission();
   const params = useParams<{ staffId?: string }>();
   const urlStaffId = params.staffId;
+
+  // Permission check (route-level protection already exists, this is for component-level verification)
+  const canViewCommissions = hasPermission(PERMISSIONS.SALES.VIEW_STAFF_COMMISSIONS);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -283,8 +289,8 @@ const StaffCommissionsPage: React.FC = () => {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`p-2 border rounded-lg transition-colors ${showFilters
-                ? "bg-brand-primary text-white"
-                : "hover:bg-gray-50 text-gray-600"
+              ? "bg-brand-primary text-white"
+              : "hover:bg-gray-50 text-gray-600"
               }`}
             title="Toggle Filters"
           >
@@ -679,10 +685,10 @@ const StaffCommissionsPage: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.order.paymentStatus === "completed"
-                              ? "bg-green-100 text-green-800"
-                              : item.order.paymentStatus === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
+                            ? "bg-green-100 text-green-800"
+                            : item.order.paymentStatus === "pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
                             }`}
                         >
                           {item.order.paymentStatus}

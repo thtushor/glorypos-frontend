@@ -13,6 +13,8 @@ import Spinner from "@/components/Spinner";
 import money from "@/utils/money";
 import DashBoardProduct from "../DashBoardProduct";
 import { useAuth } from "@/context/AuthContext";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface OrderItem {
   id: number;
@@ -86,6 +88,12 @@ interface FilterParams {
 
 const Orders: React.FC = () => {
   const { user } = useAuth();
+  const { hasPermission } = usePermission();
+
+  // Permission checks
+  const canViewCostProfit = hasPermission(PERMISSIONS.SALES.VIEW_COST_PROFIT);
+  const canEditOrder = hasPermission(PERMISSIONS.SALES.EDIT_ORDER);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
@@ -318,15 +326,19 @@ const Orders: React.FC = () => {
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                   Total Sales
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                  Total Cost
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                  Commission
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                  Profit/Loss
-                </th>
+                {canViewCostProfit && (
+                  <>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                      Total Cost
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                      Commission
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                      Profit/Loss
+                    </th>
+                  </>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Actions
                 </th>
@@ -443,45 +455,49 @@ const Orders: React.FC = () => {
                           ? money.format(totals.totalSales)
                           : "---"}
                       </td>
-                      {/* Total Cost */}
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-gray-700">
-                        {totals.totalCost > 0
-                          ? money.format(totals.totalCost)
-                          : "---"}
-                      </td>
-                      {/* Total Commission */}
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        {totals.totalCommission > 0 ? (
-                          <span className="text-green-700 font-medium">
-                            {money.format(totals.totalCommission)}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">---</span>
-                        )}
-                      </td>
-                      {/* Profit/Loss */}
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        {totals.totalSales > 0 || totals.totalCost > 0 ? (
-                          totals.profit >= 0 ? (
-                            <span className="font-semibold text-green-600">
-                              {money.format(
-                                totals.totalProfit -
-                                Number(totals.totalCommission || 0)
-                              )}
-                            </span>
-                          ) : (
-                            <span className="font-semibold text-red-600">
-                              -
-                              {money.format(
-                                totals.totalLoss +
-                                Number(totals.totalCommission || 0)
-                              )}
-                            </span>
-                          )
-                        ) : (
-                          <span className="text-gray-400">---</span>
-                        )}
-                      </td>
+                      {canViewCostProfit && (
+                        <>
+                          {/* Total Cost */}
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-gray-700">
+                            {totals.totalCost > 0
+                              ? money.format(totals.totalCost)
+                              : "---"}
+                          </td>
+                          {/* Total Commission */}
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            {totals.totalCommission > 0 ? (
+                              <span className="text-green-700 font-medium">
+                                {money.format(totals.totalCommission)}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">---</span>
+                            )}
+                          </td>
+                          {/* Profit/Loss */}
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            {totals.totalSales > 0 || totals.totalCost > 0 ? (
+                              totals.profit >= 0 ? (
+                                <span className="font-semibold text-green-600">
+                                  {money.format(
+                                    totals.totalProfit -
+                                    Number(totals.totalCommission || 0)
+                                  )}
+                                </span>
+                              ) : (
+                                <span className="font-semibold text-red-600">
+                                  -
+                                  {money.format(
+                                    totals.totalLoss +
+                                    Number(totals.totalCommission || 0)
+                                  )}
+                                </span>
+                              )
+                            ) : (
+                              <span className="text-gray-400">---</span>
+                            )}
+                          </td>
+                        </>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex gap-2">
                           <button
@@ -495,16 +511,18 @@ const Orders: React.FC = () => {
                             <FaEye className="w-4 h-4" />
                           </button>
 
-                         {order.orderStatus!=="completed" && <button
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setAdjustOrderModalOpen(true);
-                            }}
-                            className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full"
-                            title="Adjust Order"
-                          >
-                            <FaRegEdit className="w-4 h-4" />
-                          </button>}
+                          {canEditOrder && order.orderStatus !== "completed" && (
+                            <button
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setAdjustOrderModalOpen(true);
+                              }}
+                              className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full"
+                              title="Adjust Order"
+                            >
+                              <FaRegEdit className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
