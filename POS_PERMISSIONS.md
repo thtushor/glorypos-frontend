@@ -7,11 +7,16 @@ Applied permission-based access control to the POS (Point of Sale) system to res
 
 ### 1. **CREATE_ORDER Permission**
 - **Permission**: `PERMISSIONS.SALES.CREATE_ORDER`
-- **Applies to**: Payment button
+- **Applies to**: 
+  - Payment button (in ShoppingCart)
+  - Add to Cart button (in CartProductSection)
 - **Behavior**: 
-  - Users **without** this permission cannot process payments/create orders
+  - Users **without** this permission cannot:
+    - Process payments/create orders
+    - Add products to cart
   - Payment button is disabled if user lacks permission
-  - Prevents unauthorized order creation
+  - Add to Cart buttons are disabled if user lacks permission
+  - Prevents unauthorized order creation and cart modifications
 
 ### 2. **EDIT_ORDER Permission**
 - **Permission**: `PERMISSIONS.SALES.EDIT_ORDER`
@@ -29,8 +34,10 @@ Applied permission-based access control to the POS (Point of Sale) system to res
 
 ## Implementation Details
 
-### File Modified
-**`src/components/shared/ShoppingCart.tsx`**
+### Files Modified
+
+1. **`src/components/shared/ShoppingCart.tsx`**
+2. **`src/components/shared/CartProductSection.tsx`**
 
 ### Changes Made
 
@@ -79,7 +86,7 @@ Applied permission-based access control to the POS (Point of Sale) system to res
    />
    ```
 
-   **Payment Button**:
+   **Payment Button** (in ShoppingCart):
    ```typescript
    <button
      disabled={
@@ -90,6 +97,18 @@ Applied permission-based access control to the POS (Point of Sale) system to res
      }
      // ... other props
    />
+   ```
+
+   **Add to Cart Button** (in CartProductSection):
+   ```typescript
+   <button
+     type="button"
+     onClick={() => handleAddToCart(product)}
+     disabled={!canCreateOrder}
+     className="... disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
+   >
+     Add to Cart
+   </button>
    ```
 
 ## User Experience
@@ -103,12 +122,16 @@ Applied permission-based access control to the POS (Point of Sale) system to res
 
 #### With CREATE_ORDER Permission
 - Can process payments and create orders
+- Can add products to cart
 - Payment button is enabled
+- Add to Cart buttons are enabled
 
 #### Without CREATE_ORDER Permission
 - **Cannot** process payments or create orders
+- **Cannot** add products to cart
 - Payment button is disabled
-- Can still browse products and add to cart
+- Add to Cart buttons are disabled
+- Can only browse products (view-only mode)
 
 #### With EDIT_ORDER Permission
 - Can modify sales prices for cart items
@@ -157,6 +180,10 @@ Access   │         ↓
          │    Enable   │   Disable
          │    Payment  │   Payment
          │    Button   │   Button
+         │    +        │   +
+         │    Add to   │   Add to
+         │    Cart     │   Cart
+         │    Buttons  │   Buttons
          │         ↓   │   ↓
          │    ┌────────────────────────┐
          │    │ Has EDIT_ORDER?        │
@@ -173,14 +200,18 @@ Access   │         ↓
 ## Testing Checklist
 
 - [ ] Main shop user can create orders
+- [ ] Main shop user can add products to cart
 - [ ] Main shop user can edit sales prices
 - [ ] Main shop user can edit discounts
 - [ ] Child user with CREATE_ORDER can process payments
+- [ ] Child user with CREATE_ORDER can add products to cart
 - [ ] Child user without CREATE_ORDER sees disabled payment button
+- [ ] Child user without CREATE_ORDER sees disabled Add to Cart buttons
 - [ ] Child user with EDIT_ORDER can modify prices
 - [ ] Child user without EDIT_ORDER sees disabled price inputs
 - [ ] Child user without EDIT_ORDER sees disabled discount inputs
 - [ ] Disabled inputs show proper visual feedback (gray background)
+- [ ] Disabled buttons show proper visual feedback (opacity, gray color)
 - [ ] Tooltip or message explains why button/input is disabled (optional enhancement)
 
 ## Future Enhancements

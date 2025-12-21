@@ -25,6 +25,8 @@ import Pagination from "../Pagination";
 import Modal from "../Modal";
 import { VariantSelectionModal } from "./VariantSelectionModal";
 import { CartItem } from "@/types/cartItemType";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 function CartProductSection({
   showMobileCart,
@@ -49,6 +51,11 @@ function CartProductSection({
 
   // Filter states for API
   const { user } = useAuth();
+  const { hasPermission } = usePermission();
+
+  // Permission checks
+  const canCreateOrder = hasPermission(PERMISSIONS.SALES.CREATE_ORDER);
+
   const [searchKey, setSearchKey] = useState("");
   //   const [sku, setSku] = useState("");
   const [shopId, setShopId] = useState("");
@@ -292,9 +299,8 @@ function CartProductSection({
   return (
     <>
       <div
-        className={`flex-1 flex flex-col  bg-white rounded-lg shadow overflow-hidden ${
-          showMobileCart ? "hidden xl:flex" : "flex"
-        }`}
+        className={`flex-1 flex flex-col  bg-white rounded-lg shadow overflow-hidden ${showMobileCart ? "hidden xl:flex" : "flex"
+          }`}
       >
         {/* Search and Filters */}
         <div className="border-b bg-white">
@@ -352,10 +358,10 @@ function CartProductSection({
                   shopId !== "" ||
                   (priceRange?.min && priceRange?.min > 0) ||
                   (priceRange?.max && priceRange?.max > 0)) && (
-                  <span className="px-2 py-0.5 bg-brand-primary text-white text-xs rounded-full">
-                    Active
-                  </span>
-                )}
+                    <span className="px-2 py-0.5 bg-brand-primary text-white text-xs rounded-full">
+                      Active
+                    </span>
+                  )}
               </div>
               {isFiltersExpanded ? (
                 <FaChevronUp className="text-gray-500" />
@@ -366,9 +372,8 @@ function CartProductSection({
 
             {/* Expandable Filter Content */}
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                isFiltersExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-              }`}
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${isFiltersExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                }`}
             >
               <div className="p-4 space-y-4 bg-gray-50">
                 {/* Filters Grid - 2 Columns */}
@@ -569,11 +574,10 @@ function CartProductSection({
 
         {/* Products Grid */}
         <div
-          className={`flex-1 p-4 overflow-y-auto ${
-            isLoadingProducts || isLoadingCategories || isLoadingShops
-              ? "flex items-center justify-center"
-              : ""
-          }`}
+          className={`flex-1 p-4 overflow-y-auto ${isLoadingProducts || isLoadingCategories || isLoadingShops
+            ? "flex items-center justify-center"
+            : ""
+            }`}
         >
           {isLoadingProducts || isLoadingCategories || isLoadingShops ? (
             <div className="flex justify-center items-center">
@@ -593,11 +597,11 @@ function CartProductSection({
                         src={
                           selectedVariants[product.id]
                             ? product.ProductVariants.find(
-                                (v) => v.id === selectedVariants[product.id]
-                              )?.imageUrl
+                              (v) => v.id === selectedVariants[product.id]
+                            )?.imageUrl
                             : product.ProductVariants?.length > 0
-                            ? product.ProductVariants[0]?.imageUrl
-                            : product.productImage
+                              ? product.ProductVariants[0]?.imageUrl
+                              : product.productImage
                         }
                         alt={product.name}
                         className="w-full h-full object-cover rounded-t-lg"
@@ -616,8 +620,8 @@ function CartProductSection({
                       {/* Price Section with Discount Info */}
                       <div className="mt-2 space-y-1">
                         {product.discountType &&
-                        Number(product.discountAmount || 0) > 0 &&
-                        Number(product.salesPrice || 0) >
+                          Number(product.discountAmount || 0) > 0 &&
+                          Number(product.salesPrice || 0) >
                           Number(product.price || 0) ? (
                           <div className="flex items-center gap-2 flex-wrap">
                             {/* Sales Price with Strikethrough */}
@@ -629,8 +633,8 @@ function CartProductSection({
                               {product.discountType === "percentage"
                                 ? `-${product.discountAmount}%`
                                 : `-${money.format(
-                                    Number(product.discountAmount || 0)
-                                  )}`}
+                                  Number(product.discountAmount || 0)
+                                )}`}
                             </span>
                           </div>
                         ) : null}
@@ -654,12 +658,11 @@ function CartProductSection({
                                 (variant, index) => (
                                   <div
                                     key={index}
-                                    className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${
-                                      selectedVariants[product.id] ===
+                                    className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${selectedVariants[product.id] ===
                                       variant.id
-                                        ? "z-10 ring-2 rounded-full ring-brand-primary"
-                                        : ""
-                                    }`}
+                                      ? "z-10 ring-2 rounded-full ring-brand-primary"
+                                      : ""
+                                      }`}
                                   >
                                     <img
                                       src={variant.imageUrl}
@@ -705,13 +708,12 @@ function CartProductSection({
 
                       <div className="mt-2 flex items-center gap-2">
                         <span
-                          className={`w-2 h-2 rounded-full ${
-                            getTotalStock(product) > 10
-                              ? "bg-green-500"
-                              : getTotalStock(product) > 5
+                          className={`w-2 h-2 rounded-full ${getTotalStock(product) > 10
+                            ? "bg-green-500"
+                            : getTotalStock(product) > 5
                               ? "bg-yellow-500"
                               : "bg-red-500"
-                          }`}
+                            }`}
                         />
                         <span className="text-xs text-gray-500">
                           {getTotalStock(product)} in stock
@@ -722,7 +724,8 @@ function CartProductSection({
                       <button
                         type="button"
                         onClick={() => handleAddToCart(product)}
-                        className="mt-4 w-full md:font-medium text-[14px] px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors"
+                        disabled={!canCreateOrder}
+                        className="mt-4 w-full md:font-medium text-[14px] px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
                       >
                         Add to Cart
                       </button>
