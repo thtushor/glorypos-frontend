@@ -7,6 +7,7 @@ export const PERMISSIONS = {
 
     // Sales Module
     SALES: {
+        VIEW_SALES: 'view_sales',
         VIEW_POS: 'view_pos',
         CREATE_ORDER: 'create_order',
         VIEW_ORDERS: 'view_orders',
@@ -20,6 +21,7 @@ export const PERMISSIONS = {
 
     // Inventory Module
     INVENTORY: {
+        VIEW_INVENTORY: 'view_inventory',
         VIEW_PRODUCTS: 'view_products',
         CREATE_PRODUCT: 'create_product',
         EDIT_PRODUCT: 'edit_product',
@@ -102,6 +104,7 @@ export const PERMISSION_GROUPS = [
         name: 'Sales',
         description: 'Point of Sale and order management',
         permissions: [
+            { key: PERMISSIONS.SALES.VIEW_SALES, label: 'View Sales', description: 'Access sales interface' },
             { key: PERMISSIONS.SALES.VIEW_POS, label: 'View POS', description: 'Access POS interface' },
             { key: PERMISSIONS.SALES.CREATE_ORDER, label: 'Create Order', description: 'Create new sales orders' },
             { key: PERMISSIONS.SALES.VIEW_ORDERS, label: 'View Orders', description: 'View all orders' },
@@ -118,6 +121,7 @@ export const PERMISSION_GROUPS = [
         name: 'Inventory',
         description: 'Product and inventory management',
         permissions: [
+            { key: PERMISSIONS.INVENTORY.VIEW_INVENTORY, label: 'View Inventory', description: 'View inventory list' },
             { key: PERMISSIONS.INVENTORY.VIEW_PRODUCTS, label: 'View Products', description: 'View product list' },
             { key: PERMISSIONS.INVENTORY.CREATE_PRODUCT, label: 'Create Product', description: 'Add new products' },
             { key: PERMISSIONS.INVENTORY.EDIT_PRODUCT, label: 'Edit Product', description: 'Modify product details' },

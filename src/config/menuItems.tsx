@@ -37,7 +37,7 @@ export const menuItems: MenuItem[] = [
     title: "Sales",
     path: "/sales",
     icon: <FaShoppingCart className="w-5 h-5" />,
-    permission: PERMISSIONS.SALES.VIEW_POS,
+    permission: PERMISSIONS.SALES.VIEW_SALES,
     submenu: [
       {
         id: "pos",
@@ -81,7 +81,7 @@ export const menuItems: MenuItem[] = [
     title: "Inventory",
     path: "/inventory",
     icon: <FaWarehouse className="w-5 h-5" />,
-    permission: PERMISSIONS.INVENTORY.VIEW_PRODUCTS,
+    permission: PERMISSIONS.INVENTORY.VIEW_INVENTORY,
     submenu: [
       {
         id: "products",
