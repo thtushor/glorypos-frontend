@@ -84,7 +84,7 @@ const AppRoutes = () => {
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route
-          element={<AuthorizedRoute allowedRoles={["shop", "super admin"]} />}
+          element={<AuthorizedRoute allowedRoles={["shop"]} />}
         >
           <Route
             path="dashboard"
