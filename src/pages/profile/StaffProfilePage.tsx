@@ -34,12 +34,10 @@ import { CHILD_USERS_URL_PROFILE, CREATE_CHILD_USER_URL } from "@/api/api";
 import money from "@/utils/money";
 import { format } from "date-fns";
 import { useParams, Outlet, Link, useLocation } from "react-router-dom";
+import { PERMISSION_GROUPS, PERMISSION_TEMPLATES } from "@/config/permissions";
 
-interface Permission {
-    canEdit: boolean;
-    canDelete: boolean;
-    canViewReports: boolean;
-}
+// Updated Permission type - now an array of permission keys
+type UserPermissions = string[];
 
 interface Parent {
     id: number;
@@ -95,7 +93,7 @@ interface StaffProfileData {
     phone: string | null;
     role: string;
     status: "active" | "inactive";
-    permissions: Permission;
+    permissions: UserPermissions;
     parentUserId: number;
     baseSalary: string;
     requiredDailyHours: number;
@@ -111,7 +109,7 @@ interface UpdateFormData {
     phone: string;
     role: string;
     status: "active" | "inactive";
-    permissions: Permission;
+    permissions: UserPermissions;
     baseSalary: number;
     requiredDailyHours: number;
 }
@@ -128,6 +126,21 @@ const StaffProfilePage = () => {
     const location = useLocation();
     const profileId = params.staffId || user?.child?.id
 
+    // Helper function to normalize permissions from API
+    const normalizePermissions = (permissions: any): UserPermissions => {
+        // If already an array, return it
+        if (Array.isArray(permissions)) {
+            return permissions;
+        }
+        // If it's an object (old format), convert to empty array for now
+        // You can map old permissions to new ones if needed
+        if (typeof permissions === 'object' && permissions !== null) {
+            return [];
+        }
+        // Default to empty array
+        return [];
+    };
+
     const { data: profileResponse, isLoading } = useQuery({
         queryKey: ["staff-profile", profileId],
         queryFn: async () => {
@@ -139,7 +152,7 @@ const StaffProfilePage = () => {
                 phone: profileData.phone || "",
                 role: profileData.role,
                 status: profileData.status,
-                permissions: profileData.permissions,
+                permissions: normalizePermissions(profileData.permissions),
                 baseSalary: parseFloat(profileData.baseSalary),
                 requiredDailyHours: profileData.requiredDailyHours,
             });
@@ -189,13 +202,22 @@ const StaffProfilePage = () => {
         updateProfileMutation.mutate(formData as UpdateFormData);
     };
 
-    const handlePermissionChange = (key: keyof Permission) => {
+    const handlePermissionToggle = (permissionKey: string) => {
+        const currentPermissions = Array.isArray(formData.permissions) ? formData.permissions : [];
+        const hasPermission = currentPermissions.includes(permissionKey);
+
         setFormData({
             ...formData,
-            permissions: {
-                ...formData.permissions!,
-                [key]: !formData.permissions![key],
-            },
+            permissions: hasPermission
+                ? currentPermissions.filter(p => p !== permissionKey)
+                : [...currentPermissions, permissionKey],
+        });
+    };
+
+    const applyPermissionTemplate = (templateName: keyof typeof PERMISSION_TEMPLATES) => {
+        setFormData({
+            ...formData,
+            permissions: [...PERMISSION_TEMPLATES[templateName]],
         });
     };
 
@@ -574,30 +596,148 @@ const StaffProfilePage = () => {
                                             </div>
                                         </div>
 
-                                        {/* Permissions */}
+                                        {/* Permissions Management */}
                                         <div className="pt-6 border-t-2 border-gray-100">
-                                            <h3 className="text-lg font-bold text-gray-900 mb-4">Permissions</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                {Object.entries(formData.permissions || {}).map(([key, value]) => (
-                                                    <label
-                                                        key={key}
-                                                        className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${value
-                                                            ? "bg-green-50 border-green-500"
-                                                            : "bg-gray-50 border-gray-200"
-                                                            } ${!isEditing ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"}`}
-                                                    >
-                                                        <span className="text-sm font-semibold text-gray-700">
-                                                            {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
-                                                        </span>
-                                                        <input
-                                                            type="checkbox"
-                                                            disabled={!isEditing}
-                                                            checked={value}
-                                                            onChange={() => handlePermissionChange(key as keyof Permission)}
-                                                            className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
-                                                        />
-                                                    </label>
-                                                ))}
+                                            <div className="flex items-center justify-between mb-6">
+                                                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                                    <FaUserShield className="text-blue-600" />
+                                                    Permissions Management
+                                                </h3>
+                                                {isEditing && (
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => applyPermissionTemplate('ADMIN')}
+                                                            className="px-3 py-1.5 text-xs font-semibold bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition"
+                                                        >
+                                                            Admin Template
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => applyPermissionTemplate('MANAGER')}
+                                                            className="px-3 py-1.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
+                                                        >
+                                                            Manager Template
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => applyPermissionTemplate('CASHIER')}
+                                                            className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition"
+                                                        >
+                                                            Cashier Template
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, permissions: [] })}
+                                                            className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition"
+                                                        >
+                                                            Clear All
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Permission Groups */}
+                                            <div className="space-y-6">
+                                                {PERMISSION_GROUPS.map((group) => {
+                                                    const groupPermissions = group.permissions;
+                                                    const currentPermissions = Array.isArray(formData.permissions) ? formData.permissions : [];
+                                                    const selectedCount = groupPermissions.filter(p =>
+                                                        currentPermissions.includes(p.key)
+                                                    ).length;
+                                                    const totalCount = groupPermissions.length;
+
+                                                    return (
+                                                        <div key={group.id} className="bg-gradient-to-br from-gray-50 to-white rounded-xl border-2 border-gray-200 overflow-hidden">
+                                                            {/* Group Header */}
+                                                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b-2 border-gray-200">
+                                                                <div className="flex items-center justify-between">
+                                                                    <div>
+                                                                        <h4 className="text-lg font-bold text-gray-900">{group.name}</h4>
+                                                                        <p className="text-sm text-gray-600 mt-1">{group.description}</p>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-3">
+                                                                        <span className="text-sm font-semibold text-gray-700 bg-white px-3 py-1 rounded-full border-2 border-gray-200">
+                                                                            {selectedCount} / {totalCount}
+                                                                        </span>
+                                                                        {isEditing && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    const allGroupKeys = groupPermissions.map(p => p.key);
+                                                                                    const allSelected = allGroupKeys.every(key =>
+                                                                                        currentPermissions.includes(key)
+                                                                                    );
+
+                                                                                    if (allSelected) {
+                                                                                        // Deselect all in this group
+                                                                                        setFormData({
+                                                                                            ...formData,
+                                                                                            permissions: currentPermissions.filter(
+                                                                                                p => allGroupKeys.indexOf(p as any) === -1
+                                                                                            ),
+                                                                                        });
+                                                                                    } else {
+                                                                                        // Select all in this group
+                                                                                        const newPermissions = new Set([
+                                                                                            ...currentPermissions,
+                                                                                            ...allGroupKeys,
+                                                                                        ]);
+                                                                                        setFormData({
+                                                                                            ...formData,
+                                                                                            permissions: Array.from(newPermissions),
+                                                                                        });
+                                                                                    }
+                                                                                }}
+                                                                                className="px-3 py-1 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                                                                            >
+                                                                                {selectedCount === totalCount ? 'Deselect All' : 'Select All'}
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Group Permissions */}
+                                                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                                {groupPermissions.map((permission) => {
+                                                                    const isChecked = currentPermissions.includes(permission.key);
+
+                                                                    return (
+                                                                        <label
+                                                                            key={permission.key}
+                                                                            className={`group relative flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${isChecked
+                                                                                ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-500 shadow-sm'
+                                                                                : 'bg-white border-gray-200 hover:border-gray-300'
+                                                                                } ${!isEditing ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-md'}`}
+                                                                        >
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                disabled={!isEditing}
+                                                                                checked={isChecked}
+                                                                                onChange={() => handlePermissionToggle(permission.key)}
+                                                                                className="mt-1 w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed"
+                                                                            />
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span className="text-sm font-bold text-gray-900">
+                                                                                        {permission.label}
+                                                                                    </span>
+                                                                                    {isChecked && (
+                                                                                        <FaCheckCircle className="text-green-600 text-xs flex-shrink-0" />
+                                                                                    )}
+                                                                                </div>
+                                                                                <p className="text-xs text-gray-600 mt-1 leading-tight">
+                                                                                    {permission.description}
+                                                                                </p>
+                                                                            </div>
+                                                                        </label>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     </form>
