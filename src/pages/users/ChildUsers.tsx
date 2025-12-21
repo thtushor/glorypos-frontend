@@ -18,6 +18,8 @@ import { format } from "date-fns";
 import CreateUserForm from "./CreateUserForm";
 import { useSearchParams } from "react-router-dom";
 import debounce from "lodash/debounce";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface Parent {
   id: number;
@@ -70,6 +72,14 @@ const ChildUsers = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { hasPermission } = usePermission();
+
+  // Permission checks
+  const canCreateUser = hasPermission(PERMISSIONS.USERS.CREATE_CHILD_USER);
+  const canEditUser = hasPermission(PERMISSIONS.USERS.EDIT_CHILD_USER);
+  const canDeleteUser = hasPermission(PERMISSIONS.USERS.DELETE_CHILD_USER);
+  const canViewDetails = hasPermission(PERMISSIONS.USERS.VIEW_CHILD_USERS);
+
   const [filters, setFilters] = useState({
     searchKey: searchParams.get("searchKey") || "",
     role: searchParams.get("role") || "",
@@ -141,12 +151,14 @@ const ChildUsers = () => {
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Child Users</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover flex items-center gap-2"
-        >
-          <FaPlus /> Add User
-        </button>
+        {canCreateUser && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover flex items-center gap-2"
+          >
+            <FaPlus /> Add User
+          </button>
+        )}
       </div>
 
       <div className="mb-6 grid grid-cols-1 sm:grid-cols-5 gap-4">
@@ -242,11 +254,10 @@ const ChildUsers = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        user.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${user.status === "active"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                        }`}
                     >
                       {user.status}
                     </span>
@@ -255,30 +266,39 @@ const ChildUsers = () => {
                     {format(new Date(user.createdAt), "MMM dd, yyyy")}
                   </td>
                   <td className="px-6 py-4 text-right space-x-2 flex items-center">
-                    <button
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setShowEditModal(true);
-                      }}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      <FaEdit className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setShowDetailsModal(true);
-                      }}
-                      className="text-brand-primary hover:text-brand-hover"
-                    >
-                      <FaUserCog className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <FaTrash className="w-5 h-5" />
-                    </button>
+                    {canEditUser && (
+                      <button
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowEditModal(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-800"
+                        title="Edit User"
+                      >
+                        <FaEdit className="w-5 h-5" />
+                      </button>
+                    )}
+                    {canViewDetails && (
+                      <button
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowDetailsModal(true);
+                        }}
+                        className="text-brand-primary hover:text-brand-hover"
+                        title="View Details"
+                      >
+                        <FaUserCog className="w-5 h-5" />
+                      </button>
+                    )}
+                    {canDeleteUser && (
+                      <button
+                        onClick={() => handleDelete(user)}
+                        className="text-red-600 hover:text-red-800"
+                        title="Delete User"
+                      >
+                        <FaTrash className="w-5 h-5" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -312,9 +332,8 @@ const ChildUsers = () => {
               <button
                 key={pageNum}
                 onClick={() => handlePageChange(pageNum)}
-                className={`px-3 py-1 border rounded-md ${
-                  pageNum === page ? "bg-brand-primary text-white" : ""
-                }`}
+                className={`px-3 py-1 border rounded-md ${pageNum === page ? "bg-brand-primary text-white" : ""
+                  }`}
               >
                 {pageNum}
               </button>
@@ -423,11 +442,10 @@ const ChildUsers = () => {
                         {key.replace(/([A-Z])/g, " $1")}
                       </span>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          value
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${value
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                          }`}
                       >
                         {value ? "Yes" : "No"}
                       </span>

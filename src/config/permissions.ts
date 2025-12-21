@@ -159,8 +159,8 @@ export const PERMISSION_GROUPS = [
     },
     {
         id: 'users',
-        name: 'Users & Roles',
-        description: 'User and role management',
+        name: 'Staff & Roles',
+        description: 'Staff and role management',
         permissions: [
             { key: PERMISSIONS.USERS.VIEW_CHILD_USERS, label: 'View Staff', description: 'View staff members' },
             { key: PERMISSIONS.USERS.CREATE_CHILD_USER, label: 'Create Staff', description: 'Add new staff members' },
