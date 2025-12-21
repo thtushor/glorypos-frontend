@@ -143,9 +143,15 @@ export const menuItems = [
     icon: <FaMoneyCheckAlt className="w-5 h-5" />,
   },
   {
-    id: "profile",
-    title: "Profile",
-    path: "/profile",
+    id: "edit-shop",
+    title: "Edit Shop",
+    path: "/edit-shop",
+    icon: <RiProfileFill className="w-5 h-5" />,
+  },
+  {
+    id: "staff-profile",
+    title: "Staff Profile",
+    path: "/staff-profile",
     icon: <RiProfileFill className="w-5 h-5" />,
   },
   {

@@ -35,6 +35,7 @@ import ChildUsers from "@/pages/users/ChildUsers";
 import SubscriptionLimits from "@/pages/subscription/SubscriptionLimits";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import ProfilePage from "@/pages/profile/ProfilePage";
+import StaffProfilePage from "@/pages/profile/StaffProfilePage";
 import OtherShops from "@/pages/OtherShops";
 import Payroll from "@/pages/payroll/Payroll";
 import BarcodeScannerTest from "@/pages/BarcodeScannerTest";
@@ -143,7 +144,8 @@ const AppRoutes = () => {
         >
           <Route path="subscriptions" element={<SubscriptionPlans />} />
           <Route path="users/child" element={<ChildUsers />} />
-          <Route path="profile" element={<ProfilePage />} />
+          <Route path="edit-shop" element={<ProfilePage />} />
+          <Route path="staff-profile" element={<StaffProfilePage />} />
         </Route>
 
         {/* Super Admin Only Routes */}

@@ -22,8 +22,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
   const { user } = useAuth();
 
-  console.log({ user });
-
   // Fetch total shops count for shop users
   const { data: shopCountData } = useQuery({
     queryKey: ["sub-shops-count"],
@@ -61,9 +59,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   return (
     <div className="h-screen bg-white shadow-lg w-sidebar flex flex-col">
       <div
-        className={`${
-          isOpen ? "h-auto" : "h-20"
-        } flex flex-col items-center justify-center border-b border-gray-200/80 px-4 py-4 transition-all duration-300 flex-shrink-0`}
+        className={`${isOpen ? "h-auto" : "h-20"
+          } flex flex-col items-center justify-center border-b border-gray-200/80 px-4 py-4 transition-all duration-300 flex-shrink-0`}
       >
         {user?.accountType === "shop" ? (
           <div className="w-full flex flex-col items-center space-y-3">
@@ -183,11 +180,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 <div>
                   <button
                     onClick={() => toggleMenu(item.id)}
-                    className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors duration-200 ${
-                      isMenuActive(item.path)
-                        ? "text-brand-primary"
-                        : "text-gray-700 hover:text-brand-primary hover:bg-gray-50"
-                    }`}
+                    className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors duration-200 ${isMenuActive(item.path)
+                      ? "text-brand-primary"
+                      : "text-gray-700 hover:text-brand-primary hover:bg-gray-50"
+                      }`}
                   >
                     <div className="flex items-center space-x-4">
                       <span className="text-gray-500">{item.icon}</span>
@@ -195,9 +191,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                     </div>
                     {isOpen && (
                       <span
-                        className={`transform transition-transform duration-200 text-gray-500 ${
-                          expandedMenus.includes(item.id) ? "rotate-180" : ""
-                        }`}
+                        className={`transform transition-transform duration-200 text-gray-500 ${expandedMenus.includes(item.id) ? "rotate-180" : ""
+                          }`}
                       >
                         <FaChevronDown className="h-3 w-3" />
                       </span>
@@ -205,11 +200,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                   </button>
                   {/* Submenu with animation */}
                   <div
-                    className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                      isOpen && expandedMenus.includes(item.id)
-                        ? "max-h-96 opacity-100"
-                        : "max-h-0 opacity-0"
-                    }`}
+                    className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen && expandedMenus.includes(item.id)
+                      ? "max-h-96 opacity-100"
+                      : "max-h-0 opacity-0"
+                      }`}
                   >
                     <div className="pl-4 py-2 space-y-1">
                       {item.submenu.map((subItem) => (
@@ -217,10 +211,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                           key={subItem.id}
                           to={subItem.path}
                           className={({ isActive }) =>
-                            `flex items-center space-x-4 px-4 py-2 text-sm rounded-md transition-colors duration-200 ${
-                              isActive
-                                ? "text-brand-primary bg-brand-primary/10"
-                                : "text-gray-700 hover:text-brand-primary hover:bg-gray-50"
+                            `flex items-center space-x-4 px-4 py-2 text-sm rounded-md transition-colors duration-200 ${isActive
+                              ? "text-brand-primary bg-brand-primary/10"
+                              : "text-gray-700 hover:text-brand-primary hover:bg-gray-50"
                             }`
                           }
                         >
@@ -236,10 +229,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 <NavLink
                   to={item.path}
                   className={({ isActive }) =>
-                    `flex items-center space-x-4 px-4 py-2 text-sm transition-colors duration-200 ${
-                      isActive
-                        ? "text-brand-primary bg-brand-primary/10"
-                        : "text-gray-700 hover:text-brand-primary hover:bg-gray-50"
+                    `flex items-center space-x-4 px-4 py-2 text-sm transition-colors duration-200 ${isActive
+                      ? "text-brand-primary bg-brand-primary/10"
+                      : "text-gray-700 hover:text-brand-primary hover:bg-gray-50"
                     }`
                   }
                 >

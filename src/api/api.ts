@@ -170,6 +170,7 @@ export const VALIDATE_COUPON_URL = `${COUPONS_URL}/validate`;
 
 // Add to existing endpoints
 export const CHILD_USERS_URL = `${BASE_URL}/user/child-users`;
+export const CHILD_USERS_URL_PROFILE = `${BASE_URL}/user/child-users/:id`;
 export const CREATE_CHILD_USER_URL = `${BASE_URL}/user/child-user`;
 
 // Sub Shops API
