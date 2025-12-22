@@ -78,9 +78,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       { email: userEmail },
     ],
     queryFn: async () => {
-      const { access_token } = getCookiesAsObject();
       const email = userEmail;
-      if (!access_token || !email) {
+      if (!email) {
         navigate("/login");
         setUser(null);
         console.log("navigating login.... due to no access token or email");
