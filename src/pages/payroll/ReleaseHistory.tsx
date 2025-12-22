@@ -13,6 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useParams, Link } from "react-router-dom";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
+import Modal from "@/components/Modal";
 
 interface Release {
   id: number;
@@ -599,213 +600,236 @@ const ReleaseHistory = () => {
       )}
 
       {/* Payslip Modal */}
-      {selectedPayslip && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+      <Modal
+        isOpen={!!selectedPayslip}
+        onClose={() => setSelectedPayslip(null)}
+        maxWidth="5xl"
+        className="p-0"
+      >
+        {selectedPayslip && (
+          <>
+            {/* Modal Header with Print Button */}
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center -mt-6 -mx-6 mb-6">
               <h2 className="text-xl font-bold text-gray-800">Salary Payslip</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={handlePrint}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
-                >
-                  <FaPrint />
-                  Print
-                </button>
-                <button
-                  onClick={() => setSelectedPayslip(null)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                >
-                  Close
-                </button>
-              </div>
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+              >
+                <FaPrint />
+                Print
+              </button>
             </div>
 
             {/* Payslip Content */}
-            <div ref={payslipRef} className="p-8">
+            <div ref={payslipRef} className="px-8 pb-8">
               {/* Company Header */}
               <div className="text-center mb-6 border-b-2 border-gray-300 pb-4">
-                <h1 className="text-2xl font-bold text-gray-800">
+                <h1 className="text-3xl font-bold text-gray-800">
                   {selectedPayslip.UserRole.parent.businessName}
                 </h1>
-                <p className="text-sm text-gray-600">Salary Payslip</p>
+                <p className="text-lg text-gray-600 mt-1">Salary Payslip</p>
               </div>
 
               {/* Employee & Period Info */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-2 gap-6 mb-6 bg-gray-50 p-4 rounded-lg">
                 <div>
                   <p className="text-sm text-gray-600">Employee Name:</p>
-                  <p className="font-semibold text-gray-800">{selectedPayslip.UserRole.fullName}</p>
+                  <p className="font-bold text-lg text-gray-800">{selectedPayslip.UserRole.fullName}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Employee ID:</p>
-                  <p className="font-semibold text-gray-800">{selectedPayslip.userId}</p>
+                  <p className="font-bold text-lg text-gray-800">{selectedPayslip.userId}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Designation:</p>
-                  <p className="font-semibold text-gray-800">{selectedPayslip.UserRole.role.toUpperCase()}</p>
+                  <p className="font-bold text-lg text-gray-800">{selectedPayslip.UserRole.role.toUpperCase()}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Salary Month:</p>
-                  <p className="font-semibold text-gray-800">{formatMonth(selectedPayslip.salaryMonth)}</p>
+                  <p className="font-bold text-lg text-gray-800">{formatMonth(selectedPayslip.salaryMonth)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Release Date:</p>
+                  <p className="font-bold text-lg text-gray-800">{formatDate(selectedPayslip.releaseDate)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Released By:</p>
+                  <p className="font-bold text-lg text-gray-800">{selectedPayslip.releaser?.fullName || "N/A"}</p>
                 </div>
               </div>
 
-              {/* Attendance Details */}
+              {/* Salary Breakdown Table */}
               <div className="mb-6">
-                <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">Attendance Details</h3>
-                <div className="grid grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-600">Working Days:</p>
-                    <p className="font-semibold">{selectedPayslip.calculationSnapshot.workingDays}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Present Days:</p>
-                    <p className="font-semibold text-green-600">{selectedPayslip.calculationSnapshot.presentDays}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Paid Leave:</p>
-                    <p className="font-semibold text-blue-600">{selectedPayslip.calculationSnapshot.paidLeaveDays}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Unpaid Leave:</p>
-                    <p className="font-semibold text-red-600">{selectedPayslip.calculationSnapshot.unpaidLeaveDays}</p>
-                  </div>
+                <h3 className="font-bold text-xl text-gray-800 mb-4 border-b-2 border-emerald-600 pb-2">
+                  Salary Breakdown
+                </h3>
+                <div className="overflow-hidden border border-gray-300 rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-300">
+                    <thead className="bg-gradient-to-r from-emerald-600 to-teal-600">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
+                          Description
+                        </th>
+                        <th className="px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-wider">
+                          Amount
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {/* Earnings Section */}
+                      <tr className="bg-green-50">
+                        <td colSpan={2} className="px-6 py-3 font-bold text-green-800 uppercase text-sm">
+                          Earnings
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-3 text-gray-700">Base Salary</td>
+                        <td className="px-6 py-3 text-right font-semibold text-gray-900">
+                          {money.format(parseFloat(selectedPayslip.baseSalary))}
+                        </td>
+                      </tr>
+                      {selectedPayslip.calculationSnapshot.commission && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-3 text-gray-700">
+                            Commission ({selectedPayslip.calculationSnapshot.commission.commissionRate}% on {money.format(selectedPayslip.calculationSnapshot.commission.totalSales)})
+                          </td>
+                          <td className="px-6 py-3 text-right font-semibold text-green-600">
+                            + {money.format(selectedPayslip.calculationSnapshot.commission.commissionAmount)}
+                          </td>
+                        </tr>
+                      )}
+                      {parseFloat(selectedPayslip.bonusAmount) > 0 && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-3 text-gray-700">
+                            Bonus {selectedPayslip.bonusDescription && `(${selectedPayslip.bonusDescription})`}
+                          </td>
+                          <td className="px-6 py-3 text-right font-semibold text-green-600">
+                            + {money.format(parseFloat(selectedPayslip.bonusAmount))}
+                          </td>
+                        </tr>
+                      )}
+                      {parseFloat(selectedPayslip.overtimeAmount) > 0 && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-3 text-gray-700">Overtime</td>
+                          <td className="px-6 py-3 text-right font-semibold text-green-600">
+                            + {money.format(parseFloat(selectedPayslip.overtimeAmount))}
+                          </td>
+                        </tr>
+                      )}
+
+                      {/* Deductions Section */}
+                      <tr className="bg-red-50">
+                        <td colSpan={2} className="px-6 py-3 font-bold text-red-800 uppercase text-sm">
+                          Deductions
+                        </td>
+                      </tr>
+                      {selectedPayslip.calculationSnapshot.unpaidLeaveDeduction > 0 && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-3 text-gray-700">
+                            Leave Deduction ({selectedPayslip.calculationSnapshot.unpaidLeaveDays} unpaid days)
+                          </td>
+                          <td className="px-6 py-3 text-right font-semibold text-red-600">
+                            - {money.format(selectedPayslip.calculationSnapshot.unpaidLeaveDeduction)}
+                          </td>
+                        </tr>
+                      )}
+                      {parseFloat(selectedPayslip.advanceAmount) > 0 && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-3 text-gray-700">Advance Deduction</td>
+                          <td className="px-6 py-3 text-right font-semibold text-red-600">
+                            - {money.format(parseFloat(selectedPayslip.advanceAmount))}
+                          </td>
+                        </tr>
+                      )}
+                      {parseFloat(selectedPayslip.fineAmount) > 0 && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-3 text-gray-700">Fine</td>
+                          <td className="px-6 py-3 text-right font-semibold text-red-600">
+                            - {money.format(parseFloat(selectedPayslip.fineAmount))}
+                          </td>
+                        </tr>
+                      )}
+                      {parseFloat(selectedPayslip.loanDeduction) > 0 && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-3 text-gray-700">Loan Deduction</td>
+                          <td className="px-6 py-3 text-right font-semibold text-red-600">
+                            - {money.format(parseFloat(selectedPayslip.loanDeduction))}
+                          </td>
+                        </tr>
+                      )}
+                      {parseFloat(selectedPayslip.otherDeduction) > 0 && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-3 text-gray-700">Other Deduction</td>
+                          <td className="px-6 py-3 text-right font-semibold text-red-600">
+                            - {money.format(parseFloat(selectedPayslip.otherDeduction))}
+                          </td>
+                        </tr>
+                      )}
+
+                      {/* Net Payable */}
+                      <tr className="bg-blue-100 border-t-2 border-blue-600">
+                        <td className="px-6 py-4 font-bold text-blue-900 text-lg">Net Payable Salary</td>
+                        <td className="px-6 py-4 text-right font-bold text-blue-900 text-xl">
+                          {money.format(parseFloat(selectedPayslip.netPayableSalary))}
+                        </td>
+                      </tr>
+
+                      {/* Payment Details */}
+                      <tr className="bg-green-100">
+                        <td className="px-6 py-4 font-bold text-green-900">Amount Paid</td>
+                        <td className="px-6 py-4 text-right font-bold text-green-900 text-lg">
+                          {money.format(parseFloat(selectedPayslip.paidAmount))}
+                        </td>
+                      </tr>
+                      <tr className="bg-orange-100 border-t-2 border-orange-600">
+                        <td className="px-6 py-4 font-bold text-orange-900 text-lg">Remaining Due</td>
+                        <td className="px-6 py-4 text-right font-bold text-orange-900 text-xl">
+                          {money.format(parseFloat(selectedPayslip.netPayableSalary) - parseFloat(selectedPayslip.paidAmount))}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
-              {/* Earnings & Deductions */}
-              <div className="grid grid-cols-2 gap-6 mb-6">
-                {/* Earnings */}
-                <div>
-                  <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">Earnings</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Base Salary:</span>
-                      <span className="font-semibold">{money.format(parseFloat(selectedPayslip.baseSalary))}</span>
-                    </div>
-                    {selectedPayslip.calculationSnapshot.commission && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Commission:</span>
-                        <span className="font-semibold text-green-600">
-                          {money.format(selectedPayslip.calculationSnapshot.commission.commissionAmount)}
-                        </span>
-                      </div>
-                    )}
-                    {parseFloat(selectedPayslip.bonusAmount) > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Bonus:</span>
-                        <span className="font-semibold text-green-600">
-                          {money.format(parseFloat(selectedPayslip.bonusAmount))}
-                        </span>
-                      </div>
-                    )}
-                    {parseFloat(selectedPayslip.overtimeAmount) > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Overtime:</span>
-                        <span className="font-semibold text-green-600">
-                          {money.format(parseFloat(selectedPayslip.overtimeAmount))}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex justify-between pt-2 border-t font-bold">
-                      <span>Gross Salary:</span>
-                      <span className="text-blue-600">
-                        {money.format(selectedPayslip.calculationSnapshot.salaryBreakdown.gross)}
-                      </span>
-                    </div>
+              {/* Attendance Summary */}
+              <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-bold text-lg text-gray-800 mb-3">Attendance Summary</h3>
+                <div className="grid grid-cols-4 gap-4 text-center">
+                  <div className="bg-white p-3 rounded-lg shadow-sm">
+                    <p className="text-sm text-gray-600">Working Days</p>
+                    <p className="text-2xl font-bold text-gray-800">{selectedPayslip.calculationSnapshot.workingDays}</p>
                   </div>
-                </div>
-
-                {/* Deductions */}
-                <div>
-                  <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">Deductions</h3>
-                  <div className="space-y-2 text-sm">
-                    {selectedPayslip.calculationSnapshot.unpaidLeaveDeduction > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Leave Deduction:</span>
-                        <span className="font-semibold text-red-600">
-                          {money.format(selectedPayslip.calculationSnapshot.unpaidLeaveDeduction)}
-                        </span>
-                      </div>
-                    )}
-                    {parseFloat(selectedPayslip.advanceAmount) > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Advance Deduction:</span>
-                        <span className="font-semibold text-red-600">
-                          {money.format(parseFloat(selectedPayslip.advanceAmount))}
-                        </span>
-                      </div>
-                    )}
-                    {parseFloat(selectedPayslip.fineAmount) > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Fine:</span>
-                        <span className="font-semibold text-red-600">
-                          {money.format(parseFloat(selectedPayslip.fineAmount))}
-                        </span>
-                      </div>
-                    )}
-                    {parseFloat(selectedPayslip.loanDeduction) > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Loan Deduction:</span>
-                        <span className="font-semibold text-red-600">
-                          {money.format(parseFloat(selectedPayslip.loanDeduction))}
-                        </span>
-                      </div>
-                    )}
-                    {parseFloat(selectedPayslip.otherDeduction) > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Other Deduction:</span>
-                        <span className="font-semibold text-red-600">
-                          {money.format(parseFloat(selectedPayslip.otherDeduction))}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex justify-between pt-2 border-t font-bold">
-                      <span>Total Deductions:</span>
-                      <span className="text-red-600">
-                        {money.format(selectedPayslip.calculationSnapshot.salaryBreakdown.totalDeductions)}
-                      </span>
-                    </div>
+                  <div className="bg-white p-3 rounded-lg shadow-sm">
+                    <p className="text-sm text-gray-600">Present Days</p>
+                    <p className="text-2xl font-bold text-green-600">{selectedPayslip.calculationSnapshot.presentDays}</p>
                   </div>
-                </div>
-              </div>
-
-              {/* Payment Summary */}
-              <div className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg p-4 mb-6">
-                <h3 className="font-bold text-gray-800 mb-3">Payment Summary</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-700">Net Payable Salary:</span>
-                    <span className="font-bold text-blue-600">
-                      {money.format(parseFloat(selectedPayslip.netPayableSalary))}
-                    </span>
+                  <div className="bg-white p-3 rounded-lg shadow-sm">
+                    <p className="text-sm text-gray-600">Paid Leave</p>
+                    <p className="text-2xl font-bold text-blue-600">{selectedPayslip.calculationSnapshot.paidLeaveDays}</p>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-700">Amount Paid:</span>
-                    <span className="font-bold text-green-600">
-                      {money.format(parseFloat(selectedPayslip.paidAmount))}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-base pt-2 border-t border-gray-300">
-                    <span className="font-bold text-gray-800">Remaining Due:</span>
-                    <span className="font-bold text-orange-600">
-                      {money.format(selectedPayslip.calculationSnapshot.salaryBreakdown.due)}
-                    </span>
+                  <div className="bg-white p-3 rounded-lg shadow-sm">
+                    <p className="text-sm text-gray-600">Unpaid Leave</p>
+                    <p className="text-2xl font-bold text-red-600">{selectedPayslip.calculationSnapshot.unpaidLeaveDays}</p>
                   </div>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="mt-8 pt-4 border-t text-xs text-gray-600">
-                <p>Generated on: {new Date().toLocaleDateString()}</p>
-                <p className="mt-2">This is a computer-generated payslip and does not require a signature.</p>
+              <div className="mt-8 pt-4 border-t-2 border-gray-300 text-sm text-gray-600">
+                <p className="mb-2">
+                  <span className="font-semibold">Generated on:</span> {new Date().toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric"
+                  })}
+                </p>
+                <p className="italic">This is a computer-generated payslip and does not require a signature.</p>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 };
