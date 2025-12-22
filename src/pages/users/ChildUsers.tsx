@@ -16,7 +16,7 @@ import Spinner from "@/components/Spinner";
 import Modal from "@/components/Modal";
 import { format } from "date-fns";
 import CreateUserForm from "./CreateUserForm";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import debounce from "lodash/debounce";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
@@ -79,6 +79,7 @@ const ChildUsers = () => {
   const canEditUser = hasPermission(PERMISSIONS.USERS.EDIT_CHILD_USER);
   const canDeleteUser = hasPermission(PERMISSIONS.USERS.DELETE_CHILD_USER);
   const canViewDetails = hasPermission(PERMISSIONS.USERS.VIEW_CHILD_USERS);
+  const canViewOtherProfiles = hasPermission(PERMISSIONS.STAFF_PROFILE.VIEW_OTHER_PROFILES);
 
   const [filters, setFilters] = useState({
     searchKey: searchParams.get("searchKey") || "",
@@ -233,7 +234,16 @@ const ChildUsers = () => {
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="font-medium">{user.fullName}</span>
+                      {canViewOtherProfiles ? (
+                        <Link
+                          to={`/staff-profile/${user.id}/profile`}
+                          className="font-medium text-brand-primary hover:text-brand-hover hover:underline transition-colors"
+                        >
+                          {user.fullName}
+                        </Link>
+                      ) : (
+                        <span className="font-medium">{user.fullName}</span>
+                      )}
                       <span className="text-sm text-gray-500">
                         {user.email}
                       </span>
