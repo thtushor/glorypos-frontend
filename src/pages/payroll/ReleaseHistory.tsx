@@ -603,17 +603,17 @@ const ReleaseHistory = () => {
       <Modal
         isOpen={!!selectedPayslip}
         onClose={() => setSelectedPayslip(null)}
-        maxWidth="5xl"
+        maxWidth="4xl"
         className="p-0"
       >
         {selectedPayslip && (
           <>
             {/* Modal Header with Print Button */}
-            <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center -mt-6 -mx-6 mb-6">
-              <h2 className="text-xl font-bold text-gray-800">Salary Payslip</h2>
+            <div className="sticky top-0 bg-white border-b px-4 py-3 flex justify-between items-center -mt-6 -mx-6 mb-4">
+              <h2 className="text-lg font-bold text-gray-800">Salary Payslip</h2>
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+                className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition text-sm"
               >
                 <FaPrint />
                 Print
@@ -621,169 +621,154 @@ const ReleaseHistory = () => {
             </div>
 
             {/* Payslip Content */}
-            <div ref={payslipRef} className="px-8 pb-8">
+            <div ref={payslipRef} className="px-6 pb-6">
               {/* Company Header */}
-              <div className="text-center mb-6 border-b-2 border-gray-300 pb-4">
-                <h1 className="text-3xl font-bold text-gray-800">
+              <div className="text-center mb-4 border-b-2 border-gray-800 pb-3">
+                <h1 className="text-2xl font-bold text-gray-900">
                   {selectedPayslip.UserRole.parent.businessName}
                 </h1>
-                <p className="text-lg text-gray-600 mt-1">Salary Payslip</p>
+                <p className="text-sm text-gray-600 mt-1">Salary Payslip</p>
               </div>
 
-              {/* Employee & Period Info */}
-              <div className="grid grid-cols-2 gap-6 mb-6 bg-gray-50 p-4 rounded-lg">
+              {/* Employee & Period Info - Compact Grid */}
+              <div className="grid grid-cols-3 gap-x-6 gap-y-2 mb-4 text-sm">
                 <div>
-                  <p className="text-sm text-gray-600">Employee Name:</p>
-                  <p className="font-bold text-lg text-gray-800">{selectedPayslip.UserRole.fullName}</p>
+                  <span className="text-gray-600">Employee:</span>
+                  <span className="font-semibold ml-2">{selectedPayslip.UserRole.fullName}</span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Employee ID:</p>
-                  <p className="font-bold text-lg text-gray-800">{selectedPayslip.userId}</p>
+                  <span className="text-gray-600">ID:</span>
+                  <span className="font-semibold ml-2">{selectedPayslip.userId}</span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Designation:</p>
-                  <p className="font-bold text-lg text-gray-800">{selectedPayslip.UserRole.role.toUpperCase()}</p>
+                  <span className="text-gray-600">Role:</span>
+                  <span className="font-semibold ml-2">{selectedPayslip.UserRole.role.toUpperCase()}</span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Salary Month:</p>
-                  <p className="font-bold text-lg text-gray-800">{formatMonth(selectedPayslip.salaryMonth)}</p>
+                  <span className="text-gray-600">Month:</span>
+                  <span className="font-semibold ml-2">{formatMonth(selectedPayslip.salaryMonth)}</span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Release Date:</p>
-                  <p className="font-bold text-lg text-gray-800">{formatDate(selectedPayslip.releaseDate)}</p>
+                  <span className="text-gray-600">Release Date:</span>
+                  <span className="font-semibold ml-2">{formatDate(selectedPayslip.releaseDate)}</span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Released By:</p>
-                  <p className="font-bold text-lg text-gray-800">{selectedPayslip.releaser?.fullName || "N/A"}</p>
+                  <span className="text-gray-600">Released By:</span>
+                  <span className="font-semibold ml-2">{selectedPayslip.releaser?.fullName || "N/A"}</span>
                 </div>
               </div>
 
-              {/* Salary Breakdown Table */}
-              <div className="mb-6">
-                <h3 className="font-bold text-xl text-gray-800 mb-4 border-b-2 border-emerald-600 pb-2">
-                  Salary Breakdown
-                </h3>
-                <div className="overflow-hidden border border-gray-300 rounded-lg">
-                  <table className="min-w-full divide-y divide-gray-300">
-                    <thead className="bg-gradient-to-r from-emerald-600 to-teal-600">
+              {/* Salary Breakdown Table - Compact */}
+              <div className="mb-4">
+                <div className="border border-gray-300">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-gray-800 text-white">
                       <tr>
-                        <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
-                          Description
-                        </th>
-                        <th className="px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-wider">
-                          Amount
-                        </th>
+                        <th className="px-4 py-2 text-left font-semibold">Description</th>
+                        <th className="px-4 py-2 text-right font-semibold">Amount</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {/* Earnings Section */}
-                      <tr className="bg-green-50">
-                        <td colSpan={2} className="px-6 py-3 font-bold text-green-800 uppercase text-sm">
-                          Earnings
-                        </td>
+                    <tbody className="divide-y divide-gray-200">
+                      {/* Earnings */}
+                      <tr className="bg-gray-100">
+                        <td colSpan={2} className="px-4 py-1.5 font-semibold text-gray-800">EARNINGS</td>
                       </tr>
-                      <tr className="hover:bg-gray-50">
-                        <td className="px-6 py-3 text-gray-700">Base Salary</td>
-                        <td className="px-6 py-3 text-right font-semibold text-gray-900">
+                      <tr>
+                        <td className="px-4 py-1.5 text-gray-700">Base Salary</td>
+                        <td className="px-4 py-1.5 text-right font-medium">
                           {money.format(parseFloat(selectedPayslip.baseSalary))}
                         </td>
                       </tr>
                       {selectedPayslip.calculationSnapshot.commission && (
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-6 py-3 text-gray-700">
-                            Commission ({selectedPayslip.calculationSnapshot.commission.commissionRate}% on {money.format(selectedPayslip.calculationSnapshot.commission.totalSales)})
+                        <tr>
+                          <td className="px-4 py-1.5 text-gray-700">
+                            Commission ({selectedPayslip.calculationSnapshot.commission.commissionRate}%)
                           </td>
-                          <td className="px-6 py-3 text-right font-semibold text-green-600">
+                          <td className="px-4 py-1.5 text-right font-medium text-green-700">
                             + {money.format(selectedPayslip.calculationSnapshot.commission.commissionAmount)}
                           </td>
                         </tr>
                       )}
                       {parseFloat(selectedPayslip.bonusAmount) > 0 && (
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-6 py-3 text-gray-700">
-                            Bonus {selectedPayslip.bonusDescription && `(${selectedPayslip.bonusDescription})`}
-                          </td>
-                          <td className="px-6 py-3 text-right font-semibold text-green-600">
+                        <tr>
+                          <td className="px-4 py-1.5 text-gray-700">Bonus</td>
+                          <td className="px-4 py-1.5 text-right font-medium text-green-700">
                             + {money.format(parseFloat(selectedPayslip.bonusAmount))}
                           </td>
                         </tr>
                       )}
                       {parseFloat(selectedPayslip.overtimeAmount) > 0 && (
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-6 py-3 text-gray-700">Overtime</td>
-                          <td className="px-6 py-3 text-right font-semibold text-green-600">
+                        <tr>
+                          <td className="px-4 py-1.5 text-gray-700">Overtime</td>
+                          <td className="px-4 py-1.5 text-right font-medium text-green-700">
                             + {money.format(parseFloat(selectedPayslip.overtimeAmount))}
                           </td>
                         </tr>
                       )}
 
-                      {/* Deductions Section */}
-                      <tr className="bg-red-50">
-                        <td colSpan={2} className="px-6 py-3 font-bold text-red-800 uppercase text-sm">
-                          Deductions
-                        </td>
+                      {/* Deductions */}
+                      <tr className="bg-gray-100">
+                        <td colSpan={2} className="px-4 py-1.5 font-semibold text-gray-800">DEDUCTIONS</td>
                       </tr>
                       {selectedPayslip.calculationSnapshot.unpaidLeaveDeduction > 0 && (
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-6 py-3 text-gray-700">
-                            Leave Deduction ({selectedPayslip.calculationSnapshot.unpaidLeaveDays} unpaid days)
+                        <tr>
+                          <td className="px-4 py-1.5 text-gray-700">
+                            Leave Deduction ({selectedPayslip.calculationSnapshot.unpaidLeaveDays} days)
                           </td>
-                          <td className="px-6 py-3 text-right font-semibold text-red-600">
+                          <td className="px-4 py-1.5 text-right font-medium text-red-700">
                             - {money.format(selectedPayslip.calculationSnapshot.unpaidLeaveDeduction)}
                           </td>
                         </tr>
                       )}
                       {parseFloat(selectedPayslip.advanceAmount) > 0 && (
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-6 py-3 text-gray-700">Advance Deduction</td>
-                          <td className="px-6 py-3 text-right font-semibold text-red-600">
+                        <tr>
+                          <td className="px-4 py-1.5 text-gray-700">Advance Deduction</td>
+                          <td className="px-4 py-1.5 text-right font-medium text-red-700">
                             - {money.format(parseFloat(selectedPayslip.advanceAmount))}
                           </td>
                         </tr>
                       )}
                       {parseFloat(selectedPayslip.fineAmount) > 0 && (
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-6 py-3 text-gray-700">Fine</td>
-                          <td className="px-6 py-3 text-right font-semibold text-red-600">
+                        <tr>
+                          <td className="px-4 py-1.5 text-gray-700">Fine</td>
+                          <td className="px-4 py-1.5 text-right font-medium text-red-700">
                             - {money.format(parseFloat(selectedPayslip.fineAmount))}
                           </td>
                         </tr>
                       )}
                       {parseFloat(selectedPayslip.loanDeduction) > 0 && (
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-6 py-3 text-gray-700">Loan Deduction</td>
-                          <td className="px-6 py-3 text-right font-semibold text-red-600">
+                        <tr>
+                          <td className="px-4 py-1.5 text-gray-700">Loan Deduction</td>
+                          <td className="px-4 py-1.5 text-right font-medium text-red-700">
                             - {money.format(parseFloat(selectedPayslip.loanDeduction))}
                           </td>
                         </tr>
                       )}
                       {parseFloat(selectedPayslip.otherDeduction) > 0 && (
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-6 py-3 text-gray-700">Other Deduction</td>
-                          <td className="px-6 py-3 text-right font-semibold text-red-600">
+                        <tr>
+                          <td className="px-4 py-1.5 text-gray-700">Other Deduction</td>
+                          <td className="px-4 py-1.5 text-right font-medium text-red-700">
                             - {money.format(parseFloat(selectedPayslip.otherDeduction))}
                           </td>
                         </tr>
                       )}
 
-                      {/* Net Payable */}
-                      <tr className="bg-blue-100 border-t-2 border-blue-600">
-                        <td className="px-6 py-4 font-bold text-blue-900 text-lg">Net Payable Salary</td>
-                        <td className="px-6 py-4 text-right font-bold text-blue-900 text-xl">
+                      {/* Summary */}
+                      <tr className="bg-blue-50 border-t-2 border-blue-600">
+                        <td className="px-4 py-2 font-bold text-blue-900">Net Payable</td>
+                        <td className="px-4 py-2 text-right font-bold text-blue-900 text-base">
                           {money.format(parseFloat(selectedPayslip.netPayableSalary))}
                         </td>
                       </tr>
-
-                      {/* Payment Details */}
-                      <tr className="bg-green-100">
-                        <td className="px-6 py-4 font-bold text-green-900">Amount Paid</td>
-                        <td className="px-6 py-4 text-right font-bold text-green-900 text-lg">
+                      <tr className="bg-green-50">
+                        <td className="px-4 py-2 font-bold text-green-900">Amount Paid</td>
+                        <td className="px-4 py-2 text-right font-bold text-green-900 text-base">
                           {money.format(parseFloat(selectedPayslip.paidAmount))}
                         </td>
                       </tr>
-                      <tr className="bg-orange-100 border-t-2 border-orange-600">
-                        <td className="px-6 py-4 font-bold text-orange-900 text-lg">Remaining Due</td>
-                        <td className="px-6 py-4 text-right font-bold text-orange-900 text-xl">
+                      <tr className="bg-orange-50 border-t-2 border-orange-600">
+                        <td className="px-4 py-2 font-bold text-orange-900">Remaining Due</td>
+                        <td className="px-4 py-2 text-right font-bold text-orange-900 text-base">
                           {money.format(parseFloat(selectedPayslip.netPayableSalary) - parseFloat(selectedPayslip.paidAmount))}
                         </td>
                       </tr>
@@ -792,39 +777,39 @@ const ReleaseHistory = () => {
                 </div>
               </div>
 
-              {/* Attendance Summary */}
-              <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-bold text-lg text-gray-800 mb-3">Attendance Summary</h3>
-                <div className="grid grid-cols-4 gap-4 text-center">
-                  <div className="bg-white p-3 rounded-lg shadow-sm">
-                    <p className="text-sm text-gray-600">Working Days</p>
-                    <p className="text-2xl font-bold text-gray-800">{selectedPayslip.calculationSnapshot.workingDays}</p>
+              {/* Attendance Summary - Compact */}
+              <div className="mb-4 border border-gray-300 p-3">
+                <h3 className="font-semibold text-sm text-gray-800 mb-2">Attendance Summary</h3>
+                <div className="grid grid-cols-4 gap-3 text-center text-sm">
+                  <div>
+                    <p className="text-xs text-gray-600">Working Days</p>
+                    <p className="text-lg font-bold text-gray-800">{selectedPayslip.calculationSnapshot.workingDays}</p>
                   </div>
-                  <div className="bg-white p-3 rounded-lg shadow-sm">
-                    <p className="text-sm text-gray-600">Present Days</p>
-                    <p className="text-2xl font-bold text-green-600">{selectedPayslip.calculationSnapshot.presentDays}</p>
+                  <div>
+                    <p className="text-xs text-gray-600">Present</p>
+                    <p className="text-lg font-bold text-green-600">{selectedPayslip.calculationSnapshot.presentDays}</p>
                   </div>
-                  <div className="bg-white p-3 rounded-lg shadow-sm">
-                    <p className="text-sm text-gray-600">Paid Leave</p>
-                    <p className="text-2xl font-bold text-blue-600">{selectedPayslip.calculationSnapshot.paidLeaveDays}</p>
+                  <div>
+                    <p className="text-xs text-gray-600">Paid Leave</p>
+                    <p className="text-lg font-bold text-blue-600">{selectedPayslip.calculationSnapshot.paidLeaveDays}</p>
                   </div>
-                  <div className="bg-white p-3 rounded-lg shadow-sm">
-                    <p className="text-sm text-gray-600">Unpaid Leave</p>
-                    <p className="text-2xl font-bold text-red-600">{selectedPayslip.calculationSnapshot.unpaidLeaveDays}</p>
+                  <div>
+                    <p className="text-xs text-gray-600">Unpaid Leave</p>
+                    <p className="text-lg font-bold text-red-600">{selectedPayslip.calculationSnapshot.unpaidLeaveDays}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Footer */}
-              <div className="mt-8 pt-4 border-t-2 border-gray-300 text-sm text-gray-600">
-                <p className="mb-2">
-                  <span className="font-semibold">Generated on:</span> {new Date().toLocaleDateString("en-US", {
+              {/* Footer - Compact */}
+              <div className="pt-3 border-t border-gray-300 text-xs text-gray-600">
+                <p>
+                  <span className="font-semibold">Generated:</span> {new Date().toLocaleDateString("en-US", {
                     year: "numeric",
-                    month: "long",
+                    month: "short",
                     day: "numeric"
                   })}
                 </p>
-                <p className="italic">This is a computer-generated payslip and does not require a signature.</p>
+                <p className="italic mt-1">This is a computer-generated payslip.</p>
               </div>
             </div>
           </>
