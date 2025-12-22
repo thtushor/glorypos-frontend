@@ -252,18 +252,63 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   const handleRelease = () => {
     if (!payrollDetails) return;
 
-    // Validate paid amount - can pay up to final remaining (total - already paid)
-    const maxPayableAmount = payrollDetails.netPayableSalary;
+    // SUPER VALIDATION: Calculate maximum allowable payment
+    // Maximum = Current Month Net Payable + Previous Dues - Already Paid This Month
+    const currentMonthNetPayable = payrollDetails.currentMonthNetPayable;
+    const totalPreviousDues = payrollDetails.totalPreviousDues || 0;
+    const alreadyPaidThisMonth = payrollDetails.currentMonthPaidAmount || 0;
 
+    // Total amount that can be paid (including previous dues)
+    const totalPayableAmount = currentMonthNetPayable + totalPreviousDues;
+
+    // Maximum amount that can be paid in this transaction
+    // (Total payable - what's already been paid this month)
+    const maxPayableInThisTransaction = payrollDetails.netPayableSalary;
+
+    // Validation 1: Paid amount must be greater than 0
     if (editablePaidAmount <= 0) {
-      alert("Paid amount must be greater than 0");
+      alert("❌ Paid amount must be greater than 0");
       return;
     }
 
-    if (editablePaidAmount > maxPayableAmount) {
-      alert(`Paid amount cannot exceed final remaining amount: ${money.format(maxPayableAmount)}`);
+    // Validation 2: Cannot exceed the maximum payable amount
+    if (editablePaidAmount > maxPayableInThisTransaction) {
+      let errorMessage = `❌ Payment Limit Exceeded!\n\n`;
+      errorMessage += `You are trying to pay: ${money.format(editablePaidAmount)}\n`;
+      errorMessage += `Maximum allowed: ${money.format(maxPayableInThisTransaction)}\n\n`;
+      errorMessage += `Breakdown:\n`;
+      errorMessage += `• Current Month Net Payable: ${money.format(currentMonthNetPayable)}\n`;
+
+      if (totalPreviousDues > 0) {
+        errorMessage += `• Previous Dues: ${money.format(totalPreviousDues)}\n`;
+        errorMessage += `• Total Payable: ${money.format(totalPayableAmount)}\n`;
+      }
+
+      if (alreadyPaidThisMonth > 0) {
+        errorMessage += `• Already Paid This Month: ${money.format(alreadyPaidThisMonth)}\n`;
+        errorMessage += `• Remaining Due: ${money.format(maxPayableInThisTransaction)}\n`;
+      }
+
+      errorMessage += `\nPlease enter an amount not exceeding ${money.format(maxPayableInThisTransaction)}`;
+
+      alert(errorMessage);
       return;
     }
+
+    // Validation 3: Warning if paying more than current month (into previous dues)
+    if (totalPreviousDues > 0 && editablePaidAmount > payrollDetails.currentMonthRemainingDue) {
+      const payingToPreviousDues = editablePaidAmount - payrollDetails.currentMonthRemainingDue;
+      const confirmMessage = `You are paying ${money.format(editablePaidAmount)}\n\n` +
+        `This includes:\n` +
+        `• Current Month: ${money.format(payrollDetails.currentMonthRemainingDue)}\n` +
+        `• Previous Dues: ${money.format(payingToPreviousDues)}\n\n` +
+        `Do you want to continue?`;
+
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+    }
+
 
     // Calculate total deductions
     const totalDeductions =
