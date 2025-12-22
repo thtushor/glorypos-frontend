@@ -1,5 +1,5 @@
 import React, { useRef, useMemo } from "react";
-import { FaPrint, FaMoneyBill, FaCreditCard, FaWallet } from "react-icons/fa";
+import { FaPrint, FaMoneyBill, FaCreditCard, FaWallet, FaUtensils } from "react-icons/fa";
 // import LogoSvg from "./icons/LogoSvg";
 import { getExpiryDate } from "@/utils/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +11,7 @@ import { useReactToPrint } from "react-to-print";
 import LogoSvg from "./icons/LogoSvg";
 import money from "@/utils/money";
 import { useReceiptPrint, type Order, type PrintOptions } from "react-pos-engine";
+import { useAuth } from "@/context/AuthContext";
 // import { useAuth } from "@/context/AuthContext";
 
 interface InvoiceItem {
@@ -88,7 +89,11 @@ interface InvoiceProps {
 
 const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const kotRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef });
+  const kotPrintFn = useReactToPrint({ contentRef: kotRef });
+
+  const { user } = useAuth();
 
   // const auth = useAuth();
 
@@ -121,75 +126,75 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
     // Build custom fields array (individual fields)
     const individualFields: Array<{ key: string; value: string }> = [];
-    
+
     // Invoice Number
     if (invoiceData.invoiceNumber) {
       individualFields.push({ key: "Invoice #", value: invoiceData.invoiceNumber });
     }
-    
+
     // Table Number
     if (invoiceData.tableNumber) {
       individualFields.push({ key: "Table", value: invoiceData.tableNumber });
     }
-    
+
     // Guest Number
     if (invoiceData.guestNumber) {
       individualFields.push({ key: "Guests", value: String(invoiceData.guestNumber) });
     }
-    
+
     // Payment Method
     if (invoiceData.payment.method) {
-      const paymentMethodLabel = invoiceData.payment.method === "mobile_banking" 
-        ? "Mobile Banking" 
+      const paymentMethodLabel = invoiceData.payment.method === "mobile_banking"
+        ? "Mobile Banking"
         : invoiceData.payment.method.toUpperCase();
       individualFields.push({ key: "Payment Method", value: paymentMethodLabel });
     }
-    
+
     // Payment Status
     if (invoiceData.payment.status) {
       individualFields.push({ key: "Payment Status", value: invoiceData.payment.status });
     }
-    
+
     // Order Status
     if (invoiceData.orderStatus) {
       individualFields.push({ key: "Order Status", value: invoiceData.orderStatus });
     }
-    
+
     // Tax ID
     if (invoiceData.businessInfo.taxId) {
       individualFields.push({ key: "Tax ID", value: invoiceData.businessInfo.taxId });
     }
-    
+
     // Spec
     if (invoiceData.spec) {
       individualFields.push({ key: "Spec", value: invoiceData.spec });
     }
-    
+
     // Remaining Amount (if partial payment)
     if (invoiceData.payment.remainingAmount > 0) {
-      individualFields.push({ 
-        key: "Remaining Amount", 
-        value: money.format(Number(invoiceData.payment.remainingAmount)) 
+      individualFields.push({
+        key: "Remaining Amount",
+        value: money.format(Number(invoiceData.payment.remainingAmount))
       });
     }
-    
+
     // Special Notes as custom field
-    if (invoiceData.specialNotes !== undefined && 
-        invoiceData.specialNotes !== null && 
-        String(invoiceData.specialNotes).trim() !== "") {
+    if (invoiceData.specialNotes !== undefined &&
+      invoiceData.specialNotes !== null &&
+      String(invoiceData.specialNotes).trim() !== "") {
       individualFields.push({ key: "Special Notes", value: String(invoiceData.specialNotes) });
     }
 
     // Format custom fields into pairs with pipe separator (max 2 lines)
     // Each custom field entry will contain two field pairs separated by pipe
     const customFields: Array<{ key: string; value: string }> = [];
-    
+
     // Group fields into pairs - each custom field entry = one line with 2 field pairs
     // Max 2 lines = max 4 fields total
     for (let i = 0; i < individualFields.length && i < 4; i += 2) {
       const field1 = individualFields[i];
       const field2 = individualFields[i + 1];
-      
+
       if (field2) {
         // Two fields on one line: "Field1: Value1 | Field2: Value2"
         customFields.push({
@@ -204,14 +209,14 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         });
       }
     }
-    
+
     // If there are more than 4 fields, add remaining fields (but limit to 2 lines total)
     if (individualFields.length > 4) {
       // Start from field 4 (index 4) for the second line
       for (let i = 4; i < individualFields.length && i < 6; i += 2) {
         const field1 = individualFields[i];
         const field2 = individualFields[i + 1];
-        
+
         if (field2) {
           customFields.push({
             key: `${field1.key}: ${field1.value} | ${field2.key}: ${field2.value}`,
@@ -231,7 +236,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     if (invoiceData.payment.isPartial) {
       notes = "⚠ Partial Payment";
     }
-    
+
     if (!notes) {
       notes = "Thank you for your business!";
     }
@@ -302,6 +307,11 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       // Fallback to react-to-print if receipt order is not available
       reactToPrintFn();
     }
+  };
+
+  // Handle KOT print
+  const handleKOTPrint = () => {
+    kotPrintFn();
   };
 
   if (!orderId) return null;
@@ -421,9 +431,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                             </span>
                           )}
                           <span
-                            className={`font-medium ${
-                              showOriginalPrice ? "text-red-600" : ""
-                            }`}
+                            className={`font-medium ${showOriginalPrice ? "text-red-600" : ""
+                              }`}
                           >
                             {money.format(item.unitPrice)}
                           </span>
@@ -437,9 +446,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                             </span>
                           )}
                           <span
-                            className={`font-medium ${
-                              showOriginalPrice ? "text-red-600" : ""
-                            }`}
+                            className={`font-medium ${showOriginalPrice ? "text-red-600" : ""
+                              }`}
                           >
                             {money.format(item.subtotal)}
                           </span>
@@ -453,14 +461,14 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           </div>
 
           {/* Special Notes */}
-          {invoiceData.specialNotes !== undefined && 
-           invoiceData.specialNotes !== null && 
-           String(invoiceData.specialNotes).trim() !== "" && (
-            <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-              <h3 className="font-medium text-sm mb-1 text-yellow-800">Special Notes</h3>
-              <p className="text-sm text-yellow-700 whitespace-pre-wrap">{String(invoiceData.specialNotes)}</p>
-            </div>
-          )}
+          {invoiceData.specialNotes !== undefined &&
+            invoiceData.specialNotes !== null &&
+            String(invoiceData.specialNotes).trim() !== "" && (
+              <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <h3 className="font-medium text-sm mb-1 text-yellow-800">Special Notes</h3>
+                <p className="text-sm text-yellow-700 whitespace-pre-wrap">{String(invoiceData.specialNotes)}</p>
+              </div>
+            )}
 
           {/* Summary */}
           <div className="space-y-2 text-sm">
@@ -601,6 +609,89 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           </div>
         </div>
 
+        {/* KOT Receipt (Hidden, only for printing) */}
+        <div style={{ display: 'none' }}>
+          <div ref={kotRef} className="p-6 max-w-md mx-auto">
+            {/* KOT Header */}
+            <div className="text-center mb-4 border-b-2 border-black pb-3">
+              <h1 className="text-2xl font-bold">KITCHEN ORDER TICKET</h1>
+              <p className="text-sm mt-1">{invoiceData.businessInfo.name}</p>
+              <p className="text-xs mt-1">{new Date(invoiceData.date).toLocaleString()}</p>
+            </div>
+
+            {/* Order Info */}
+            <div className="mb-4 text-sm space-y-1">
+              <div className="flex justify-between font-bold text-base">
+                <span>Order #:</span>
+                <span>{invoiceData.invoiceNumber}</span>
+              </div>
+              {invoiceData.tableNumber && (
+                <div className="flex justify-between font-bold text-base">
+                  <span>Table:</span>
+                  <span>{invoiceData.tableNumber}</span>
+                </div>
+              )}
+              {invoiceData.guestNumber && (
+                <div className="flex justify-between">
+                  <span>Guests:</span>
+                  <span>{invoiceData.guestNumber}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Items Table */}
+            <div className="mb-4">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-y-2 border-black">
+                    <th className="text-left py-2 px-1">Item</th>
+                    <th className="text-center py-2 px-1 w-16">Qty</th>
+                    <th className="text-left py-2 px-1 w-24">Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoiceData.items.map((item, index) => (
+                    <tr key={index} className="border-b">
+                      <td className="py-3 px-1">
+                        <div>
+                          <p className="font-bold text-base">{item.productName}</p>
+                          {item.details && (
+                            <p className="text-xs text-gray-600 mt-0.5">{item.details}</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="text-center py-3 px-1">
+                        <span className="font-bold text-lg">{item.quantity}</span>
+                      </td>
+                      <td className="py-3 px-1">
+                        <div className="border-b border-gray-300 min-h-[30px]">
+                          {/* Empty space for handwritten remarks */}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Special Instructions */}
+            {invoiceData.specialNotes !== undefined &&
+              invoiceData.specialNotes !== null &&
+              String(invoiceData.specialNotes).trim() !== "" && (
+                <div className="mb-4 p-3 border-2 border-black rounded">
+                  <h3 className="font-bold text-sm mb-1">SPECIAL INSTRUCTIONS:</h3>
+                  <p className="text-sm whitespace-pre-wrap font-medium">{String(invoiceData.specialNotes)}</p>
+                </div>
+              )}
+
+            {/* Footer */}
+            <div className="mt-6 pt-3 border-t-2 border-black text-center">
+              <p className="text-sm font-medium">Total Items: {invoiceData.items.reduce((sum, item) => sum + item.quantity, 0)}</p>
+              <p className="text-xs mt-2 text-gray-600">Please prepare this order</p>
+            </div>
+          </div>
+        </div>
+
         {/* Actions */}
         <div className="border-t px-6 py-4 flex justify-end gap-4">
           <button
@@ -609,13 +700,21 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           >
             Close
           </button>
+          {user?.shopType === "restaurant" && <button
+            onClick={handleKOTPrint}
+            disabled={!invoiceData || invoiceData.items.length === 0}
+            className="px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FaUtensils className="w-4 h-4" />
+            Print KOT
+          </button>}
           <button
             onClick={handlePrint}
             disabled={!invoiceData || invoiceData.items.length === 0}
             className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaPrint className="w-4 h-4" />
-            Print
+            Print Invoice
           </button>
         </div>
       </div>
