@@ -1,6 +1,6 @@
 // components/ReleaseSalaryForm.tsx
 import React, { useEffect, useRef, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { FiCalendar, FiUser, FiDollarSign, FiClock, FiTrendingUp, FiTrendingDown, FiArrowRight, FiEdit3 } from "react-icons/fi";
 import {
@@ -149,6 +149,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   const [editablePaidAmount, setEditablePaidAmount] = useState<number>(0);
 
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const previewRef = useRef<HTMLDivElement>(null);
 
   // Fetch employees
@@ -231,6 +232,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   const { mutate: releaseMutation, isPending } = useMutation({
     mutationFn: (data: any) => AXIOS.post(PAYROLL_RELEASE, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["release-history"] });
       resetPayrollDetails();
       setSelectedUserId("");
       setMonth("");

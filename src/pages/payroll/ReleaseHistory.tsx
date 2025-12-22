@@ -517,7 +517,7 @@ const ReleaseHistory = () => {
                     {/* Due */}
                     <td className="px-6 py-5">
                       <div className="text-base text-nowrap font-bold text-orange-600">
-                        {money.format(item.calculationSnapshot.salaryBreakdown.due)}
+                        {money.format(parseFloat(item.netPayableSalary) - parseFloat(item.paidAmount))}
                       </div>
                     </td>
 

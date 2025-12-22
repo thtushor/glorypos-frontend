@@ -79,14 +79,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     ],
     queryFn: async () => {
       const email = userEmail;
-      if (!email) {
-        navigate("/login");
-        setUser(null);
-        console.log("navigating login.... due to no access token or email");
-        localStorage.removeItem("user");
-        return null;
-      }
-
       const response = await AXIOS.get(PROFILE_URL, {
         params: {
           email: email,
