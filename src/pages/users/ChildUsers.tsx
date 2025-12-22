@@ -429,31 +429,7 @@ const ChildUsers = () => {
               </div>
             </div>
 
-            <div>
-              <h3 className="text-lg font-medium mb-4">Permissions</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {Object.entries(selectedUser.permissions).map(
-                  ([key, value]) => (
-                    <div
-                      key={key}
-                      className="flex items-center justify-between p-2 bg-gray-50 rounded"
-                    >
-                      <span className="text-sm capitalize">
-                        {key.replace(/([A-Z])/g, " $1")}
-                      </span>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${value
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                          }`}
-                      >
-                        {value ? "Yes" : "No"}
-                      </span>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
+
           </div>
         )}
       </Modal>

@@ -227,7 +227,7 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
           label="Required Daily Hours"
         />
 
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Permissions
           </label>
@@ -250,7 +250,7 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
               </label>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
 
       <div className="flex justify-end">
