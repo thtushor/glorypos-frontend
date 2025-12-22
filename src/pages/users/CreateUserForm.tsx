@@ -107,15 +107,15 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
     mutation.mutate(formData);
   };
 
-  const handlePermissionChange = (key: keyof Permission) => {
-    setFormData({
-      ...formData,
-      permissions: {
-        ...formData.permissions,
-        [key]: !formData.permissions[key],
-      },
-    });
-  };
+  // const handlePermissionChange = (key: keyof Permission) => {
+  //   setFormData({
+  //     ...formData,
+  //     permissions: {
+  //       ...formData.permissions,
+  //       [key]: !formData.permissions[key],
+  //     },
+  //   });
+  // };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
