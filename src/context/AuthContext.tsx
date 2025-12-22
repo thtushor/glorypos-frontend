@@ -10,7 +10,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import AXIOS from "../api/network/Axios";
 import { LOGIN_URL, PROFILE_URL } from "../api/api";
-import { getCookiesAsObject } from "@/utils/cookies";
+// import { getCookiesAsObject } from "@/utils/cookies";
 
 interface User {
   email: string;
