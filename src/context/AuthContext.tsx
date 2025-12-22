@@ -75,14 +75,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   } = useQuery({
     queryKey: [
       PROFILE_URL,
-      { email: user?.child ? user?.child?.email : user?.email },
+      { email: userEmail },
     ],
     queryFn: async () => {
       const { access_token } = getCookiesAsObject();
-      const email = user?.child ? user?.child?.email : user?.email;
+      const email = userEmail;
       if (!access_token || !email) {
         navigate("/login");
         setUser(null);
+        console.log("navigating login.... due to no access token or email");
         localStorage.removeItem("user");
         return null;
       }
@@ -105,6 +106,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     if (error) {
       console.log("navigating login....");
       setUser(null);
+      console.log("navigating login.... due to error");
       localStorage.removeItem("user");
       navigate("/login");
     }
@@ -176,6 +178,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const logout = () => {
     setUser(null);
+    console.log("setUser data from logout", { user: null });
     localStorage.removeItem("user");
     document.cookie =
       "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
