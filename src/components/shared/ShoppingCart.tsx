@@ -117,6 +117,7 @@ function ShoppingCart({
   // Permission checks
   const canCreateOrder = hasPermission(PERMISSIONS.SALES.CREATE_ORDER);
   const canEditOrder = hasPermission(PERMISSIONS.SALES.EDIT_ORDER);
+  const canDeleteOrder = hasPermission(PERMISSIONS.SALES.DELETE_ORDER);
 
   const [customerInfo, setCustomerInfo] = useState({
     name: initialCustomerInfo?.name || "",
@@ -1190,25 +1191,29 @@ function ShoppingCart({
             <span>Scan Barcode</span>
           </button>
 
+
+
           {/* Delete Order Button - Only shown when editing an existing order */}
-          {orderId && (
-            <button
-              onClick={handleDeleteOrder}
-              disabled={deleteOrderMutation.isPending}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {deleteOrderMutation.isPending ? (
-                <>
-                  <Spinner size="16px" />
-                  <span>Deleting...</span>
-                </>
-              ) : (
-                <>
-                  <FaTrash className="w-4 h-4" />
-                  <span>Delete Order</span>
-                </>
-              )}
-            </button>
+          {orderId && canDeleteOrder && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <button
+                onClick={handleDeleteOrder}
+                disabled={deleteOrderMutation.isPending || !canDeleteOrder}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-md hover:bg-red-100 hover:border-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+              >
+                {deleteOrderMutation.isPending ? (
+                  <>
+                    <Spinner size="16px" />
+                    <span>Deleting Order...</span>
+                  </>
+                ) : (
+                  <>
+                    <FaTrash className="w-4 h-4" />
+                    <span>Delete Order</span>
+                  </>
+                )}
+              </button>
+            </div>
           )}
         </div>
       </div>
