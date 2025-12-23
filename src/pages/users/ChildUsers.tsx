@@ -9,9 +9,12 @@ import {
   FaEnvelope,
   FaPhone,
   FaEdit,
+  FaKey,
+  FaCopy,
+  FaExternalLinkAlt,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
-import { CHILD_USERS_URL } from "@/api/api";
+import { CHILD_USERS_URL, REQUEST_RESET_PASSWORD } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import Modal from "@/components/Modal";
 import { format } from "date-fns";
@@ -20,6 +23,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import debounce from "lodash/debounce";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
+import { useAuth } from "@/context/AuthContext";
 
 interface Parent {
   id: number;
@@ -70,9 +74,13 @@ const ChildUsers = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showResetLinkModal, setShowResetLinkModal] = useState(false);
+  const [resetLink, setResetLink] = useState("");
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const { hasPermission } = usePermission();
+
+  const { user } = useAuth();
 
   // Permission checks
   const canCreateUser = hasPermission(PERMISSIONS.USERS.CREATE_CHILD_USER);
@@ -115,6 +123,27 @@ const ChildUsers = () => {
     },
     onError: (error: any) => {
       toast.error(error?.message || "Failed to delete user");
+    },
+  });
+
+  // Reset Password Mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      const response = await AXIOS.post(REQUEST_RESET_PASSWORD, { userId: user?.id, email });
+      return response;
+    },
+    onSuccess: (data: any) => {
+      console.log({ data });
+      if (data?.data?.resetLink) {
+        setResetLink(data.data.resetLink);
+        setShowResetLinkModal(true);
+        toast.success("Password reset link generated successfully");
+      } else {
+        toast.error(data?.message || "Failed to generate reset link");
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to generate reset link");
     },
   });
 
@@ -275,40 +304,61 @@ const ChildUsers = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {format(new Date(user.createdAt), "MMM dd, yyyy")}
                   </td>
-                  <td className="px-6 py-4 text-right space-x-2 flex items-center">
-                    {canEditUser && (
+                  <td className="px-6 py-4 text-right space-x-2 flex items-center justify-end">
+                    <div className="flex items-center gap-3">
                       <button
                         onClick={() => {
-                          setSelectedUser(user);
-                          setShowEditModal(true);
+                          resetPasswordMutation.mutate({ email: user.email });
                         }}
-                        className="text-blue-600 hover:text-blue-800"
-                        title="Edit User"
+                        disabled={resetPasswordMutation.isPending}
+                        className="group relative inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-orange-700 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        title="Generate Password Reset Link"
                       >
-                        <FaEdit className="w-5 h-5" />
+                        <FaKey className="w-4 h-4" />
+                        <span className="hidden xl:inline">Reset Password</span>
+                        {resetPasswordMutation.isPending && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-orange-50 rounded-lg">
+                            <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                        )}
                       </button>
-                    )}
-                    {canViewDetails && (
-                      <button
-                        onClick={() => {
-                          setSelectedUser(user);
-                          setShowDetailsModal(true);
-                        }}
-                        className="text-brand-primary hover:text-brand-hover"
-                        title="View Details"
-                      >
-                        <FaUserCog className="w-5 h-5" />
-                      </button>
-                    )}
-                    {canDeleteUser && (
-                      <button
-                        onClick={() => handleDelete(user)}
-                        className="text-red-600 hover:text-red-800"
-                        title="Delete User"
-                      >
-                        <FaTrash className="w-5 h-5" />
-                      </button>
-                    )}
+                      {canEditUser && (
+                        <button
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setShowEditModal(true);
+                          }}
+                          className="group relative inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200"
+                          title="Edit User"
+                        >
+                          <FaEdit className="w-4 h-4" />
+                          <span className="hidden xl:inline">Edit</span>
+                        </button>
+                      )}
+                      {canViewDetails && (
+                        <button
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setShowDetailsModal(true);
+                          }}
+                          className="group relative inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-brand-primary bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 transition-all duration-200"
+                          title="View Details"
+                        >
+                          <FaUserCog className="w-4 h-4" />
+                          <span className="hidden xl:inline">Details</span>
+                        </button>
+                      )}
+                      {canDeleteUser && (
+                        <button
+                          onClick={() => handleDelete(user)}
+                          className="group relative inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-all duration-200"
+                          title="Delete User"
+                        >
+                          <FaTrash className="w-4 h-4" />
+                          <span className="hidden xl:inline">Delete</span>
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -442,6 +492,61 @@ const ChildUsers = () => {
 
           </div>
         )}
+      </Modal>
+
+      {/* Reset Link Modal */}
+      <Modal
+        isOpen={showResetLinkModal}
+        onClose={() => {
+          setShowResetLinkModal(false);
+          setResetLink("");
+        }}
+        title="Password Reset Link"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Password reset link has been generated. You can copy the link or open it in a new tab.
+          </p>
+
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500 mb-2">Reset Link:</p>
+            <p className="text-sm text-gray-900 break-all font-mono">
+              {resetLink}
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(resetLink);
+                toast.success("Reset link copied to clipboard!");
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md"
+            >
+              <FaCopy className="w-4 h-4" />
+              Copy Link
+            </button>
+            <button
+              onClick={() => {
+                window.open(resetLink, "_blank");
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+            >
+              <FaExternalLinkAlt className="w-4 h-4" />
+              Open Link
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              setShowResetLinkModal(false);
+              setResetLink("");
+            }}
+            className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-md"
+          >
+            Close
+          </button>
+        </div>
       </Modal>
     </div>
   );
