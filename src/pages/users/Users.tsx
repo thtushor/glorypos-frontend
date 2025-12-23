@@ -77,6 +77,8 @@ const Users = () => {
 
   console.log({ user: user?.user?.accountType });
 
+  const isSuperAdmin = user?.user?.accountType === "super admin";
+
   const [filters, setFilters] = useState({
     searchKey: "",
     accountStatus: "",
@@ -113,6 +115,25 @@ const Users = () => {
     },
     onError: (error: any) => {
       toast.error(error?.message || "Failed to update user");
+    },
+  });
+
+  // Toggle Verification Mutation
+  const toggleVerificationMutation = useMutation({
+    mutationFn: async ({ userId, isVerified }: { userId: number; isVerified: boolean }) => {
+      const response = await AXIOS.post(`/profile?userId=${userId}`, { isVerified });
+      return response;
+    },
+    onSuccess: (data) => {
+      if (data.status) {
+        toast.success("Verification status updated successfully");
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+      } else {
+        toast.error((data as any).message);
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to update verification status");
     },
   });
 
@@ -216,6 +237,11 @@ const Users = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Subscription
                 </th>
+                {isSuperAdmin && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Verified
+                  </th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -259,11 +285,10 @@ const Users = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          user.accountStatus === "active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
+                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.accountStatus === "active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                          }`}
                       >
                         {user.accountStatus}
                       </span>
@@ -290,13 +315,12 @@ const Users = () => {
                                   <span className="text-gray-600">Status:</span>
                                   <span
                                     className={`px-2 py-0.5 rounded-full text-xs font-medium
-                                    ${
-                                      sub.status === "active"
+                                    ${sub.status === "active"
                                         ? "bg-green-100 text-green-800"
                                         : sub.status === "expired"
-                                        ? "bg-red-100 text-red-800"
-                                        : "bg-yellow-100 text-yellow-800"
-                                    }`}
+                                          ? "bg-red-100 text-red-800"
+                                          : "bg-yellow-100 text-yellow-800"
+                                      }`}
                                   >
                                     {sub.status}
                                   </span>
@@ -307,13 +331,12 @@ const Users = () => {
                                   </span>
                                   <span
                                     className={`px-2 py-0.5 rounded-full text-xs font-medium
-                                    ${
-                                      sub.paymentStatus === "completed"
+                                    ${sub.paymentStatus === "completed"
                                         ? "bg-green-100 text-green-800"
                                         : sub.paymentStatus === "failed"
-                                        ? "bg-red-100 text-red-800"
-                                        : "bg-yellow-100 text-yellow-800"
-                                    }`}
+                                          ? "bg-red-100 text-red-800"
+                                          : "bg-yellow-100 text-yellow-800"
+                                      }`}
                                   >
                                     {sub.paymentStatus}
                                   </span>
@@ -355,6 +378,39 @@ const Users = () => {
                         </span>
                       )}
                     </td>
+                    {isSuperAdmin && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-1">
+                          <span
+                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.isVerified
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                              }`}
+                          >
+                            {user.isVerified ? "✓ Verified" : "⚠ Not Verified"}
+                          </span>
+                          <button
+                            onClick={() => {
+                              toggleVerificationMutation.mutate({
+                                userId: user.id,
+                                isVerified: !user.isVerified,
+                              });
+                            }}
+                            disabled={toggleVerificationMutation.isPending}
+                            className={`px-2 py-1 text-xs font-medium rounded transition-colors ${user.isVerified
+                              ? "bg-red-50 text-red-700 hover:bg-red-100"
+                              : "bg-green-50 text-green-700 hover:bg-green-100"
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            {toggleVerificationMutation.isPending
+                              ? "Updating..."
+                              : user.isVerified
+                                ? "Mark as Unverified"
+                                : "Mark as Verified"}
+                          </button>
+                        </div>
+                      </td>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => {
@@ -412,6 +468,7 @@ const Users = () => {
                   | "super admin"
                   | "admin"
                   | "default",
+                isVerified: formData.get("isVerified") === "true",
               });
             }}
             className="space-y-4"
@@ -524,6 +581,21 @@ const Users = () => {
                   <option value="shop">Shop</option>
                 </select>
               </div>
+              {isSuperAdmin && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Verification Status
+                  </label>
+                  <select
+                    name="isVerified"
+                    defaultValue={selectedUser.isVerified.toString()}
+                    className="mt-1 block border p-2 w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                  >
+                    <option value="true">Verified</option>
+                    <option value="false">Not Verified</option>
+                  </select>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-2">
