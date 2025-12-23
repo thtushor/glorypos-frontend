@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { checkPermission, checkAnyPermission } from "@/utils/permissionHelpers";
 import { FaLock, FaHome, FaExclamationTriangle } from "react-icons/fa";
@@ -8,6 +8,7 @@ interface PermissionRouteProps {
     requiredPermission?: string;
     requiredAnyPermissions?: string[];
     redirectTo?: string;
+    allowedRoles?: ("shop" | "super admin" | "admin")[];
 }
 
 /**
@@ -20,9 +21,15 @@ const PermissionRoute: React.FC<PermissionRouteProps> = ({
     requiredPermission,
     requiredAnyPermissions,
     redirectTo = "/dashboard",
+    allowedRoles
 }) => {
     const { user } = useAuth();
     const navigate = useNavigate();
+
+
+    if (!user || (allowedRoles && allowedRoles?.length > 0 && !allowedRoles.includes(user.accountType as any))) {
+        return <Navigate to={"/404"} replace />;
+    }
 
     // Check single permission
     if (requiredPermission) {

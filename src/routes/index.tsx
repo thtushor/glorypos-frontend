@@ -84,7 +84,7 @@ const AppRoutes = () => {
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route
-          element={<AuthorizedRoute allowedRoles={["shop"]} />}
+          element={<AuthorizedRoute allowedRoles={["shop", "super admin", "admin"]} />}
         >
           <Route
             path="dashboard"
@@ -98,10 +98,11 @@ const AppRoutes = () => {
               )
             }
           />
+
           <Route
             path="payroll"
             element={
-              <PermissionRoute requiredPermission={PERMISSIONS.PAYROLL.VIEW_PAYROLL}>
+              <PermissionRoute requiredPermission={PERMISSIONS.PAYROLL.VIEW_PAYROLL} allowedRoles={["shop"]}>
                 <Payroll />
               </PermissionRoute>
             }
