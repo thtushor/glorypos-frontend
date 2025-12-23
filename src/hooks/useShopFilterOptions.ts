@@ -38,6 +38,7 @@ export const useShopFilterOptions = () => {
                 params: {
                     page: 1,
                     pageSize: 1000000,
+                    showParentShop: true,
                 },
             });
             return response.data;
