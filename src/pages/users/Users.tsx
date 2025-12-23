@@ -123,7 +123,7 @@ const Users = () => {
 
   // Reset Password Mutation
   const resetPasswordMutation = useMutation({
-    mutationFn: async ({ userId, email }: { userId: number; email: string }) => {
+    mutationFn: async ({ email }: { userId: number; email: string }) => {
       const response = await AXIOS.post(REQUEST_RESET_PASSWORD, { userId: user?.user?.id, email });
       return response;
     },
@@ -134,11 +134,11 @@ const Users = () => {
         setShowResetLinkModal(true);
         toast.success("Password reset link generated successfully");
       } else {
-        toast.error("Failed to generate reset link");
+        toast.error(data?.message || "Failed to generate reset link");
       }
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Failed to generate reset link");
+      toast.error(error?.message || "Failed to generate reset link");
     },
   });
 

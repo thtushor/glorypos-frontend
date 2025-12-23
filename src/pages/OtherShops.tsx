@@ -6,6 +6,9 @@ import {
   FaFilter,
   FaPlus,
   FaPercent,
+  FaKey,
+  FaCopy,
+  FaExternalLinkAlt,
   // FaStore,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
@@ -23,7 +26,7 @@ import {
 } from "react-icons/fi";
 import { useAuth } from "@/context/AuthContext";
 import Spinner from "@/components/Spinner";
-import { SUB_SHOPS_URL, REGISTER_URL } from "@/api/api";
+import { SUB_SHOPS_URL, REGISTER_URL, REQUEST_RESET_PASSWORD } from "@/api/api";
 import LockIcon from "@/components/icons/LockIcon";
 import UserIcon from "@/components/icons/UserIcon";
 import EnvelopeIcon from "@/components/icons/EnvelopeIcon";
@@ -79,6 +82,8 @@ const OtherShops = () => {
   const [selectedShop, setSelectedShop] = useState<SubShop | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showResetLinkModal, setShowResetLinkModal] = useState(false);
+  const [resetLink, setResetLink] = useState("");
 
   const [filters, setFilters] = useState({
     searchKey: "",
@@ -146,6 +151,27 @@ const OtherShops = () => {
     },
   });
 
+  // Reset Password Mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      const response = await AXIOS.post(REQUEST_RESET_PASSWORD, { userId: user?.id, email });
+      return response;
+    },
+    onSuccess: (data: any) => {
+      console.log({ data });
+      if (data?.data?.resetLink) {
+        setResetLink(data.data.resetLink);
+        setShowResetLinkModal(true);
+        toast.success("Password reset link generated successfully");
+      } else {
+        toast.error(data?.message || "Failed to generate reset link");
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to generate reset link");
+    },
+  });
+
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
   };
@@ -171,7 +197,7 @@ const OtherShops = () => {
   };
 
   return (
-    <div className="p-3 space-y-6">
+    <div className="md:p-3 space-y-6">
       {/* Header */}
       <div className="flex sm:flex-row flex-col sm:justify-between gap-2 sm:items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Other Shops</h1>
@@ -331,16 +357,35 @@ const OtherShops = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {canManageSubShops && (
-                        <button
-                          onClick={() => {
-                            setSelectedShop(shop);
-                            setShowEditModal(true);
-                          }}
-                          className="text-brand-primary hover:text-brand-hover"
-                          title="Edit Shop"
-                        >
-                          <FaEdit className="w-5 h-5" />
-                        </button>
+                        <div className="flex items-center justify-end gap-3">
+                          <button
+                            onClick={() => {
+                              resetPasswordMutation.mutate({ email: shop.email });
+                            }}
+                            disabled={resetPasswordMutation.isPending}
+                            className="group relative inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-orange-700 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                            title="Generate Password Reset Link"
+                          >
+                            <FaKey className="w-4 h-4" />
+                            <span className="hidden xl:inline">Reset Password</span>
+                            {resetPasswordMutation.isPending && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-orange-50 rounded-lg">
+                                <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+                              </div>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedShop(shop);
+                              setShowEditModal(true);
+                            }}
+                            className="group relative inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-brand-primary bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 transition-all duration-200"
+                            title="Edit Shop Details"
+                          >
+                            <FaEdit className="w-4 h-4" />
+                            <span className="hidden xl:inline">Edit</span>
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -732,6 +777,61 @@ const OtherShops = () => {
             </div>
           </form>
         )}
+      </Modal>
+
+      {/* Reset Link Modal */}
+      <Modal
+        isOpen={showResetLinkModal}
+        onClose={() => {
+          setShowResetLinkModal(false);
+          setResetLink("");
+        }}
+        title="Password Reset Link"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Password reset link has been generated. You can copy the link or open it in a new tab.
+          </p>
+
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500 mb-2">Reset Link:</p>
+            <p className="text-sm text-gray-900 break-all font-mono">
+              {resetLink}
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(resetLink);
+                toast.success("Reset link copied to clipboard!");
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md"
+            >
+              <FaCopy className="w-4 h-4" />
+              Copy Link
+            </button>
+            <button
+              onClick={() => {
+                window.open(resetLink, "_blank");
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+            >
+              <FaExternalLinkAlt className="w-4 h-4" />
+              Open Link
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              setShowResetLinkModal(false);
+              setResetLink("");
+            }}
+            className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-md"
+          >
+            Close
+          </button>
+        </div>
       </Modal>
     </div>
   );
