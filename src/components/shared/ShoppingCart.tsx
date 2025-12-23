@@ -26,7 +26,7 @@ import {
 } from "react-icons/fa";
 import Modal from "../Modal";
 import AXIOS from "@/api/network/Axios";
-import { CHILD_USERS_URL, ORDERS_URL } from "@/api/api";
+import { CHILD_USERS_URL, ORDERS_URL, DELETE_ORDERS_URL } from "@/api/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import Spinner from "../Spinner";
@@ -496,6 +496,32 @@ function ShoppingCart({
     },
   });
 
+  // Delete Order Mutation
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (orderIdToDelete: number) => {
+      const response = await AXIOS.post(`${DELETE_ORDERS_URL}/${orderIdToDelete}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Order deleted successfully");
+      setCart([]);
+      setAdjustments({
+        tax: { type: "percentage", value: 0 },
+        discount: { type: "percentage", value: 0 },
+        priceAdjustments: {},
+        salesPriceAdjustments: {},
+        discountAdjustments: {},
+      });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+      // Optionally redirect or close modal
+      // window.location.href = "/orders"; // Redirect to orders page
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to delete order");
+    },
+  });
+
   const updateDiscount = (newDiscount?: number) => {
     const formattedDiscount = newDiscount
       ? formatCurrency(newDiscount)
@@ -589,6 +615,16 @@ function ShoppingCart({
       window.print();
       document.body.innerHTML = originalContent;
       window.location.reload(); // Reload to restore React app
+    }
+  };
+
+  const handleDeleteOrder = () => {
+    if (!orderId) {
+      toast.error("No order ID found");
+      return;
+    }
+    if (window.confirm("Are you sure you want to delete this order? This action cannot be undone.")) {
+      deleteOrderMutation.mutate(orderId);
     }
   };
 
@@ -1153,6 +1189,27 @@ function ShoppingCart({
             <FaQrcode className="w-5 h-5" />
             <span>Scan Barcode</span>
           </button>
+
+          {/* Delete Order Button - Only shown when editing an existing order */}
+          {orderId && (
+            <button
+              onClick={handleDeleteOrder}
+              disabled={deleteOrderMutation.isPending}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {deleteOrderMutation.isPending ? (
+                <>
+                  <Spinner size="16px" />
+                  <span>Deleting...</span>
+                </>
+              ) : (
+                <>
+                  <FaTrash className="w-4 h-4" />
+                  <span>Delete Order</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
