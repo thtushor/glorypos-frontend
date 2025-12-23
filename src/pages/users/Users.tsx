@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FaSearch, FaEdit, FaFilter } from "react-icons/fa";
+import { FaSearch, FaEdit, FaFilter, FaKey, FaCopy, FaExternalLinkAlt } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import { toast } from "react-toastify";
 import Pagination from "@/components/Pagination";
@@ -18,6 +18,7 @@ import { useAuth } from "@/context/AuthContext";
 import Spinner from "@/components/Spinner";
 import { MdSubscriptions } from "react-icons/md";
 import { format } from "date-fns";
+import { REQUEST_RESET_PASSWORD } from "@/api/api";
 
 interface User {
   id: number;
@@ -73,6 +74,8 @@ const Users = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showResetLinkModal, setShowResetLinkModal] = useState(false);
+  const [resetLink, setResetLink] = useState("");
   const user = useAuth();
 
   console.log({ user: user?.user?.accountType });
@@ -115,6 +118,27 @@ const Users = () => {
     },
     onError: (error: any) => {
       toast.error(error?.message || "Failed to update user");
+    },
+  });
+
+  // Reset Password Mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, email }: { userId: number; email: string }) => {
+      const response = await AXIOS.post(REQUEST_RESET_PASSWORD, { userId: user?.user?.id, email });
+      return response;
+    },
+    onSuccess: (data: any) => {
+      console.log({ data });
+      if (data?.data?.resetLink) {
+        setResetLink(data.data.resetLink);
+        setShowResetLinkModal(true);
+        toast.success("Password reset link generated successfully");
+      } else {
+        toast.error("Failed to generate reset link");
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to generate reset link");
     },
   });
 
@@ -365,8 +389,8 @@ const Users = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.isVerified
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
                             }`}
                         >
                           {user.isVerified ? "✓ Verified" : "⚠ Not Verified"}
@@ -374,15 +398,30 @@ const Users = () => {
                       </td>
                     )}
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => {
-                          setSelectedUser(user);
-                          setShowEditModal(true);
-                        }}
-                        className="text-brand-primary hover:text-brand-hover"
-                      >
-                        <FaEdit className="w-5 h-5" />
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {isSuperAdmin && (
+                          <button
+                            onClick={() => {
+                              resetPasswordMutation.mutate({ userId: user.id, email: user.email });
+                            }}
+                            disabled={resetPasswordMutation.isPending}
+                            className="text-orange-600 hover:text-orange-800 disabled:opacity-50"
+                            title="Send Password Reset"
+                          >
+                            <FaKey className="w-5 h-5" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setShowEditModal(true);
+                          }}
+                          className="text-brand-primary hover:text-brand-hover"
+                          title="Edit User"
+                        >
+                          <FaEdit className="w-5 h-5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -578,6 +617,61 @@ const Users = () => {
             </div>
           </form>
         )}
+      </Modal>
+
+      {/* Reset Link Modal */}
+      <Modal
+        isOpen={showResetLinkModal}
+        onClose={() => {
+          setShowResetLinkModal(false);
+          setResetLink("");
+        }}
+        title="Password Reset Link"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Password reset link has been generated. You can copy the link or open it in a new tab.
+          </p>
+
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500 mb-2">Reset Link:</p>
+            <p className="text-sm text-gray-900 break-all font-mono">
+              {resetLink}
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(resetLink);
+                toast.success("Reset link copied to clipboard!");
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md"
+            >
+              <FaCopy className="w-4 h-4" />
+              Copy Link
+            </button>
+            <button
+              onClick={() => {
+                window.open(resetLink, "_blank");
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+            >
+              <FaExternalLinkAlt className="w-4 h-4" />
+              Open Link
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              setShowResetLinkModal(false);
+              setResetLink("");
+            }}
+            className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-md"
+          >
+            Close
+          </button>
+        </div>
       </Modal>
     </div>
   );
