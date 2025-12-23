@@ -161,7 +161,7 @@ const Users = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="md:p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-900">Users</h1>
@@ -398,17 +398,23 @@ const Users = () => {
                       </td>
                     )}
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-3">
                         {isSuperAdmin && (
                           <button
                             onClick={() => {
                               resetPasswordMutation.mutate({ userId: user.id, email: user.email });
                             }}
                             disabled={resetPasswordMutation.isPending}
-                            className="text-orange-600 hover:text-orange-800 disabled:opacity-50"
-                            title="Send Password Reset"
+                            className="group relative inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-orange-700 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                            title="Generate Password Reset Link"
                           >
-                            <FaKey className="w-5 h-5" />
+                            <FaKey className="w-4 h-4" />
+                            <span className="hidden xl:inline">Reset Password</span>
+                            {resetPasswordMutation.isPending && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-orange-50 rounded-lg">
+                                <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+                              </div>
+                            )}
                           </button>
                         )}
                         <button
@@ -416,10 +422,11 @@ const Users = () => {
                             setSelectedUser(user);
                             setShowEditModal(true);
                           }}
-                          className="text-brand-primary hover:text-brand-hover"
-                          title="Edit User"
+                          className="group relative inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-brand-primary bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 transition-all duration-200"
+                          title="Edit User Details"
                         >
-                          <FaEdit className="w-5 h-5" />
+                          <FaEdit className="w-4 h-4" />
+                          <span className="hidden xl:inline">Edit</span>
                         </button>
                       </div>
                     </td>
