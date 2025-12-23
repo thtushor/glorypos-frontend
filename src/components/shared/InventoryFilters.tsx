@@ -1,27 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 import { FaSearch } from "react-icons/fa";
-import AXIOS from "@/api/network/Axios";
-import { SUB_SHOPS_URL } from "@/api/api";
 import Spinner from "@/components/Spinner";
-import { useAuth } from "@/context/AuthContext";
-
-interface SubShop {
-  id: number;
-  fullName: string;
-  email: string;
-  businessName: string;
-  accountType: string;
-}
-
-interface SubShopResponse {
-  users: SubShop[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    totalPages: number;
-    totalItems: number;
-  };
-}
+import { useShopFilterOptions } from "@/hooks/useShopFilterOptions";
 
 interface InventoryFiltersProps {
   searchKey: string;
@@ -38,21 +17,8 @@ const InventoryFilters = ({
   onShopIdChange,
   searchPlaceholder = "Search...",
 }: InventoryFiltersProps) => {
-
-  const { user } = useAuth();
-  // Fetch all shops with pageSize 1000000
-  const { data: shopData, isLoading: isLoadingShops } = useQuery<SubShopResponse>({
-    queryKey: ["sub-shops-for-filter"],
-    queryFn: async () => {
-      const response = await AXIOS.get(SUB_SHOPS_URL, {
-        params: {
-          page: 1,
-          pageSize: 1000000,
-        },
-      });
-      return response.data;
-    },
-  });
+  // Use the custom hook for shop filter options
+  const { shops, isLoading: isLoadingShops } = useShopFilterOptions();
 
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -82,7 +48,7 @@ const InventoryFilters = ({
               Loading shops...
             </option>
           ) : (
-            ([{ ...(user as unknown as SubShop) }, ...(shopData?.users || [])])?.map((shop: SubShop) => (
+            shops?.map((shop) => (
               <option key={shop?.id} value={shop?.id}>
                 {shop?.businessName || shop?.fullName}
               </option>
