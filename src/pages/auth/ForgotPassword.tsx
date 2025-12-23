@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { FaEnvelope } from "react-icons/fa";
 import LogoSvg from "@/components/icons/LogoSvg";
 import LoginContainer from "@/components/LoginContainer";
+import { REQUEST_RESET_PASSWORD } from "@/api/api";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -13,13 +14,12 @@ const ForgotPassword = () => {
 
   const resetPasswordMutation = useMutation({
     mutationFn: async (email: string) => {
-      const response = await AXIOS.post("/request-reset", { email });
-      return response.data;
+      const response = await AXIOS.post(REQUEST_RESET_PASSWORD, { email });
+      return response;
     },
-    onSuccess: () => {
-      toast.success(
-        "Password reset instructions have been sent to your email address"
-      );
+    onSuccess: (data: any) => {
+      console.log({ data })
+      toast.success(data?.message);
       // Clear the form
       setEmail("");
       // Redirect to login after 3 seconds
@@ -28,10 +28,7 @@ const ForgotPassword = () => {
       }, 3000);
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to send reset instructions. Please try again."
-      );
+      toast.error(error?.response?.data?.message);
     },
   });
 

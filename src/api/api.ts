@@ -13,6 +13,8 @@ export const REGISTER_URL = `${BASE_URL}/register`;
 export const LOGIN_URL = `${BASE_URL}/login`;
 export const PROFILE_URL = `${BASE_URL}/profile`;
 
+export const REQUEST_RESET_PASSWORD = `${BASE_URL}/request-reset`;
+
 // Product API
 export const PRODUCT_URL = `${BASE_URL}/products`;
 export const DELETE_PRODUCT_URL = `${BASE_URL}/products/delete`;
