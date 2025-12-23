@@ -118,24 +118,7 @@ const Users = () => {
     },
   });
 
-  // Toggle Verification Mutation
-  const toggleVerificationMutation = useMutation({
-    mutationFn: async ({ userId, isVerified }: { userId: number; isVerified: boolean }) => {
-      const response = await AXIOS.post(`/profile?userId=${userId}`, { isVerified });
-      return response;
-    },
-    onSuccess: (data) => {
-      if (data.status) {
-        toast.success("Verification status updated successfully");
-        queryClient.invalidateQueries({ queryKey: ["users"] });
-      } else {
-        toast.error((data as any).message);
-      }
-    },
-    onError: (error: any) => {
-      toast.error(error?.message || "Failed to update verification status");
-    },
-  });
+
 
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
@@ -380,35 +363,14 @@ const Users = () => {
                     </td>
                     {isSuperAdmin && (
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col gap-1">
-                          <span
-                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.isVerified
+                        <span
+                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.isVerified
                               ? "bg-green-100 text-green-800"
                               : "bg-yellow-100 text-yellow-800"
-                              }`}
-                          >
-                            {user.isVerified ? "✓ Verified" : "⚠ Not Verified"}
-                          </span>
-                          <button
-                            onClick={() => {
-                              toggleVerificationMutation.mutate({
-                                userId: user.id,
-                                isVerified: !user.isVerified,
-                              });
-                            }}
-                            disabled={toggleVerificationMutation.isPending}
-                            className={`px-2 py-1 text-xs font-medium rounded transition-colors ${user.isVerified
-                              ? "bg-red-50 text-red-700 hover:bg-red-100"
-                              : "bg-green-50 text-green-700 hover:bg-green-100"
-                              } disabled:opacity-50 disabled:cursor-not-allowed`}
-                          >
-                            {toggleVerificationMutation.isPending
-                              ? "Updating..."
-                              : user.isVerified
-                                ? "Mark as Unverified"
-                                : "Mark as Verified"}
-                          </button>
-                        </div>
+                            }`}
+                        >
+                          {user.isVerified ? "✓ Verified" : "⚠ Not Verified"}
+                        </span>
                       </td>
                     )}
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
