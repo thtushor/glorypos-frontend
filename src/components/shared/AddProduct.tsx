@@ -51,7 +51,7 @@ function AddProduct({
   const canAdjustStock = hasPermission(PERMISSIONS.INVENTORY.ADJUST_STOCK);
 
   const isRestaurent = user?.shopType === "restaurant";
-  const currentShopId = user?.child?.id ?? user?.id;
+  const currentShopId = user?.id;
   const [enableVariants, setEnableVariants] = useState(false);
 
   // Helper function to build API params with shopId

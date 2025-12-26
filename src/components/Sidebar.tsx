@@ -99,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
                   {/* ✅ Shop Name */}
                   <span className="text-xs capitalize font-bold text-gray-50 py-1 bg-green-500 rounded-md truncate px-2">
-                    {user.shopType || "Shop"}
+                    {user.shopType==="normal"  ? "Normal Shop":user.shopType==="restaurant" ? user?.shopType : user?.shopType || "Shop"}
                   </span>
 
                   {/* ✅ If Child Shop → Show Parent Shop Info */}
@@ -127,7 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                     >
                       <FaStore className="w-4 h-4 text-brand-primary" />
                       <span className="font-bold text-brand-primary">
-                        {totalShops}
+                        {totalShops-1}
                       </span>
                       <span className="text-gray-600">
                         {totalShops === 1 ? "Sub Shop" : "Sub Shops"}
@@ -148,7 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                     </span>
                   ) : totalShops > 0 ? (
                     <span className="text-xs font-bold text-brand-primary bg-brand-primary/10 rounded-full w-6 h-6 flex items-center justify-center">
-                      {totalShops}
+                      {totalShops-1}
                     </span>
                   ) : null}
                 </div>
