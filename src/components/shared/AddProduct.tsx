@@ -56,7 +56,8 @@ function AddProduct({
 
   // Helper function to build API params with shopId
   const getApiParams = () => {
-    return currentShopId ? { shopId: currentShopId } : {};
+    return {};
+    // return currentShopId ? { shopId: currentShopId } : {};
   };
 
   const [productId, setProductId] = useState<number | undefined>(
@@ -75,7 +76,7 @@ function AddProduct({
   );
   const [isLoadingImage, setIsLoadingImage] = useState(false);
 
-  console.log({ productData, imagePreviews, formData });
+  // console.log({ productData, imagePreviews, formData });
   // Update previews when productData changes
   useEffect(() => {
     const images = productData.images || [];
