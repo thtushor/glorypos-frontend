@@ -99,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
                   {/* ✅ Shop Name */}
                   <span className="text-xs capitalize font-bold text-gray-50 py-1 bg-green-500 rounded-md truncate px-2">
-                    {user.shopType==="normal"  ? "Normal Shop":user.shopType==="restaurant" ? user?.shopType : user?.shopType || "Shop"}
+                    {user.shopType==="normal"  ? "Shop":user.shopType==="restaurant" ? user?.shopType : user?.shopType || "Shop"}
                   </span>
 
                   {/* ✅ If Child Shop → Show Parent Shop Info */}
