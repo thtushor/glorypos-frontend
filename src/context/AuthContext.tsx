@@ -93,9 +93,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     enabled: !!(userEmail) && !justLoggedIn, // Don't fetch if user just logged in
   });
 
-
-  console.log({ error })
-
   useEffect(() => {
     if (error) {
       console.log("navigating login....");
