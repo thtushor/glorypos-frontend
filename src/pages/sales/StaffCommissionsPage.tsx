@@ -9,13 +9,14 @@ import {
 } from "react-icons/fa";
 // import { BiSpreadsheet } from "react-icons/bi";
 import AXIOS from "@/api/network/Axios";
-import { SUB_SHOPS_URL, CHILD_USERS_URL, COMMISSIONS_URL } from "@/api/api";
+import { CHILD_USERS_URL, COMMISSIONS_URL } from "@/api/api";
 import Pagination from "@/components/Pagination";
 import { toast } from "react-toastify";
 import Spinner from "@/components/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import money from "@/utils/money";
 import { useParams } from "react-router-dom";
+import { useShopFilterOptions } from "@/hooks/useShopFilterOptions";
 
 
 interface CommissionItem {
@@ -98,6 +99,7 @@ const StaffCommissionsPage: React.FC = () => {
     page: 1,
     pageSize: 20,
     staffId: urlStaffId ? Number(urlStaffId) : undefined,
+    shopId: user?.id
   });
 
   // Update staffId filter when URL param changes
@@ -107,21 +109,8 @@ const StaffCommissionsPage: React.FC = () => {
     }
   }, [urlStaffId]);
 
-  // Fetch Shops
-  const { data: shopData, isLoading: isLoadingShops } = useQuery({
-    queryKey: ["sub-shops-for-commissions-filter"],
-    queryFn: async () => {
-      const response = await AXIOS.get(SUB_SHOPS_URL, {
-        params: {
-          page: 1,
-          pageSize: 10000,
-        },
-      });
-      return response.data;
-    },
-  });
-
-  const shops = shopData?.users || [];
+  
+const {shops,isLoading:isLoadingShops} = useShopFilterOptions();
 
   // Fetch Active Staff/Child Users
   const { data: staffData, isLoading: isLoadingStaff } = useQuery({

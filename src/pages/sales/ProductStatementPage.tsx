@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FaSearch, FaFilter } from "react-icons/fa";
 import { BiSpreadsheet } from "react-icons/bi";
 import AXIOS from "@/api/network/Axios";
-import { SUB_SHOPS_URL, CHILD_USERS_URL } from "@/api/api";
+import { CHILD_USERS_URL } from "@/api/api";
 import Pagination from "@/components/Pagination";
 import { toast } from "react-toastify";
 import ProductStatement from "@/components/ProductStatement";
