@@ -2,7 +2,6 @@ import {
   BRANDS_URL,
   CATEGORY_URL,
   fetchProducts,
-  SUB_SHOPS_URL,
   UNITS_URL,
 } from "@/api/api";
 import AXIOS from "@/api/network/Axios";
@@ -27,6 +26,7 @@ import { VariantSelectionModal } from "./VariantSelectionModal";
 import { CartItem } from "@/types/cartItemType";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
+import { useShopFilterOptions } from "@/hooks/useShopFilterOptions";
 
 function CartProductSection({
   showMobileCart,
@@ -58,7 +58,8 @@ function CartProductSection({
 
   const [searchKey, setSearchKey] = useState("");
   //   const [sku, setSku] = useState("");
-  const [shopId, setShopId] = useState("");
+  const [shopId, setShopId] = useState(user?.id?.toString()||"");
+
   const [selectedCategory, setSelectedCategory] = useState<number | "all">(
     "all"
   );
@@ -71,9 +72,11 @@ function CartProductSection({
 
   const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
   const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
+  
   const [selectedGender, setSelectedGender] = useState<
     "men" | "women" | "others" | "all"
   >("all");
+
   const [modelNo, setModelNo] = useState("");
   const [priceRange, setPriceRange] = useState<{ min?: number; max?: number }>({
     min: undefined,
@@ -180,21 +183,8 @@ function CartProductSection({
     },
   });
 
-  // Fetch Shops
-  const { data: shopData, isLoading: isLoadingShops } = useQuery({
-    queryKey: ["sub-shops-for-filter"],
-    queryFn: async () => {
-      const response = await AXIOS.get(SUB_SHOPS_URL, {
-        params: {
-          page: 1,
-          pageSize: 10000,
-        },
-      });
-      return response.data;
-    },
-  });
-
-  const shops = shopData?.users || [];
+  // Fetch Shops using custom hook
+  const { shops, isLoading: isLoadingShops } = useShopFilterOptions();
 
   // Reset to page 1 when filters change
   const handleFilterChange = () => {
@@ -473,10 +463,7 @@ function CartProductSection({
                           Loading shops...
                         </option>
                       ) : (
-                        [
-                          ...(user?.id ? [{ id: user.id, ...user }] : []),
-                          ...shops,
-                        ]
+                        shops
                           .filter((shop: any) => shop?.id != null)
                           .map((shop: any) => (
                             <option key={shop.id} value={shop.id}>
