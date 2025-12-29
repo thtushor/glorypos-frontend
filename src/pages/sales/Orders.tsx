@@ -15,6 +15,7 @@ import DashBoardProduct from "../DashBoardProduct";
 import { useAuth } from "@/context/AuthContext";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
+import { useShopFilterOptions } from "@/hooks/useShopFilterOptions";
 
 interface OrderItem {
   id: number;
@@ -84,6 +85,7 @@ interface FilterParams {
   paymentMethod?: string;
   startDate?: string;
   endDate?: string;
+  shopId?:string;
 }
 
 const Orders: React.FC = () => {
@@ -101,10 +103,13 @@ const Orders: React.FC = () => {
   const [filters, setFilters] = useState<FilterParams>({
     page: 1,
     pageSize: 20,
+    shopId:user?.id?.toString()
   });
 
   const [isOpen, setIsOpen] = useState(false);
   const [adjustOrderModalOpen, setAdjustOrderModalOpen] = useState(false);
+
+  const {shops,isLoading: isLoadingShops} = useShopFilterOptions();
 
   // Fetch Orders
   const {
@@ -202,7 +207,7 @@ const Orders: React.FC = () => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search orders..."
+                placeholder="Search by order, customer name, phone"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-lg"
@@ -268,6 +273,36 @@ const Orders: React.FC = () => {
             <option value="card">Card</option>
             <option value="mobile_banking">Mobile Banking</option>
           </select>
+
+          {/* Shop Filter */}
+              <select
+                value={filters.shopId || ""}
+                onChange={(e) =>
+                  handleFilterChange(
+                    "shopId",
+                    e.target.value
+                  )
+                  
+                }
+                disabled={isLoadingShops}
+                className="border rounded-lg p-2"
+              >
+                <option value="">All Shops</option>
+                {isLoadingShops ? (
+                  <option value="" disabled>
+                    Loading shops...
+                  </option>
+                ) : (
+                  shops
+                    .filter((shop: any) => shop?.id != null)
+                    .map((shop: any) => (
+                      <option key={shop.id} value={shop.id}>
+                        {shop.businessName || shop.fullName}
+                      </option>
+                    ))
+                )}
+              </select>
+            
 
           <div className="flex gap-2">
             <input
@@ -353,7 +388,7 @@ const Orders: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ) : ordersData?.orders.length === 0 ? (
+              ) : ordersData?.orders?.length === 0 ? (
                 <tr>
                   <td
                     colSpan={11}

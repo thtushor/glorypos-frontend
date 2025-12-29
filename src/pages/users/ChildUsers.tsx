@@ -24,6 +24,7 @@ import debounce from "lodash/debounce";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
 import { useAuth } from "@/context/AuthContext";
+import { useShopFilterOptions } from "@/hooks/useShopFilterOptions";
 
 interface Parent {
   id: number;
@@ -93,6 +94,7 @@ const ChildUsers = () => {
     searchKey: searchParams.get("searchKey") || "",
     role: searchParams.get("role") || "",
     status: searchParams.get("status") || "",
+    parentUserId: user?.id?.toString()||""
   });
   const page = Number(searchParams.get("page")) || 1;
   const pageSize = Number(searchParams.get("pageSize")) || 10;
@@ -106,6 +108,7 @@ const ChildUsers = () => {
         ...(filters.searchKey && { searchKey: filters.searchKey }),
         ...(filters.role && { role: filters.role }),
         ...(filters.status && { status: filters.status }),
+        ...(filters.parentUserId && {parentUserId: filters?.parentUserId})
       });
       const response = await AXIOS.get(`${CHILD_USERS_URL}?${params}`);
       return response.data;
@@ -169,6 +172,8 @@ const ChildUsers = () => {
     });
   };
 
+  const { shops, isLoading: isLoadingShops } = useShopFilterOptions();
+
   //   if (isLoading) {
   //     return (
   //       <div className="flex justify-center items-center h-64">
@@ -222,6 +227,34 @@ const ChildUsers = () => {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
+
+
+        {/* Shop Filter */}
+        <select
+          value={filters.parentUserId || ""}
+          onChange={(e) =>
+            updateFilters({ ...filters, parentUserId: e.target.value })
+
+          }
+          disabled={isLoadingShops}
+          className="border rounded-lg p-2"
+        >
+          <option value="">All Shops</option>
+          {isLoadingShops ? (
+            <option value="" disabled>
+              Loading shops...
+            </option>
+          ) : (
+            shops
+              .filter((shop: any) => shop?.id != null)
+              .map((shop: any) => (
+                <option key={shop.id} value={shop.id}>
+                  {shop.businessName || shop.fullName}
+                </option>
+              ))
+          )}
+        </select>
+
       </div>
 
       <div className="overflow-x-auto">
