@@ -109,8 +109,8 @@ const StaffCommissionsPage: React.FC = () => {
     }
   }, [urlStaffId]);
 
-  
-const {shops,isLoading:isLoadingShops} = useShopFilterOptions();
+
+  const { shops, isLoading: isLoadingShops } = useShopFilterOptions();
 
   // Fetch Active Staff/Child Users
   const { data: staffData, isLoading: isLoadingStaff } = useQuery({
@@ -368,7 +368,7 @@ const {shops,isLoading:isLoadingShops} = useShopFilterOptions();
                     Loading shops...
                   </option>
                 ) : (
-                  [...(user?.id ? [{ id: user.id, ...user }] : []), ...shops]
+                  shops
                     .filter((shop: any) => shop?.id != null)
                     .map((shop: any) => (
                       <option key={shop.id} value={shop.id}>
