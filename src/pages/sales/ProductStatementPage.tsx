@@ -12,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import money from "@/utils/money";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
+import { useShopFilterOptions } from "@/hooks/useShopFilterOptions";
 
 interface StatementItem {
   id: number;
@@ -131,23 +132,10 @@ const ProductStatementPage: React.FC = () => {
   const [filters, setFilters] = useState<FilterParams>({
     page: 1,
     pageSize: 20,
+    productUserId: user?.id
   });
 
-  // Fetch Shops (similar to POS.tsx)
-  const { data: shopData, isLoading: isLoadingShops } = useQuery({
-    queryKey: ["sub-shops-for-filter"],
-    queryFn: async () => {
-      const response = await AXIOS.get(SUB_SHOPS_URL, {
-        params: {
-          page: 1,
-          pageSize: 10000,
-        },
-      });
-      return response.data;
-    },
-  });
-
-  const shops = shopData?.users || [];
+  const { shops, isLoading: isLoadingShops } = useShopFilterOptions();
 
   // Fetch Active Staff/Child Users (similar to POS.tsx)
   const { data: staffData, isLoading: isLoadingStaff } = useQuery({
@@ -461,7 +449,7 @@ const ProductStatementPage: React.FC = () => {
                     Loading shops...
                   </option>
                 ) : (
-                  [...(user?.id ? [{ id: user.id, ...user }] : []), ...shops]
+                  shops
                     .filter((shop: any) => shop?.id != null)
                     .map((shop: any) => (
                       <option key={shop.id} value={shop.id}>
@@ -498,7 +486,7 @@ const ProductStatementPage: React.FC = () => {
               />
             </div>
 
-           
+
 
             {/* Staff/Commission Filter */}
             <div className="space-y-1">
@@ -629,7 +617,7 @@ const ProductStatementPage: React.FC = () => {
                         {item?.Order?.orderNumber}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-[300px]">
                           {/* Product Image */}
                           <div className="relative flex-shrink-0 group">
                             <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 shadow-sm">
