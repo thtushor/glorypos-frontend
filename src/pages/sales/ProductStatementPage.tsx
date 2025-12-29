@@ -475,7 +475,7 @@ const ProductStatementPage: React.FC = () => {
             {/* Order Item Date Filters */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
-                Order Item Start Date
+                Order Start Date
               </label>
               <input
                 type="date"
@@ -488,7 +488,7 @@ const ProductStatementPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
-                Order Item End Date
+                Order End Date
               </label>
               <input
                 type="date"
@@ -498,33 +498,7 @@ const ProductStatementPage: React.FC = () => {
               />
             </div>
 
-            {/* Order Date Filters */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Order Start Date
-              </label>
-              <input
-                type="date"
-                value={filters.orderStartDate || ""}
-                onChange={(e) =>
-                  handleFilterChange("orderStartDate", e.target.value)
-                }
-                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Order End Date
-              </label>
-              <input
-                type="date"
-                value={filters.orderEndDate || ""}
-                onChange={(e) =>
-                  handleFilterChange("orderEndDate", e.target.value)
-                }
-                className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-              />
-            </div>
+           
 
             {/* Staff/Commission Filter */}
             <div className="space-y-1">

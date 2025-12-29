@@ -13,6 +13,7 @@ import InputWithIcon from "@/components/InputWithIcon";
 import InventoryFilters from "@/components/shared/InventoryFilters";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
+import { useAuth } from "@/context/AuthContext";
 
 interface User {
   id: number;
@@ -40,6 +41,7 @@ interface CategoryFormData {
 const Categories = () => {
   const queryClient = useQueryClient();
   const { hasPermission } = usePermission();
+  const { user } = useAuth();
 
   // Permission checks
   const canManageCategories = hasPermission(PERMISSIONS.INVENTORY.MANAGE_CATEGORIES);
@@ -55,7 +57,7 @@ const Categories = () => {
 
   // Filter states
   const [searchKey, setSearchKey] = useState("");
-  const [shopId, setShopId] = useState("");
+  const [shopId, setShopId] = useState(user?.id?.toString() || "");
 
   // Fetch Categories
   const { data: categories, isLoading } = useQuery({

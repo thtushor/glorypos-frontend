@@ -10,6 +10,7 @@ import Modal from "@/components/Modal";
 import InventoryFilters from "@/components/shared/InventoryFilters";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
+import { useAuth } from "@/context/AuthContext";
 
 interface User {
   id: number;
@@ -39,6 +40,7 @@ interface ColorFormData {
 const Colors = () => {
   const queryClient = useQueryClient();
   const { hasPermission } = usePermission();
+  const { user } = useAuth();
   const canManageColors = hasPermission(PERMISSIONS.INVENTORY.MANAGE_COLORS);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,7 +54,7 @@ const Colors = () => {
 
   // Filter states
   const [searchKey, setSearchKey] = useState("");
-  const [shopId, setShopId] = useState("");
+  const [shopId, setShopId] = useState(user?.id?.toString() || "");
 
   // Fetch Colors
   const { data: colors, isLoading } = useQuery({

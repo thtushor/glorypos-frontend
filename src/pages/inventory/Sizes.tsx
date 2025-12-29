@@ -10,6 +10,7 @@ import Modal from "@/components/Modal";
 import InventoryFilters from "@/components/shared/InventoryFilters";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
+import { useAuth } from "@/context/AuthContext";
 
 interface User {
   id: number;
@@ -37,6 +38,7 @@ interface SizeFormData {
 const Sizes = () => {
   const queryClient = useQueryClient();
   const { hasPermission } = usePermission();
+  const { user } = useAuth();
   const canManageSizes = hasPermission(PERMISSIONS.INVENTORY.MANAGE_SIZES);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,7 +51,7 @@ const Sizes = () => {
 
   // Filter states
   const [searchKey, setSearchKey] = useState("");
-  const [shopId, setShopId] = useState("");
+  const [shopId, setShopId] = useState(user?.id?.toString() || "");
 
   // Fetch Sizes
   const { data: sizes, isLoading } = useQuery({
@@ -62,8 +64,6 @@ const Sizes = () => {
       return response.data;
     },
   });
-
-  console.log({ sizes });
 
   // Create Size Mutation
   const createMutation = useMutation({
