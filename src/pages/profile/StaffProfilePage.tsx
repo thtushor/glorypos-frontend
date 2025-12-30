@@ -266,15 +266,15 @@ const StaffProfilePage = () => {
     const isProfileTab = location.pathname.endsWith('/profile');
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4">
-            <div className="max-w-7xl mx-auto space-y-6">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-3 px-2 sm:py-4 sm:px-3 md:py-6 md:px-4 lg:py-8">
+            <div className="max-w-7xl mx-auto space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6">
                 {/* Header Card */}
-                <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-                    <div className="relative h-48 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+                <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden">
+                    <div className="relative h-32 sm:h-40 md:h-48 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
                         <div className="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
-                        <div className="absolute -bottom-20 left-8 z-10">
+                        <div className="absolute -bottom-12 sm:-bottom-16 md:-bottom-20 left-3 sm:left-6 md:left-8 z-10">
                             <div className="relative group">
-                                <div className="w-40 h-40 rounded-full overflow-hidden border-8 border-white shadow-2xl bg-white">
+                                <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 sm:border-6 md:border-8 border-white shadow-2xl bg-white">
                                     <FallbackAvatar
                                         src={previewImage || profile?.imageUrl || "/default-avatar.png"}
                                         alt={profile.fullName}
@@ -285,7 +285,7 @@ const StaffProfilePage = () => {
                                             onClick={handleImageClick}
                                             className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-300"
                                         >
-                                            <FaCamera className="text-white text-3xl" />
+                                            <FaCamera className="text-white text-xl sm:text-2xl md:text-3xl" />
                                         </div>
                                     )}
                                 </div>
@@ -300,41 +300,41 @@ const StaffProfilePage = () => {
                         </div>
                     </div>
 
-                    <div className="pt-24 pb-8 px-8">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="pt-16 sm:pt-20 md:pt-24 pb-4 sm:pb-6 md:pb-8 px-3 sm:px-5 md:px-8">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
                             <div>
-                                <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
                                     {profile.fullName}
                                 </h1>
-                                <div className="flex items-center gap-4 flex-wrap">
-                                    <span className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg">
-                                        <FaUserShield className="mr-2" />
+                                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-wrap">
+                                    <span className="inline-flex items-center px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 rounded-full text-xs sm:text-sm font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg">
+                                        <FaUserShield className="mr-1 sm:mr-2 text-xs sm:text-sm" />
                                         {profile.role}
                                     </span>
                                     <span
-                                        className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg ${profile.status === "active"
+                                        className={`inline-flex items-center px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 rounded-full text-xs sm:text-sm font-semibold shadow-lg ${profile.status === "active"
                                             ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
                                             : "bg-gradient-to-r from-red-500 to-pink-500 text-white"
                                             }`}
                                     >
                                         {profile.status === "active" ? (
-                                            <FaCheckCircle className="mr-2" />
+                                            <FaCheckCircle className="mr-1 sm:mr-2 text-xs sm:text-sm" />
                                         ) : (
-                                            <FaTimesCircle className="mr-2" />
+                                            <FaTimesCircle className="mr-1 sm:mr-2 text-xs sm:text-sm" />
                                         )}
                                         {profile.status}
                                     </span>
                                 </div>
                             </div>
 
-                            <div className="flex gap-3">
+                            <div className="flex gap-2 sm:gap-3">
                                 {canEditChildUsers && (
                                     !isEditing ? (
                                         <button
                                             onClick={() => setIsEditing(true)}
-                                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+                                            className="px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base"
                                         >
-                                            <FaEdit /> Edit Profile
+                                            <FaEdit className="text-xs sm:text-sm" /> <span className="hidden sm:inline">Edit Profile</span><span className="sm:hidden">Edit</span>
                                         </button>
                                     ) : (
                                         <>
@@ -352,23 +352,23 @@ const StaffProfilePage = () => {
                                                     });
                                                     setPreviewImage(null);
                                                 }}
-                                                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 font-semibold shadow-lg transition-all duration-300 flex items-center gap-2"
+                                                className="px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 bg-gray-200 text-gray-700 rounded-lg sm:rounded-xl hover:bg-gray-300 font-semibold shadow-lg transition-all duration-300 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base"
                                             >
-                                                <FaTimes /> Cancel
+                                                <FaTimes className="text-xs sm:text-sm" /> <span className="hidden sm:inline">Cancel</span>
                                             </button>
                                             <button
                                                 onClick={handleSubmit}
                                                 disabled={updateProfileMutation.isPending}
-                                                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 disabled:opacity-50"
+                                                className="px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg sm:rounded-xl hover:from-green-700 hover:to-emerald-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-1 sm:gap-2 disabled:opacity-50 text-xs sm:text-sm md:text-base"
                                             >
                                                 {updateProfileMutation.isPending ? (
                                                     <>
-                                                        <FaSpinner className="animate-spin" />
-                                                        Saving...
+                                                        <FaSpinner className="animate-spin text-xs sm:text-sm" />
+                                                        <span className="hidden sm:inline">Saving...</span>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <FaSave /> Save Changes
+                                                        <FaSave className="text-xs sm:text-sm" /> <span className="hidden sm:inline">Save Changes</span><span className="sm:hidden">Save</span>
                                                     </>
                                                 )}
                                             </button>
@@ -381,65 +381,65 @@ const StaffProfilePage = () => {
                 </div>
 
                 {/* Financial Overview Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-                        <div className="flex items-center justify-between mb-4">
-                            <FaMoneyBillWave className="text-4xl opacity-80" />
-                            <span className="text-sm font-semibold bg-white/20 px-3 py-1 rounded-full">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 lg:p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div className="flex items-center justify-between mb-2 sm:mb-3 md:mb-4">
+                            <FaMoneyBillWave className="text-xl sm:text-2xl md:text-3xl lg:text-4xl opacity-80" />
+                            <span className="text-[10px] sm:text-xs md:text-sm font-semibold bg-white/20 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full">
                                 Lifetime
                             </span>
                         </div>
-                        <h3 className="text-sm font-medium opacity-90 mb-1">Total Earned</h3>
-                        <p className="text-3xl font-bold">
+                        <h3 className="text-[10px] sm:text-xs md:text-sm font-medium opacity-90 mb-1">Total Earned</h3>
+                        <p className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-bold">
                             {money.format(profile.financials.salaryDetails.totalPaidLifetime)}
                         </p>
                     </div>
 
-                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-                        <div className="flex items-center justify-between mb-4">
-                            <FaChartLine className="text-4xl opacity-80" />
-                            <span className="text-sm font-semibold bg-white/20 px-3 py-1 rounded-full">
+                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 lg:p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div className="flex items-center justify-between mb-2 sm:mb-3 md:mb-4">
+                            <FaChartLine className="text-xl sm:text-2xl md:text-3xl lg:text-4xl opacity-80" />
+                            <span className="text-[10px] sm:text-xs md:text-sm font-semibold bg-white/20 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full">
                                 Sales
                             </span>
                         </div>
-                        <h3 className="text-sm font-medium opacity-90 mb-1">Total Commission</h3>
-                        <p className="text-3xl font-bold">
+                        <h3 className="text-[10px] sm:text-xs md:text-sm font-medium opacity-90 mb-1">Total Commission</h3>
+                        <p className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-bold">
                             {money.format(profile.financials.totalCommission)}
                         </p>
                     </div>
 
-                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-                        <div className="flex items-center justify-between mb-4">
-                            <FaCalendarAlt className="text-4xl opacity-80" />
-                            <span className="text-sm font-semibold bg-white/20 px-3 py-1 rounded-full">
+                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 lg:p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div className="flex items-center justify-between mb-2 sm:mb-3 md:mb-4">
+                            <FaCalendarAlt className="text-xl sm:text-2xl md:text-3xl lg:text-4xl opacity-80" />
+                            <span className="text-[10px] sm:text-xs md:text-sm font-semibold bg-white/20 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full">
                                 This Year
                             </span>
                         </div>
-                        <h3 className="text-sm font-medium opacity-90 mb-1">Leave Days</h3>
-                        <p className="text-3xl font-bold">
+                        <h3 className="text-[10px] sm:text-xs md:text-sm font-medium opacity-90 mb-1">Leave Days</h3>
+                        <p className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-bold">
                             {profile.financials.leaveSummary.totalDaysThisYear}
                         </p>
                     </div>
 
-                    <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-                        <div className="flex items-center justify-between mb-4">
-                            <FaMoneyBillWave className="text-4xl opacity-80" />
-                            <span className="text-sm font-semibold bg-white/20 px-3 py-1 rounded-full">
+                    <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 lg:p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div className="flex items-center justify-between mb-2 sm:mb-3 md:mb-4">
+                            <FaMoneyBillWave className="text-xl sm:text-2xl md:text-3xl lg:text-4xl opacity-80" />
+                            <span className="text-[10px] sm:text-xs md:text-sm font-semibold bg-white/20 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full">
                                 Advance
                             </span>
                         </div>
-                        <h3 className="text-sm font-medium opacity-90 mb-1">Outstanding</h3>
-                        <p className="text-3xl font-bold">
+                        <h3 className="text-[10px] sm:text-xs md:text-sm font-medium opacity-90 mb-1">Outstanding</h3>
+                        <p className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-bold">
                             {money.format(profile.financials.advanceSalary.outstanding)}
                         </p>
                     </div>
                 </div>
 
                 {/* NAVIGATION TABS */}
-                <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl overflow-hidden">
                     <div className="border-b border-gray-200">
                         <nav
-                            className="flex space-x-8 overflow-x-auto px-8 pb-1"
+                            className="flex space-x-2 sm:space-x-4 md:space-x-6 lg:space-x-8 overflow-x-auto px-3 sm:px-5 md:px-8 pb-1 scrollbar-hide"
                             aria-label="Staff Profile Navigation"
                         >
                             {navItems.map((tab) => {
@@ -451,8 +451,8 @@ const StaffProfilePage = () => {
                                         key={tab.name}
                                         to={tab.path}
                                         className={`
-                                            group relative py-4 px-1 whitespace-nowrap border-b-2 font-medium text-sm transition-all duration-200
-                                            flex items-center gap-2
+                                            group relative py-3 sm:py-4 px-1 whitespace-nowrap border-b-2 font-medium text-xs sm:text-sm transition-all duration-200
+                                            flex items-center gap-1 sm:gap-2
                                             ${isActive
                                                 ? "border-blue-600 text-blue-600"
                                                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -460,12 +460,12 @@ const StaffProfilePage = () => {
                                         `}
                                     >
                                         <Icon
-                                            className={`w-4 h-4 transition-colors ${isActive
+                                            className={`w-3 h-3 sm:w-4 sm:h-4 transition-colors ${isActive
                                                 ? "text-blue-600"
                                                 : "text-gray-400 group-hover:text-gray-600"
                                                 }`}
                                         />
-                                        <span>{tab.name}</span>
+                                        <span className="hidden sm:inline">{tab.name}</span>
 
                                         {isActive && (
                                             <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
@@ -477,26 +477,26 @@ const StaffProfilePage = () => {
                     </div>
 
                     {/* TAB CONTENT */}
-                    <div className="p-8">
+                    <div className="p-3 sm:p-5 md:p-6 lg:p-8">
                         {isProfileTab ? (
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
                                 {/* Personal Information */}
-                                <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl p-8">
-                                    <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
-                                            <FaUser className="text-white" />
+                                <div className="lg:col-span-2 bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 lg:p-8">
+                                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-4 sm:mb-5 md:mb-6 flex items-center gap-2 sm:gap-3">
+                                        <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                                            <FaUser className="text-white text-xs sm:text-sm" />
                                         </div>
                                         Personal Information
                                     </h2>
 
-                                    <form className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <form className="space-y-4 sm:space-y-5 md:space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
                                             <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                                                     Full Name
                                                 </label>
                                                 <div className="relative">
-                                                    <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <FaUser className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
                                                     <input
                                                         type="text"
                                                         disabled={!isEditing}
@@ -507,32 +507,32 @@ const StaffProfilePage = () => {
                                                                 fullName: e.target.value,
                                                             }))
                                                         }
-                                                        className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                                        className="pl-9 sm:pl-10 md:pl-12 w-full py-2 sm:py-2.5 md:py-3 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
                                                     />
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                                                     Email
                                                 </label>
                                                 <div className="relative">
-                                                    <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <FaEnvelope className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
                                                     <input
                                                         type="email"
                                                         disabled
                                                         value={profile?.email}
-                                                        className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 bg-gray-50 text-gray-500"
+                                                        className="pl-9 sm:pl-10 md:pl-12 w-full py-2 sm:py-2.5 md:py-3 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 border-gray-200 bg-gray-50 text-gray-500"
                                                     />
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                                                     Phone Number
                                                 </label>
                                                 <div className="relative">
-                                                    <FaPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <FaPhone className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
                                                     <input
                                                         type="tel"
                                                         disabled={!isEditing}
@@ -543,17 +543,17 @@ const StaffProfilePage = () => {
                                                                 phone: e.target.value,
                                                             }))
                                                         }
-                                                        className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                                        className="pl-9 sm:pl-10 md:pl-12 w-full py-2 sm:py-2.5 md:py-3 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
                                                     />
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                                                     Role
                                                 </label>
                                                 <div className="relative">
-                                                    <FaUserShield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
+                                                    <FaUserShield className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10 text-xs sm:text-sm" />
                                                     <select
                                                         disabled={!isEditing}
                                                         value={formData?.role || ""}
@@ -563,7 +563,7 @@ const StaffProfilePage = () => {
                                                                 role: e.target.value,
                                                             }))
                                                         }
-                                                        className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300 appearance-none"
+                                                        className="pl-9 sm:pl-10 md:pl-12 w-full py-2 sm:py-2.5 md:py-3 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300 appearance-none"
                                                     >
                                                         <option value="manager">Manager</option>
                                                         <option value="cashier">Cashier</option>
@@ -573,11 +573,11 @@ const StaffProfilePage = () => {
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                                                     Base Salary
                                                 </label>
                                                 <div className="relative">
-                                                    <FaMoneyBillWave className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <FaMoneyBillWave className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
                                                     <input
                                                         type="number"
                                                         readOnly
@@ -590,17 +590,17 @@ const StaffProfilePage = () => {
                                                                 baseSalary: Number(e.target.value),
                                                             }))
                                                         }
-                                                        className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                                        className="pl-9 sm:pl-10 md:pl-12 w-full py-2 sm:py-2.5 md:py-3 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
                                                     />
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                                                     Daily Hours Required
                                                 </label>
                                                 <div className="relative">
-                                                    <FaClock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <FaClock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
                                                     <input
                                                         type="number"
                                                         disabled={!isEditing}
@@ -611,7 +611,7 @@ const StaffProfilePage = () => {
                                                                 requiredDailyHours: Number(e.target.value),
                                                             }))
                                                         }
-                                                        className="pl-12 w-full py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                                        className="pl-9 sm:pl-10 md:pl-12 w-full py-2 sm:py-2.5 md:py-3 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
                                                     />
                                                 </div>
                                             </div>
@@ -619,39 +619,39 @@ const StaffProfilePage = () => {
 
                                         {/* Permissions Management */}
                                         {canManagePermissions && (
-                                            <div className="pt-6 border-t-2 border-gray-100">
-                                                <div className="flex items-center justify-between mb-6">
-                                                    <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                                        <FaUserShield className="text-blue-600" />
+                                            <div className="pt-4 sm:pt-5 md:pt-6 border-t-2 border-gray-100">
+                                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-5 md:mb-6">
+                                                    <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 flex items-center gap-2">
+                                                        <FaUserShield className="text-blue-600 text-sm sm:text-base" />
                                                         Permissions Management
                                                     </h3>
                                                     {isEditing && (
-                                                        <div className="flex gap-2">
+                                                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
                                                             <button
                                                                 type="button"
                                                                 onClick={() => applyPermissionTemplate('ADMIN')}
-                                                                className="px-3 py-1.5 text-xs font-semibold bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition"
+                                                                className="px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition"
                                                             >
-                                                                Admin Template
+                                                                Admin
                                                             </button>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => applyPermissionTemplate('MANAGER')}
-                                                                className="px-3 py-1.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
+                                                                className="px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
                                                             >
-                                                                Manager Template
+                                                                Manager
                                                             </button>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => applyPermissionTemplate('CASHIER')}
-                                                                className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition"
+                                                                className="px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition"
                                                             >
-                                                                Cashier Template
+                                                                Cashier
                                                             </button>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setFormData({ ...formData, permissions: [] })}
-                                                                className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition"
+                                                                className="px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition"
                                                             >
                                                                 Clear All
                                                             </button>
@@ -660,7 +660,7 @@ const StaffProfilePage = () => {
                                                 </div>
 
                                                 {/* Permission Groups */}
-                                                <div className="space-y-6">
+                                                <div className="space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6">
                                                     {PERMISSION_GROUPS.map((group) => {
                                                         const groupPermissions = group.permissions;
                                                         const currentPermissions = Array.isArray(formData.permissions) ? formData.permissions : [];
@@ -670,16 +670,16 @@ const StaffProfilePage = () => {
                                                         const totalCount = groupPermissions.length;
 
                                                         return (
-                                                            <div key={group.id} className="bg-gradient-to-br from-gray-50 to-white rounded-xl border-2 border-gray-200 overflow-hidden">
+                                                            <div key={group.id} className="bg-gradient-to-br from-gray-50 to-white rounded-lg sm:rounded-xl border-2 border-gray-200 overflow-hidden">
                                                                 {/* Group Header */}
-                                                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b-2 border-gray-200">
-                                                                    <div className="flex items-center justify-between">
+                                                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-3 sm:px-4 md:px-5 lg:px-6 py-3 sm:py-4 border-b-2 border-gray-200">
+                                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
                                                                         <div>
-                                                                            <h4 className="text-lg font-bold text-gray-900">{group.name}</h4>
-                                                                            <p className="text-sm text-gray-600 mt-1">{group.description}</p>
+                                                                            <h4 className="text-sm sm:text-base md:text-lg font-bold text-gray-900">{group.name}</h4>
+                                                                            <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">{group.description}</p>
                                                                         </div>
-                                                                        <div className="flex items-center gap-3">
-                                                                            <span className="text-sm font-semibold text-gray-700 bg-white px-3 py-1 rounded-full border-2 border-gray-200">
+                                                                        <div className="flex items-center gap-2 sm:gap-3">
+                                                                            <span className="text-xs sm:text-sm font-semibold text-gray-700 bg-white px-2 py-0.5 sm:px-3 sm:py-1 rounded-full border-2 border-gray-200">
                                                                                 {selectedCount} / {totalCount}
                                                                             </span>
                                                                             {isEditing && (
@@ -711,9 +711,9 @@ const StaffProfilePage = () => {
                                                                                             });
                                                                                         }
                                                                                     }}
-                                                                                    className="px-3 py-1 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                                                                                    className="px-2 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
                                                                                 >
-                                                                                    {selectedCount === totalCount ? 'Deselect All' : 'Select All'}
+                                                                                    {selectedCount === totalCount ? 'Deselect' : 'Select All'}
                                                                                 </button>
                                                                             )}
                                                                         </div>
@@ -721,14 +721,14 @@ const StaffProfilePage = () => {
                                                                 </div>
 
                                                                 {/* Group Permissions */}
-                                                                <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                                <div className="p-3 sm:p-4 md:p-5 lg:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                                                                     {groupPermissions.map((permission) => {
                                                                         const isChecked = currentPermissions.includes(permission.key);
 
                                                                         return (
                                                                             <label
                                                                                 key={permission.key}
-                                                                                className={`group relative flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${isChecked
+                                                                                className={`group relative flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 md:p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${isChecked
                                                                                     ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-500 shadow-sm'
                                                                                     : 'bg-white border-gray-200 hover:border-gray-300'
                                                                                     } ${!isEditing ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-md'}`}
@@ -738,18 +738,18 @@ const StaffProfilePage = () => {
                                                                                     disabled={!isEditing}
                                                                                     checked={isChecked}
                                                                                     onChange={() => handlePermissionToggle(permission.key)}
-                                                                                    className="mt-1 w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed"
+                                                                                    className="mt-0.5 sm:mt-1 w-4 h-4 sm:w-5 sm:h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed flex-shrink-0"
                                                                                 />
                                                                                 <div className="flex-1 min-w-0">
-                                                                                    <div className="flex items-center gap-2">
-                                                                                        <span className="text-sm font-bold text-gray-900">
+                                                                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                                                                        <span className="text-xs sm:text-sm font-bold text-gray-900">
                                                                                             {permission.label}
                                                                                         </span>
                                                                                         {isChecked && (
-                                                                                            <FaCheckCircle className="text-green-600 text-xs flex-shrink-0" />
+                                                                                            <FaCheckCircle className="text-green-600 text-[10px] sm:text-xs flex-shrink-0" />
                                                                                         )}
                                                                                     </div>
-                                                                                    <p className="text-xs text-gray-600 mt-1 leading-tight">
+                                                                                    <p className="text-[10px] sm:text-xs text-gray-600 mt-0.5 sm:mt-1 leading-tight">
                                                                                         {permission.description}
                                                                                     </p>
                                                                                 </div>
@@ -767,12 +767,12 @@ const StaffProfilePage = () => {
                                 </div>
 
                                 {/* Parent Business & Current Month Salary */}
-                                <div className="space-y-6">
+                                <div className="space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6">
                                     {/* Parent Business */}
-                                    <div className="bg-white rounded-2xl shadow-xl p-6">
-                                        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                                            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                                                <FaBuilding className="text-white text-sm" />
+                                    <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-6">
+                                        <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
+                                            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                                                <FaBuilding className="text-white text-xs sm:text-sm" />
                                             </div>
                                             Parent Business
                                         </h2>
@@ -802,35 +802,35 @@ const StaffProfilePage = () => {
                                     </div>
 
                                     {/* Current Month Salary */}
-                                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
-                                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                            <FaCalendarAlt />
-                                            Current Month ({format(new Date(profile.currentMonthSalary.salaryMonth), "MMM yyyy")})
+                                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 text-white">
+                                        <h2 className="text-base sm:text-lg md:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2">
+                                            <FaCalendarAlt className="text-sm sm:text-base" />
+                                            <span className="text-sm sm:text-base md:text-lg">Current Month ({format(new Date(profile.currentMonthSalary.salaryMonth), "MMM yyyy")})</span>
                                         </h2>
-                                        <div className="space-y-3">
+                                        <div className="space-y-2 sm:space-y-3">
                                             <div className="flex justify-between items-center pb-2 border-b border-white/20">
-                                                <span className="text-sm opacity-90">Base Salary</span>
-                                                <span className="font-bold">{money.format(profile.currentMonthSalary.baseSalary)}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center pb-2 border-b border-white/20">
-                                                <span className="text-sm opacity-90">Commission</span>
-                                                <span className="font-bold">{money.format(profile.currentMonthSalary.totalCommission)}</span>
+                                                <span className="text-xs sm:text-sm opacity-90">Base Salary</span>
+                                                <span className="font-bold text-sm sm:text-base">{money.format(profile.currentMonthSalary.baseSalary)}</span>
                                             </div>
                                             <div className="flex justify-between items-center pb-2 border-b border-white/20">
-                                                <span className="text-sm opacity-90">Working Days</span>
-                                                <span className="font-bold">{profile.currentMonthSalary.totalWorkingDays}</span>
+                                                <span className="text-xs sm:text-sm opacity-90">Commission</span>
+                                                <span className="font-bold text-sm sm:text-base">{money.format(profile.currentMonthSalary.totalCommission)}</span>
                                             </div>
                                             <div className="flex justify-between items-center pb-2 border-b border-white/20">
-                                                <span className="text-sm opacity-90">Leave Days</span>
-                                                <span className="font-bold">{profile.currentMonthSalary.totalLeaveDays}</span>
+                                                <span className="text-xs sm:text-sm opacity-90">Working Days</span>
+                                                <span className="font-bold text-sm sm:text-base">{profile.currentMonthSalary.totalWorkingDays}</span>
                                             </div>
-                                            <div className="flex justify-between items-center pt-2 bg-white/10 rounded-lg p-3 mt-3">
-                                                <span className="font-semibold">Total Payable</span>
-                                                <span className="text-2xl font-bold">{money.format(profile.currentMonthSalary.totalPayable)}</span>
+                                            <div className="flex justify-between items-center pb-2 border-b border-white/20">
+                                                <span className="text-xs sm:text-sm opacity-90">Leave Days</span>
+                                                <span className="font-bold text-sm sm:text-base">{profile.currentMonthSalary.totalLeaveDays}</span>
                                             </div>
-                                            <div className="flex justify-between items-center bg-white/10 rounded-lg p-3">
-                                                <span className="font-semibold">Remaining Due</span>
-                                                <span className="text-xl font-bold">{money.format(profile.currentMonthSalary.currentMonthRemainingDue)}</span>
+                                            <div className="flex justify-between items-center pt-2 bg-white/10 rounded-lg p-2 sm:p-3 mt-2 sm:mt-3">
+                                                <span className="font-semibold text-xs sm:text-sm md:text-base">Total Payable</span>
+                                                <span className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold">{money.format(profile.currentMonthSalary.totalPayable)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center bg-white/10 rounded-lg p-2 sm:p-3">
+                                                <span className="font-semibold text-xs sm:text-sm md:text-base">Remaining Due</span>
+                                                <span className="text-sm sm:text-base md:text-lg lg:text-xl font-bold">{money.format(profile.currentMonthSalary.currentMonthRemainingDue)}</span>
                                             </div>
                                         </div>
                                     </div>
