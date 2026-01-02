@@ -135,10 +135,21 @@ function DashBoardProduct({
         }
       });
 
+      // Sync order-level tax and discount adjustments
+      const orderTax = Number(orderItems?.data?.tax || 0);
+      const orderDiscount = Number(orderItems?.data?.discount || 0);
+
       return {
         ...prev,
         discountAdjustments,
         salesPriceAdjustments,
+        // Set order-level tax and discount as fixed amounts
+        tax: orderTax > 0
+          ? { type: "fixed" as const, value: orderTax }
+          : prev.tax,
+        discount: orderDiscount > 0
+          ? { type: "fixed" as const, value: orderDiscount }
+          : prev.discount,
       };
     });
   }, [isSuccess, orderItems, setAdjustments]);
@@ -152,8 +163,8 @@ function DashBoardProduct({
       <div className="flex gap-6 mb-4 border-b pb-2">
         <button
           className={`px-4 py-2 font-medium ${activeTab === "products"
-              ? "text-blue-600 border-b-2 border-blue-600"
-              : "text-gray-500"
+            ? "text-blue-600 border-b-2 border-blue-600"
+            : "text-gray-500"
             }`}
           onClick={() => setActiveTab("products")}
         >
@@ -162,8 +173,8 @@ function DashBoardProduct({
 
         <button
           className={`px-4 py-2 font-medium ${activeTab === "cart"
-              ? "text-blue-600 border-b-2 border-blue-600"
-              : "text-gray-500"
+            ? "text-blue-600 border-b-2 border-blue-600"
+            : "text-gray-500"
             }`}
           onClick={() => setActiveTab("cart")}
         >
