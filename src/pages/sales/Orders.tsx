@@ -221,7 +221,7 @@ const Orders: React.FC = () => {
           >
             <FaFilter className="w-5 h-5 text-gray-600" />
           </button>
-          <button
+          {/* <button
             onClick={() => {
               setShowFilters(!showFilters);
               setIsOpen(true);
@@ -229,7 +229,7 @@ const Orders: React.FC = () => {
             className="p-2 border rounded-lg hover:bg-gray-50"
           >
             <BiSpreadsheet className="w-5 h-5 text-gray-600" />
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -407,8 +407,37 @@ const Orders: React.FC = () => {
                           {order.orderNumber || "---"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {order.customerName || "---"}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="font-semibold text-gray-900 text-sm">
+                            {order.customerName || "Walk-in Customer"}
+                          </span>
+                          {order.customerPhone && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-blue-600">
+                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                                </svg>
+                              </span>
+                              <span className="text-xs text-gray-700 font-medium">
+                                {order.customerPhone}
+                              </span>
+                            </div>
+                          )}
+                          {order.customerEmail && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-green-600">
+                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                                </svg>
+                              </span>
+                              <span className="text-xs text-gray-600 truncate max-w-[200px]" title={order.customerEmail}>
+                                {order.customerEmail}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       {user?.shopType === "restaurant" &&
                         <>

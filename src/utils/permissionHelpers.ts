@@ -16,6 +16,13 @@ export const checkPermission = (
 
     // Child user - check permissions array
     const userPermissions = user?.child?.permissions || [];
+
+    // Ensure permissions is an array
+    if (!Array.isArray(userPermissions)) {
+        console.warn('User permissions is not an array:', userPermissions);
+        return false;
+    }
+
     return userPermissions.includes(requiredPermission);
 };
 
@@ -32,6 +39,13 @@ export const checkAnyPermission = (
     }
 
     const userPermissions = user?.child?.permissions || [];
+
+    // Ensure permissions is an array
+    if (!Array.isArray(userPermissions)) {
+        console.warn('User permissions is not an array:', userPermissions);
+        return false;
+    }
+
     return requiredPermissions.some((permission) =>
         userPermissions.includes(permission)
     );
@@ -50,6 +64,13 @@ export const checkAllPermissions = (
     }
 
     const userPermissions = user?.child?.permissions || [];
+
+    // Ensure permissions is an array
+    if (!Array.isArray(userPermissions)) {
+        console.warn('User permissions is not an array:', userPermissions);
+        return false;
+    }
+
     return requiredPermissions.every((permission) =>
         userPermissions.includes(permission)
     );
@@ -67,5 +88,13 @@ export const getUserPermissions = (user: any): string[] => {
         );
     }
 
-    return user?.child?.permissions || [];
+    const permissions = user?.child?.permissions || [];
+
+    // Ensure permissions is an array
+    if (!Array.isArray(permissions)) {
+        console.warn('User permissions is not an array:', permissions);
+        return [];
+    }
+
+    return permissions;
 };
