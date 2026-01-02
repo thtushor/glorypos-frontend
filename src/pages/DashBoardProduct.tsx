@@ -51,7 +51,7 @@ function DashBoardProduct({
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
 
-  const { data: orderItems,isSuccess } = useQuery({
+  const { data: orderItems, isSuccess } = useQuery({
     queryKey: ["order", orderId],
     queryFn: async () => {
       const response = await AXIOS.get(`${SINGLE_ORDERS_URL}/${orderId}`);
@@ -72,7 +72,7 @@ function DashBoardProduct({
         const product = item.Product;
         const variant = item.ProductVariant;
 
-        const unitPriceNumber = Number(item.unitPrice ?? product?.price ?? 0)+Number(item?.unitDiscount ?? 0);
+        const unitPriceNumber = Number(item.unitPrice ?? product?.price ?? 0) + Number(item?.unitDiscount ?? 0);
         const discountAmountNumber = Number(
           item.discountAmount ?? product?.discountAmount ?? 0
         );
@@ -84,9 +84,9 @@ function DashBoardProduct({
           unit: product.Unit,
           selectedVariant: variant
             ? {
-                ...variant,
-                Category: product?.Category,
-              }
+              ...variant,
+              Category: product?.Category,
+            }
             : undefined,
           cartItemId: `${product.id}-${variant?.id ?? "default"}`,
           imageUrl: variant?.imageUrl || product.productImage,
@@ -143,7 +143,7 @@ function DashBoardProduct({
     });
   }, [isSuccess, orderItems, setAdjustments]);
 
-  
+
 
 
   return (
@@ -151,22 +151,20 @@ function DashBoardProduct({
       {/* 🔥 Top Navigation Tabs */}
       <div className="flex gap-6 mb-4 border-b pb-2">
         <button
-          className={`px-4 py-2 font-medium ${
-            activeTab === "products"
+          className={`px-4 py-2 font-medium ${activeTab === "products"
               ? "text-blue-600 border-b-2 border-blue-600"
               : "text-gray-500"
-          }`}
+            }`}
           onClick={() => setActiveTab("products")}
         >
           Products
         </button>
 
         <button
-          className={`px-4 py-2 font-medium ${
-            activeTab === "cart"
+          className={`px-4 py-2 font-medium ${activeTab === "cart"
               ? "text-blue-600 border-b-2 border-blue-600"
               : "text-gray-500"
-          }`}
+            }`}
           onClick={() => setActiveTab("cart")}
         >
           Cart ({cartItemsCount})
@@ -192,6 +190,7 @@ function DashBoardProduct({
           orderId={orderId}
           adjustments={adjustments}
           setAdjustments={setAdjustments}
+          initialStaffId={orderItems?.data?.commissions?.length ? orderItems?.data?.commissions[0].UserRoleId : orderItems?.data ? "self-sell" : null}
           handleBarcodeScan={handleBarcodeScan}
           showMobileCart={true}
           initialBarcodeOpen={initialBarcodeOpenState}
@@ -200,21 +199,21 @@ function DashBoardProduct({
           initialCustomerInfo={{ name: orderItems?.data?.customerName || "", phone: orderItems?.data?.customerPhone || "" }}
           initialPaymentInfo={
             {
-              walletAmount: orderItems?.data?.walletAmount||0,
-              cardAmount: orderItems?.data?.cardAmount||0,
-              cashAmount: orderItems?.data?.cashAmount||0
+              walletAmount: orderItems?.data?.walletAmount || 0,
+              cardAmount: orderItems?.data?.cardAmount || 0,
+              cashAmount: orderItems?.data?.cashAmount || 0
             }
           }
           initialKOTInfo={{
-            tableNumber: orderItems?.data?.tableNumber||"",
-            guestCount: orderItems?.data?.guestNumber||1,
-            specialInstructions: orderItems?.data?.specialNotes||""
+            tableNumber: orderItems?.data?.tableNumber || "",
+            guestCount: orderItems?.data?.guestNumber || 1,
+            specialInstructions: orderItems?.data?.specialNotes || ""
           }}
           onClose={() => setActiveTab("products")} // switch back to product tab
         />
       )}
 
-    
+
 
       {/* Mobile Floating Cart Button */}
       <button

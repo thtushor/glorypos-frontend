@@ -90,7 +90,8 @@ function ShoppingCart({
   onCloseBarcodeScanner,
   initialCustomerInfo,
   initialKOTInfo,
-  initialPaymentInfo
+  initialPaymentInfo,
+  initialStaffId = null
 }: {
   cart: CartItem[];
   adjustments: CartAdjustments;
@@ -110,6 +111,7 @@ function ShoppingCart({
     guestCount: number,
   }
   initialPaymentInfo?: PartialPayment;
+  initialStaffId?: "self-sell" | number | null;
 }) {
   const { user } = useAuth();
   const { hasPermission } = usePermission();
@@ -147,7 +149,7 @@ function ShoppingCart({
 
   const [selectedStaffId, setSelectedStaffId] = useState<
     number | "self-sell" | null
-  >(null);
+  >(initialStaffId);
 
   const [staffSearchKey, setStaffSearchKey] = useState("");
   const [staffRoleFilter, setStaffRoleFilter] = useState("");
@@ -644,6 +646,12 @@ function ShoppingCart({
     if (!initialPaymentInfo) return;
     setPartialPayment(initialPaymentInfo);
   }, [initialPaymentInfo])
+
+
+  useEffect(() => {
+    if (!initialStaffId) return;
+    setSelectedStaffId(initialStaffId);
+  }, [initialStaffId])
 
 
   return (
