@@ -28,14 +28,14 @@ const LABEL_SIZES: LabelSize[] = [
     background: "#d4a574",
   },
   {
-    id: "white",
-    name: "White",
-    widthMm: 37,
-    heightMm: 23,
-    barcodeWidthMm: 34,
-    barcodeHeight: 48,
-    topFontSize: "7pt",
-    shopFontSize: "8pt",
+    id: "White",
+    name: "White (Brown)",
+    widthMm: 35,
+    heightMm: 18,
+    barcodeWidthMm: 31,
+    barcodeHeight: 38,
+    topFontSize: "5.8pt",
+    shopFontSize: "6.8pt",
     background: "#fff",
   },
 ];
@@ -149,17 +149,19 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
                 width: `${size.widthMm}mm`,
                 height: `${size.heightMm}mm`,
                 background: size.background || "white",
-                padding: "2mm",
+                padding: "1.6mm",
                 boxSizing: "border-box",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
+                paddingTop:"1.2mm", 
               }}
+
             >
               {/* Top: Product Name + Shop Name */}
-              <div className="text-center leading-tight">
+              <div className="text-center leading-tight  mt-[-4px]">
                 <div
-                  className="font-medium truncate uppercase text-[6px] text-black"
+                  className="font-medium truncate uppercase text-[8px] text-black"
                   title={name}
                 >
                   {[brandName, categoryName, modelNo]
@@ -167,7 +169,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
                     .join(" / ")}
                 </div>
                 <div
-                  className="font-black mt-[1px] mb-[2px] uppercase tracking-wider truncate text-[6px]"
+                  className="font-black mt-[-1px] mb-[2px] uppercase tracking-wider truncate text-[8px]"
                   style={{ color: "#000" }}
                 >
                   SHOP: {shopName}
@@ -175,12 +177,10 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
               </div>
 
               {/* Barcode */}
-              <div className="flex justify-center">
+              <div className="flex justify-center bg-white px-1 pt-0">
                 <svg
                   id="preview-barcode"
-                  style={{
-                    width: `${size.barcodeWidthMm}mm`,
-                  }}
+                  className="w-full max-h-[42px]"
                 />
               </div>
             </div>
@@ -191,16 +191,17 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
             style={{ position: "absolute", left: "-9999px", top: "-9999px" }}
           >
             <div
-              ref={printRef}
+              ref={printRef} 
               style={{
                 width: `${size.widthMm}mm`,
                 height: `${size.heightMm}mm`,
                 background: size.background || "white",
-                padding: "1mm",
+                padding: "1.6mm",
                 boxSizing: "border-box",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
+                paddingTop:"1.2mm", 
               }}
             >
               {/* Top: Product Name + Shop Name */}
