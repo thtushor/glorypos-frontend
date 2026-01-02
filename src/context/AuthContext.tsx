@@ -95,9 +95,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     if (error) {
-      console.log("navigating login....");
+      console.log("navigating login....", error);
       setUser(null);
-      console.log("navigating login.... due to error");
+      console.log("navigating login.... due to error", error);
       localStorage.removeItem("user");
       navigate("/login");
     }
@@ -125,9 +125,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     onSuccess: (response: any) => {
       if (response.status) {
         const { user, token } = response.data;
-        console.log({ user, token });
-        console.log("setUser data from login", { user: user });
-
         // Set flag to prevent profile query from overriding this data
         setJustLoggedIn(true);
 
@@ -140,10 +137,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           status: true,
         });
         setTimeout(() => {
-          console.log("navigating to dashboard....");
           navigate("/dashboard");
-          // Reset flag after navigation
-          setTimeout(() => setJustLoggedIn(false), 500);
         }, 2000);
       } else {
         toast.error(response.message || "Login failed");

@@ -216,8 +216,8 @@ const Users = () => {
             >
               <option value="">All</option>
               <option value="super admin">Super Admin</option>
-              <option value="admin">Admin</option>
-              <option value="default">Default</option>
+              {/* <option value="admin">Admin</option> */}
+              <option value="shop">Shop</option>
             </select>
           </div>
         </div>

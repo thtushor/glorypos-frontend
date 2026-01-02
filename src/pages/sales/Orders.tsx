@@ -85,7 +85,7 @@ interface FilterParams {
   paymentMethod?: string;
   startDate?: string;
   endDate?: string;
-  shopId?:string;
+  shopId?: string;
 }
 
 const Orders: React.FC = () => {
@@ -103,13 +103,13 @@ const Orders: React.FC = () => {
   const [filters, setFilters] = useState<FilterParams>({
     page: 1,
     pageSize: 20,
-    shopId:user?.id?.toString()
+    shopId: user?.id?.toString()
   });
 
   const [isOpen, setIsOpen] = useState(false);
   const [adjustOrderModalOpen, setAdjustOrderModalOpen] = useState(false);
 
-  const {shops,isLoading: isLoadingShops} = useShopFilterOptions();
+  const { shops, isLoading: isLoadingShops } = useShopFilterOptions();
 
   // Fetch Orders
   const {
@@ -275,34 +275,34 @@ const Orders: React.FC = () => {
           </select>
 
           {/* Shop Filter */}
-              <select
-                value={filters.shopId || ""}
-                onChange={(e) =>
-                  handleFilterChange(
-                    "shopId",
-                    e.target.value
-                  )
-                  
-                }
-                disabled={isLoadingShops}
-                className="border rounded-lg p-2"
-              >
-                <option value="">All Shops</option>
-                {isLoadingShops ? (
-                  <option value="" disabled>
-                    Loading shops...
+          <select
+            value={filters.shopId || ""}
+            onChange={(e) =>
+              handleFilterChange(
+                "shopId",
+                e.target.value
+              )
+
+            }
+            disabled={isLoadingShops}
+            className="border rounded-lg p-2"
+          >
+            <option value="">All Shops</option>
+            {isLoadingShops ? (
+              <option value="" disabled>
+                Loading shops...
+              </option>
+            ) : (
+              shops
+                .filter((shop: any) => shop?.id != null)
+                .map((shop: any) => (
+                  <option key={shop.id} value={shop.id}>
+                    {shop.businessName || shop.fullName}
                   </option>
-                ) : (
-                  shops
-                    .filter((shop: any) => shop?.id != null)
-                    .map((shop: any) => (
-                      <option key={shop.id} value={shop.id}>
-                        {shop.businessName || shop.fullName}
-                      </option>
-                    ))
-                )}
-              </select>
-            
+                ))
+            )}
+          </select>
+
 
           <div className="flex gap-2">
             <input
@@ -546,7 +546,7 @@ const Orders: React.FC = () => {
                             <FaEye className="w-4 h-4" />
                           </button>
 
-                          {canEditOrder && order.orderStatus !== "completed" && (
+                          {canEditOrder && (
                             <button
                               onClick={() => {
                                 setSelectedOrder(order);
