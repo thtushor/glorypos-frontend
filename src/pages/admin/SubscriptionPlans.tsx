@@ -16,6 +16,7 @@ import SubscriptionModal from "@/components/SubscriptionModal";
 import FloatingContactButtons from "@/components/FloatingContactButtons";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
+import money from "@/utils/money";
 
 interface SubscriptionPlan {
   id: number;
@@ -326,7 +327,7 @@ const SubscriptionPlans = () => {
 
               <div className="mt-4">
                 <p className="text-3xl font-bold text-gray-900">
-                  ${plan.price}
+                  {money.format(plan.price)}
                   <span className="text-base font-normal text-gray-500">
                     /{plan.duration} month{plan.duration > 1 ? "s" : ""}
                   </span>
@@ -369,8 +370,8 @@ const SubscriptionPlans = () => {
               <div className="flex items-center justify-between">
                 <span
                   className={`px-2 py-1 text-xs rounded-full ${plan.status === "active"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-gray-100 text-gray-800"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-gray-100 text-gray-800"
                     }`}
                 >
                   {plan.status}
@@ -422,7 +423,7 @@ const SubscriptionPlans = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Price ($)*
+                  Price (฿)*
                 </label>
                 <InputWithIcon
                   type="number"
