@@ -8,6 +8,7 @@ import Spinner from "@/components/Spinner";
 import Modal from "@/components/Modal";
 import Pagination from "@/components/Pagination";
 import { format } from "date-fns";
+import money from "@/utils/money";
 
 interface User {
   id: number;
@@ -239,10 +240,10 @@ const UserSubscriptions = () => {
                         {subscription.SubscriptionPlan.name}
                       </div>
                       <div className="text-sm text-gray-500">
-                        ${subscription.amount}
+                        {money.format(Number(subscription.amount))}
                         {subscription.discount !== "0.00" && (
                           <span className="text-green-500 ml-2">
-                            (-${subscription.discount})
+                            (-{money.format(Number(subscription.discount))})
                           </span>
                         )}
                       </div>
@@ -269,26 +270,24 @@ const UserSubscriptions = () => {
                         {subscription.paymentMethod}
                       </div>
                       <span
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          subscription.paymentStatus === "completed"
+                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${subscription.paymentStatus === "completed"
                             ? "bg-green-100 text-green-800"
                             : subscription.paymentStatus === "failed"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
                       >
                         {subscription.paymentStatus}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          subscription.status === "active"
+                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${subscription.status === "active"
                             ? "bg-green-100 text-green-800"
                             : subscription.status === "expired"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
                       >
                         {subscription.status}
                       </span>
