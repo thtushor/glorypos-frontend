@@ -1522,8 +1522,12 @@ function ShoppingCart({
                         filtered === "" ? "" : parseCurrencyInput(filtered);
                       // Validate max for guest count
                       const maxValue = 50;
+
                       const finalValue =
-                        parsed > maxValue ? maxValue : Math.max(1, parsed);
+                        parsed && parsed > maxValue
+                          ? maxValue
+                          : parsed;
+
                       setKotData((prev) => ({
                         ...prev,
                         guestCount: finalValue,
