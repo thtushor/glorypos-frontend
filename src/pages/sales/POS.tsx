@@ -12,11 +12,11 @@ import { CartItem } from "@/types/cartItemType";
 interface CartAdjustments {
   tax: {
     type: "fixed" | "percentage";
-    value?: number;
+    value?: number | string;
   };
   discount: {
     type: "fixed" | "percentage";
-    value?: number;
+    value?: number | string;
   };
   priceAdjustments: { [key: string]: number };
   salesPriceAdjustments: { [key: string]: number }; // Per-item sales price adjustments
@@ -156,7 +156,7 @@ const POS: React.FC = () => {
     };
   }, [handleBarcodeScan]);
 
- 
+
   // Cart items count
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 

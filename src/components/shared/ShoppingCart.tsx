@@ -42,11 +42,11 @@ import { PERMISSIONS } from "@/config/permissions";
 export interface CartAdjustments {
   tax: {
     type: "fixed" | "percentage";
-    value?: number;
+    value?: number | string;
   };
   discount: {
     type: "fixed" | "percentage";
-    value?: number;
+    value?: number | string;
   };
   priceAdjustments: { [key: string]: number };
   salesPriceAdjustments: { [key: string]: number }; // Per-item sales price adjustments
@@ -281,18 +281,18 @@ function ShoppingCart({
 
   const taxAmount = useMemo(() => {
     if (adjustments.tax.type === "percentage") {
-      const tax = (subtotal * (adjustments?.tax?.value || 0)) / 100;
+      const tax = (subtotal * (Number(adjustments?.tax?.value || 0))) / 100;
       return Math.round(tax * 100) / 100; // Round to 2 decimal places
     }
-    return Math.round((adjustments?.tax?.value || 0) * 100) / 100; // Round to 2 decimal places
+    return Math.round((Number(adjustments?.tax?.value || 0)) * 100) / 100; // Round to 2 decimal places
   }, [subtotal, adjustments.tax]);
 
   const discountAmount = useMemo(() => {
     if (adjustments.discount.type === "percentage") {
-      const discount = (subtotal * (adjustments?.discount?.value || 0)) / 100;
+      const discount = (subtotal * (Number(adjustments?.discount?.value || 0))) / 100;
       return Math.round(discount * 100) / 100; // Round to 2 decimal places
     }
-    return Math.round((adjustments?.discount?.value || 0) * 100) / 100; // Round to 2 decimal places
+    return Math.round((Number(adjustments?.discount?.value || 0)) * 100) / 100; // Round to 2 decimal places
   }, [subtotal, adjustments.discount]);
 
   const total = useMemo(() => {
@@ -321,16 +321,16 @@ function ShoppingCart({
     return paymentTotal > total + 0.01; // Add small buffer for floating point comparison
   }, [paymentTotal, total]);
 
-  const updateTax = (newTax?: number) => {
-    const formattedTax = newTax ? formatCurrency(newTax) : undefined;
+  const updateTax = (newTax?: number | string) => {
+    const formattedTax = newTax
     setAdjustments((prev) => ({
       ...prev,
       tax: {
         type: prev.tax.type,
-        value:
+        value: newTax === "" ? "" :
           prev.tax.type === "percentage"
-            ? Math.max(0, Math.min(100, formattedTax ?? 0))
-            : Math.max(0, formattedTax ?? 0),
+            ? Math.max(0, Math.min(100, Number(formattedTax) ?? 0))
+            : Math.max(0, Number(formattedTax) ?? 0),
       },
     }));
   };
@@ -525,18 +525,16 @@ function ShoppingCart({
     },
   });
 
-  const updateDiscount = (newDiscount?: number) => {
+  const updateDiscount = (newDiscount?: number | string) => {
     const formattedDiscount = newDiscount
-      ? formatCurrency(newDiscount)
-      : undefined;
     setAdjustments((prev) => ({
       ...prev,
       discount: {
         type: prev.discount.type,
-        value:
+        value: newDiscount === "" ? "" :
           prev.discount.type === "percentage"
-            ? Math.max(0, Math.min(100, formattedDiscount ?? 0))
-            : Math.max(0, formattedDiscount ?? 0),
+            ? Math.max(0, Math.min(100, Number(formattedDiscount) ?? 0))
+            : Math.max(0, Number(formattedDiscount) ?? 0),
       },
     }));
   };
@@ -874,7 +872,7 @@ function ShoppingCart({
                                 );
                                 const parsed =
                                   filtered === ""
-                                    ? 0
+                                    ? ""
                                     : parseCurrencyInput(filtered);
                                 // Validate max for percentage
                                 const maxValue =
@@ -882,7 +880,7 @@ function ShoppingCart({
                                     ? 100
                                     : undefined;
                                 const finalValue =
-                                  maxValue && parsed > maxValue
+                                  maxValue && parsed && parsed > maxValue
                                     ? maxValue
                                     : parsed;
                                 updateItemDiscount(
@@ -981,18 +979,18 @@ function ShoppingCart({
                   <input
                     type="text"
                     inputMode="decimal"
-                    value={getNumericValue(adjustments?.tax?.value ?? 0)}
+                    value={getNumericValue(adjustments?.tax?.value)}
                     onChange={(e) => {
                       const filtered = filterNumericInput(e.target.value);
                       const parsed =
                         filtered === ""
-                          ? undefined
+                          ? ""
                           : parseCurrencyInput(filtered);
                       // Validate max for percentage
                       const maxValue =
                         adjustments.tax.type === "percentage" ? 100 : undefined;
                       const finalValue =
-                        maxValue && parsed !== undefined && parsed > maxValue
+                        maxValue && parsed !== undefined && parsed && parsed > maxValue
                           ? maxValue
                           : parsed;
                       updateTax(finalValue);
@@ -1000,12 +998,12 @@ function ShoppingCart({
                     onBlur={(e) => {
                       const filtered = filterNumericInput(e.target.value);
                       const parsed =
-                        filtered === "" ? 0 : parseCurrencyInput(filtered);
+                        filtered === "" ? "" : parseCurrencyInput(filtered);
                       // Validate max for percentage
                       const maxValue =
                         adjustments.tax.type === "percentage" ? 100 : undefined;
                       const finalValue =
-                        maxValue && parsed > maxValue ? maxValue : parsed;
+                        maxValue && parsed && parsed > maxValue ? maxValue : parsed;
                       updateTax(finalValue);
                     }}
                     className="w-full sm:w-20 px-2 py-1.5 sm:py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
@@ -1041,12 +1039,12 @@ function ShoppingCart({
                   <input
                     type="text"
                     inputMode="decimal"
-                    value={getNumericValue(adjustments?.discount?.value || 0)}
+                    value={getNumericValue(adjustments?.discount?.value)}
                     onChange={(e) => {
                       const filtered = filterNumericInput(e.target.value);
                       const parsed =
                         filtered === ""
-                          ? undefined
+                          ? ""
                           : parseCurrencyInput(filtered);
                       // Validate max for percentage
                       const maxValue =
@@ -1054,7 +1052,7 @@ function ShoppingCart({
                           ? 100
                           : undefined;
                       const finalValue =
-                        maxValue && parsed !== undefined && parsed > maxValue
+                        maxValue && parsed !== undefined && parsed && parsed > maxValue
                           ? maxValue
                           : parsed;
                       updateDiscount(finalValue);
@@ -1062,14 +1060,14 @@ function ShoppingCart({
                     onBlur={(e) => {
                       const filtered = filterNumericInput(e.target.value);
                       const parsed =
-                        filtered === "" ? 0 : parseCurrencyInput(filtered);
+                        filtered === "" ? "" : parseCurrencyInput(filtered);
                       // Validate max for percentage
                       const maxValue =
                         adjustments.discount.type === "percentage"
                           ? 100
                           : undefined;
                       const finalValue =
-                        maxValue && parsed > maxValue ? maxValue : parsed;
+                        maxValue && parsed && parsed > maxValue ? maxValue : parsed;
                       updateDiscount(finalValue);
                     }}
                     className="w-full sm:w-20 px-2 py-1.5 sm:py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
