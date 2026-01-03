@@ -212,12 +212,12 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
   }, [selectedUserId, month]);
 
   // Auto-calculate net payable salary when deductions/additions change
+  // Note: This is now just for initial setup, user can manually edit it in Step 2
   useEffect(() => {
     if (!payrollDetails) return;
 
     const calculatedNetPayable =
-      payrollDetails.baseSalary +
-      payrollDetails.totalCommission +
+      payrollDetails.totalPayable +
       editableBonus +
       editableOvertime -
       editableLeaveDeduction -
@@ -319,11 +319,9 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
       (payrollDetails.otherDeduction || 0);
 
     // Calculate gross salary (base + commission + bonus + overtime)
-    const grossSalary =
-      payrollDetails.baseSalary +
-      payrollDetails.totalCommission +
-      editableBonus +
-      editableOvertime;
+    const grossSalary = payrollDetails.totalPayable + editableBonus + editableOvertime;
+
+    // Net payable is now editable by user, so we use editableNetPayable directly
 
     // Calculate due amount
     const dueAmount = editableNetPayable - editablePaidAmount;
@@ -344,7 +342,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
       ...(editableOvertime > 0 && { overtimeAmount: editableOvertime }),
       ...(payrollDetails.otherDeduction > 0 && { otherDeduction: payrollDetails.otherDeduction }),
 
-      netPayableSalary: editableNetPayable,
+      netPayableSalary: grossSalary, // Send gross salary as netPayableSalary to API
       paidAmount: editablePaidAmount,
 
       shopId: user?.id,
@@ -719,54 +717,67 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                 <h3 className="text-lg font-bold">Adjust Salary Components</h3>
               </div>
 
+              {/* Gross Salary Display */}
+              <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl p-4 text-white shadow-lg">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-emerald-100 text-sm">Gross Salary (Base + Commission + Bonus + Overtime)</p>
+                    <p className="text-3xl font-bold mt-1">
+                      {money.format(
+                        payrollDetails.baseSalary +
+                        payrollDetails.totalCommission +
+                        editableBonus +
+                        editableOvertime
+                      )}
+                    </p>
+                  </div>
+                  <FiDollarSign className="w-12 h-12 opacity-50" />
+                </div>
+              </div>
+
               {/* Payment Overview Section */}
               <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-xl p-4 border-2 border-indigo-200 shadow-lg">
                 <h4 className="font-bold text-indigo-900 mb-4 text-base flex items-center gap-2">
                   <FiDollarSign className="w-5 h-5" />
-                  Payment Overview
+                  Dues Overview
                 </h4>
 
                 <div className="space-y-3">
+                  {/* Current Month Dues */}
+                  <div className="bg-white rounded-lg p-3 border border-blue-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold text-blue-700">Current Month Dues:</span>
+                      <span className="text-lg font-bold text-blue-600">{money.format(payrollDetails.currentMonthNetPayable)}</span>
+                    </div>
+                    {payrollDetails.hasCurrentMonthPayments && (
+                      <div className="mt-2 pt-2 border-t border-blue-100 text-xs text-gray-600">
+                        <div className="flex justify-between">
+                          <span>Already Paid:</span>
+                          <span className="font-semibold text-green-600">{money.format(payrollDetails.currentMonthPaidAmount)}</span>
+                        </div>
+                        <div className="flex justify-between mt-1">
+                          <span>Remaining:</span>
+                          <span className="font-semibold text-orange-600">{money.format(payrollDetails.currentMonthRemainingDue)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
+                  {/* Previous Month Dues */}
+                  {payrollDetails.hasPreviousDues && (
+                    <div className="bg-white rounded-lg p-3 border border-orange-200">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-semibold text-orange-700">Previous Month(s) Dues:</span>
+                        <span className="text-lg font-bold text-orange-600">{money.format(payrollDetails.totalPreviousDues)}</span>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Total Payable Summary */}
                   <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-3 text-white shadow-md">
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center text-sm opacity-90">
-                        <span>Current Month:</span>
-                        <span className="font-semibold">{money.format(payrollDetails.currentMonthNetPayable)}</span>
-                      </div>
-
-                      {payrollDetails.hasPreviousDues && (
-                        <div className="flex justify-between items-center text-sm opacity-90">
-                          <span>Previous Dues:</span>
-                          <span className="font-semibold">+ {money.format(payrollDetails.totalPreviousDues)}</span>
-                        </div>
-                      )}
-
-                      <div className="border-t border-white/30 pt-2 mt-2">
-                        <div className="flex justify-between items-center">
-                          <span className="font-bold text-base">Total Payable:</span>
-                          <span className="text-2xl font-bold">{money.format(payrollDetails.totalPayable)}</span>
-                        </div>
-                      </div>
-
-                      {payrollDetails.hasCurrentMonthPayments && (
-                        <>
-                          <div className="flex justify-between items-center text-sm opacity-90">
-                            <span>Already Paid:</span>
-                            <span className="font-semibold">- {money.format(payrollDetails.currentMonthPaidAmount)}</span>
-                          </div>
-                          <div className="border-t border-white/30 pt-2">
-                            <div className="flex justify-between items-center">
-                              <span className="font-bold">Final Remaining:</span>
-                              <span className="text-xl font-bold text-yellow-300">
-                                {money.format(payrollDetails.netPayableSalary)}
-                              </span>
-                            </div>
-                          </div>
-                        </>
-                      )}
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-base">Total Remaining Due:</span>
+                      <span className="text-2xl font-bold">{money.format(payrollDetails.netPayableSalary)}</span>
                     </div>
                   </div>
                 </div>
@@ -882,16 +893,20 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                   />
                 </div>
 
-                {/* Read-only: Net Payable (Auto-calculated) */}
+                {/* Editable: Net Payable Salary */}
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-1 block">
-                    Net Payable Salary (Auto-calculated)
+                    Net Payable Salary (Editable)
+                    <span className="text-xs text-gray-500 ml-2">
+                      (After all deductions)
+                    </span>
                   </label>
                   <input
-                    type="text"
-                    value={money.format(editableNetPayable)}
-                    readOnly
-                    className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-blue-50 text-blue-700 font-bold text-lg cursor-not-allowed"
+                    type="number"
+                    value={editableNetPayable}
+                    disabled
+                    onChange={(e) => setEditableNetPayable(parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-blue-300 rounded-lg disabled:opacity-80 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-bold text-lg"
                   />
                 </div>
 
