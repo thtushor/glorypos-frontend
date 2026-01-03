@@ -375,9 +375,9 @@ function ShoppingCart({
   const updateItemDiscount = (
     itemId: string | number,
     discountType: "percentage" | "amount",
-    discountValue: number
+    discountValue: number | string
   ) => {
-    const formattedValue = formatCurrency(discountValue);
+    // const formattedValue = formatCurrency(discountValue);
     const key = typeof itemId === "string" ? Number(itemId) : itemId;
     setAdjustments((prev) => ({
       ...prev,
@@ -385,7 +385,7 @@ function ShoppingCart({
         ...prev.discountAdjustments,
         [key]: {
           type: discountType,
-          value: formattedValue,
+          value: discountValue,
         },
       },
     }));
@@ -849,15 +849,17 @@ function ShoppingCart({
                                 );
                                 const parsed =
                                   filtered === ""
-                                    ? 0
+                                    ? ""
                                     : parseCurrencyInput(filtered);
+
+                                console.log({ finalValue: parsed });
                                 // Validate max for percentage
                                 const maxValue =
                                   discount.type === "percentage"
                                     ? 100
                                     : undefined;
                                 const finalValue =
-                                  maxValue && parsed > maxValue
+                                  maxValue && parsed && parsed > maxValue
                                     ? maxValue
                                     : parsed;
                                 updateItemDiscount(
