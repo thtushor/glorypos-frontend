@@ -108,7 +108,7 @@ function ShoppingCart({
   initialKOTInfo?: {
     tableNumber: string,
     specialInstructions: string,
-    guestCount: number,
+    guestCount: number | string,
   }
   initialPaymentInfo?: PartialPayment;
   initialStaffId?: "self-sell" | number | null;
@@ -136,7 +136,7 @@ function ShoppingCart({
   const [kotData, setKotData] = useState({
     tableNumber: "",
     specialInstructions: "",
-    guestCount: 1,
+    guestCount: 1 as number | string,
   });
 
   const [currentOrder, setCurrentOrder] = useState<OrderData | null>(null);
@@ -637,7 +637,12 @@ function ShoppingCart({
 
   useEffect(() => {
     if (!initialKOTInfo) return;
-    setKotData(initialKOTInfo);
+    setKotData({
+      ...initialKOTInfo,
+      guestCount: typeof initialKOTInfo.guestCount === 'string'
+        ? parseInt(initialKOTInfo.guestCount) || 1
+        : initialKOTInfo.guestCount
+    });
   }, [initialKOTInfo])
 
   useEffect(() => {
@@ -1490,16 +1495,40 @@ function ShoppingCart({
                     Number of Guests
                   </label>
                   <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={kotData.guestCount}
-                    onChange={(e) =>
+                    type="text"
+                    inputMode="decimal"
+                    value={getNumericValue(kotData.guestCount)}
+                    onChange={(e) => {
+                      const filtered = filterNumericInput(e.target.value);
+                      const parsed =
+                        filtered === ""
+                          ? ""
+                          : parseCurrencyInput(filtered);
+                      // Validate max for guest count
+                      const maxValue = 50;
+                      const finalValue =
+                        parsed && parsed > maxValue
+                          ? maxValue
+                          : parsed;
+
                       setKotData((prev) => ({
                         ...prev,
-                        guestCount: parseInt(e.target.value) || 1,
-                      }))
-                    }
+                        guestCount: finalValue,
+                      }));
+                    }}
+                    onBlur={(e) => {
+                      const filtered = filterNumericInput(e.target.value);
+                      const parsed =
+                        filtered === "" ? "" : parseCurrencyInput(filtered);
+                      // Validate max for guest count
+                      const maxValue = 50;
+                      const finalValue =
+                        parsed > maxValue ? maxValue : Math.max(1, parsed);
+                      setKotData((prev) => ({
+                        ...prev,
+                        guestCount: finalValue,
+                      }));
+                    }}
                     className="w-full px-4 py-2.5 border-2 border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
                   />
                 </div>
