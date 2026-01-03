@@ -468,7 +468,7 @@ function AddProduct({
         {/* Category, Brand, Unit */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Category{!isRestaurent ? "*" : ""}
+            Category
           </label>
           <select
             value={formData.CategoryId || ""}
@@ -479,7 +479,6 @@ function AddProduct({
               })
             }
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
-            required={!isRestaurent}
           >
             <option value="">Select Category</option>
             {categories.map((category) => (
@@ -492,7 +491,7 @@ function AddProduct({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Brand{!isRestaurent ? "*" : ""}
+            Brand
           </label>
           <select
             value={formData.BrandId || ""}
@@ -503,7 +502,6 @@ function AddProduct({
               })
             }
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
-            required={!isRestaurent}
           >
             <option value="">Select Brand</option>
             {brands.map((brand) => (
@@ -516,7 +514,7 @@ function AddProduct({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Unit{!isRestaurent ? "*" : ""}
+            Unit
           </label>
           <select
             value={formData.UnitId || ""}
@@ -527,7 +525,6 @@ function AddProduct({
               })
             }
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
-            required={!isRestaurent}
           >
             <option value="">Select Unit</option>
             {units.map((unit) => (
