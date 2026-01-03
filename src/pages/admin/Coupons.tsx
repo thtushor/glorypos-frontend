@@ -8,6 +8,7 @@ import Spinner from "@/components/Spinner";
 import { COUPONS_URL, DELETE_COUPON_URL } from "@/api/api";
 import InputWithIcon from "@/components/InputWithIcon";
 import { format } from "date-fns";
+import money from "@/utils/money";
 
 interface Coupon {
   id: number;
@@ -188,13 +189,12 @@ const Coupons = () => {
                 <p className="text-sm text-gray-500">{coupon.description}</p>
               </div>
               <span
-                className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  coupon.status === "active"
+                className={`px-2 py-1 text-xs font-medium rounded-full ${coupon.status === "active"
                     ? "bg-green-100 text-green-800"
                     : coupon.status === "expired"
-                    ? "bg-red-100 text-red-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}
+                      ? "bg-red-100 text-red-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
               >
                 {coupon.status}
               </span>
@@ -206,7 +206,7 @@ const Coupons = () => {
                 <span className="font-medium">
                   {coupon.type === "percentage"
                     ? `${coupon.value}%`
-                    : `$${coupon.value}`}
+                    : money.format(coupon.value)}
                 </span>
               </div>
 
@@ -221,7 +221,7 @@ const Coupons = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Min. Purchase</span>
                   <span className="font-medium">
-                    ${coupon.minPurchaseAmount}
+                    {money.format(coupon.minPurchaseAmount)}
                   </span>
                 </div>
               )}
@@ -230,7 +230,7 @@ const Coupons = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Max. Discount</span>
                   <span className="font-medium">
-                    ${coupon.maxDiscountAmount}
+                    {money.format(coupon.maxDiscountAmount)}
                   </span>
                 </div>
               )}
