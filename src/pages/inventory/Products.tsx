@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { FaPlus, FaEdit, FaTrash, FaEye, FaBarcode } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaEye, FaBarcode, FaExchangeAlt } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import {
   DELETE_PRODUCT_URL,
@@ -14,6 +14,7 @@ import Spinner from "@/components/Spinner";
 import Modal from "@/components/Modal";
 import Pagination from "@/components/Pagination";
 import AddProduct from "@/components/shared/AddProduct";
+import TransferProduct from "@/components/shared/TransferProduct";
 import {
   Product,
   ProductFormData,
@@ -42,6 +43,8 @@ interface ViewModalProps {
 const Products: React.FC = () => {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [transferProduct, setTransferProduct] = useState<Product | null>(null);
   const { user } = useAuth();
   const { hasPermission } = usePermission();
 
@@ -255,6 +258,11 @@ const Products: React.FC = () => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleTransfer = (product: Product) => {
+    setTransferProduct(product);
+    setIsTransferModalOpen(true);
   };
 
   const resetForm = () => {
@@ -503,6 +511,15 @@ const Products: React.FC = () => {
                       <FaTrash className="w-5 h-5" />
                     </button>
                   )}
+                  {canCreateProduct && (
+                    <button
+                      onClick={() => handleTransfer(product)}
+                      className="p-2 bg-white rounded-full hover:bg-blue-500 hover:text-white transition-colors"
+                      title="Transfer to Another Shop"
+                    >
+                      <FaExchangeAlt className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -655,6 +672,27 @@ const Products: React.FC = () => {
           <ViewProductModal
             product={viewProduct}
             onClose={() => setViewProduct(null)}
+          />
+        )}
+      </Modal>
+
+      {/* Transfer Product Modal */}
+      <Modal
+        isOpen={isTransferModalOpen}
+        onClose={() => {
+          setIsTransferModalOpen(false);
+          setTransferProduct(null);
+        }}
+        title="Transfer Product to Another Shop"
+        className="lg:!max-w-[80vw] !max-w-[95vw]"
+      >
+        {transferProduct && (
+          <TransferProduct
+            productData={transferProduct}
+            onClose={() => {
+              setIsTransferModalOpen(false);
+              setTransferProduct(null);
+            }}
           />
         )}
       </Modal>
