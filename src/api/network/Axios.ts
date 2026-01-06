@@ -5,37 +5,41 @@ import { BASE_URL } from "../api";
 
 const AXIOS = axios.create({
   baseURL: BASE_URL,
+  timeout: 30000, // 30 seconds timeout
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
+
+/**
+ * Utility to clear authentication cookies
+ */
+const clearAuthCookies = (): void => {
+  document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict";
+  document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict";
+  localStorage.removeItem("user");
+};
 
 /**
  * Interceptor for all requests
  */
 AXIOS.interceptors.request.use(
-  async (config) => {
-    /**
-     * Add your request interceptor logic here: setting headers, authorization etc.
-     */
-    let accessToken = null;
+  (config) => {
+    // Get access token from cookies
+    const { access_token } = getCookiesAsObject();
 
-    if (document.cookie.length > 0) {
-      const { access_token } = getCookiesAsObject();
-      accessToken = access_token || null;
-    }
-
-    config.headers["Content-Type"] = "application/json";
-    config.headers["Access-Control-Allow-Origin"] = "*";
-
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+    // Add authorization header if token exists
+    if (access_token) {
+      config.headers.Authorization = `Bearer ${access_token}`;
     }
 
     return config;
   },
   (error) => {
-    /**
-     * Add your error handlers here
-     */
-    console.log("api error:", error);
+    console.error("[Axios Request Error]:", {
+      message: error.message,
+      config: error.config,
+    });
     return Promise.reject(error);
   }
 );
@@ -45,29 +49,64 @@ AXIOS.interceptors.request.use(
  */
 AXIOS.interceptors.response.use(
   (response) => {
-    /**
-     * Add logic for successful response
-     */
+    // Return response data directly
     return response?.data || {};
   },
   (error) => {
-    /**
-     * Add logic for any error from backend
-     */
-    if (error?.response?.status === 401 ||
-      error?.response?.data?.status === false &&
-      (error?.response?.data?.message === "No token provided" ||
-        error?.response?.data?.message === "Invalid or expired token" ||
-        error?.response?.data?.message === "Authentication failed" ||
-        error?.response?.data?.message === "Authentication required. Please login." ||
-        error?.response?.data?.message === "User not is not valid")
-    ) {
-      toast.error(error?.response?.data?.message);
-      window.location.href = "/login";
+    // Handle network errors
+    if (!error.response) {
+      console.error("[Network Error]:", error.message);
+      toast.error("Network error. Please check your connection.");
+      return Promise.reject({
+        message: "Network error. Please check your connection.",
+        error: error.message,
+      });
     }
 
-    console.log("api error:", error);
-    return Promise.reject(error?.response?.data);
+    const { status, data } = error.response;
+
+    // Handle 401 Unauthorized
+    if (status === 401) {
+      const isLoginPage = window.location.pathname === "/login";
+
+      if (!isLoginPage) {
+        const errorMessage = data?.message || "Session expired. Please login again.";
+        toast.error(errorMessage);
+
+        // Clear authentication cookies
+        clearAuthCookies();
+
+        // Redirect to login
+        window.location.reload();
+        window.location.href = "/login";
+
+      }
+    }
+
+    // Handle 403 Forbidden
+    if (status === 403) {
+      toast.error(data?.message || "You don't have permission to perform this action.");
+    }
+
+    // Handle 404 Not Found
+    if (status === 404) {
+      console.warn("[404 Not Found]:", error.config?.url);
+    }
+
+    // Handle 500 Server Error
+    if (status >= 500) {
+      toast.error("Server error. Please try again later.");
+    }
+
+    // Log error details for debugging
+    console.error("[Axios Response Error]:", {
+      status,
+      message: data?.message || error.message,
+      url: error.config?.url,
+      method: error.config?.method,
+    });
+
+    return Promise.reject(data || { message: error.message });
   }
 );
 
