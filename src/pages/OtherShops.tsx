@@ -707,7 +707,7 @@ const OtherShops = () => {
                   name="shopType"
                   defaultValue={selectedShop.shopType || "normal"}
                   required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm p-2"
+                  className="mt-1 border rounded-md p-2 block w-full border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
                 >
                   <option value="normal">Normal Shop</option>
                   <option value="restaurant">Restaurant</option>
