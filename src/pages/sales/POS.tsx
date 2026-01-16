@@ -174,7 +174,7 @@ const POS: React.FC = () => {
         adjustments={adjustments}
       />
       {/* Cart Section - Desktop - Sticky */}
-      <div className="lg:sticky lg:top-0 lg:h-[calc(100vh-6rem)] overflow-y-auto">
+      <div className="lg:sticky lg:top-0 lg:h-[calc(100vh-6rem)] xl:max-w-[450px] overflow-y-auto">
         <ShoppingCart
           showMobileCart={showMobileCart}
           cart={cart}
