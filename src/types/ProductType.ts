@@ -113,5 +113,7 @@ export interface ProductQueryParams {
   maxPrice?: number;
   gender?: "men" | "women" | "others";
   modelNo?: string;
+  sortBy?: string;
+  sortOrder?: "ASC" | "DESC";
   [key: string]: any; // For otherFilters
 }

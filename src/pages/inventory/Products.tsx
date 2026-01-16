@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { FaPlus, FaEdit, FaTrash, FaEye, FaBarcode, FaExchangeAlt } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaEye, FaBarcode, FaExchangeAlt, FaSortAmountDown, FaSortAmountUp } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import {
   DELETE_PRODUCT_URL,
@@ -72,6 +72,8 @@ const Products: React.FC = () => {
     "men" | "women" | "others" | "all"
   >("all");
   const [modelNo, setModelNo] = useState("");
+  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
 
   useEffect(() => {
     if (!hasAppliedDefaultShop.current && currentShopId) {
@@ -129,6 +131,8 @@ const Products: React.FC = () => {
     if (selectedUnit !== "all") params.unitId = selectedUnit;
     if (selectedGender !== "all") params.gender = selectedGender;
     if (modelNo) params.modelNo = modelNo;
+    if (sortBy) params.sortBy = sortBy;
+    if (sortOrder) params.sortOrder = sortOrder;
 
     // Add price range filters
     if (
@@ -160,6 +164,8 @@ const Products: React.FC = () => {
     selectedGender,
     modelNo,
     priceRange,
+    sortBy,
+    sortOrder,
   ]);
 
   // Products query with pagination
@@ -413,6 +419,39 @@ const Products: React.FC = () => {
           }}
           className="border rounded-lg px-3 py-2"
         />
+
+        {/* Sorting Group */}
+        <div className="flex items-center border rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-brand-primary">
+          <select
+            value={sortBy}
+            onChange={(e) => {
+              setSortBy(e.target.value);
+              handleFilterChange();
+            }}
+            className="flex-1 px-3 py-2 outline-none border-r bg-transparent text-sm"
+          >
+            <option value="createdAt">Sort: Date</option>
+            <option value="name">Sort: Name</option>
+            <option value="id">Sort: ID</option>
+            <option value="stock">Sort: Stock</option>
+            <option value="price">Sort: Price</option>
+            <option value="status">Sort: Status</option>
+          </select>
+          <button
+            onClick={() => {
+              setSortOrder((prev) => (prev === "ASC" ? "DESC" : "ASC"));
+              handleFilterChange();
+            }}
+            className="px-3 py-2 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-center"
+            title={sortOrder === "ASC" ? "Sort Ascending" : "Sort Descending"}
+          >
+            {sortOrder === "ASC" ? (
+              <FaSortAmountUp className="text-brand-primary h-4 w-4" />
+            ) : (
+              <FaSortAmountDown className="text-brand-primary h-4 w-4" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Price Range */}
@@ -631,19 +670,21 @@ const Products: React.FC = () => {
       </div>
 
       {/* Pagination */}
-      {pagination.totalPages > 0 && (
-        <div className="mt-6">
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            totalItems={pagination.totalItems}
-            pageSize={pagination.pageSize}
-            hasNextPage={pagination.hasNextPage}
-            hasPreviousPage={pagination.hasPreviousPage}
-            onPageChange={(page) => setPage(page)}
-          />
-        </div>
-      )}
+      {
+        pagination.totalPages > 0 && (
+          <div className="mt-6">
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.totalItems}
+              pageSize={pagination.pageSize}
+              hasNextPage={pagination.hasNextPage}
+              hasPreviousPage={pagination.hasPreviousPage}
+              onPageChange={(page) => setPage(page)}
+            />
+          </div>
+        )
+      }
 
       {/* Product Form Modal */}
       <Modal
@@ -696,7 +737,7 @@ const Products: React.FC = () => {
           />
         )}
       </Modal>
-    </div>
+    </div >
   );
 };
 
