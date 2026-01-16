@@ -62,6 +62,7 @@ const Products: React.FC = () => {
   const { filters, setFilter, isInitialized } = useUrlFilters({
     defaultValues: {
       page: 1,
+      pageSize: 100,
       searchKey: "",
       shopId: "",
       categoryId: "all" as number | "all",
@@ -104,7 +105,7 @@ const Products: React.FC = () => {
     },
   });
 
-  const pageSize = 20;
+  const pageSize = filters.pageSize;
 
   // Apply default shop ID on mount
   useEffect(() => {
