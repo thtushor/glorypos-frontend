@@ -173,10 +173,8 @@ const POS: React.FC = () => {
         setAdjustments={setAdjustments}
         adjustments={adjustments}
       />
-      {/* Cart Section - Desktop */}
-
-      {/* this section will be sticky  */}
-      <div className="overflow-y-auto  ">
+      {/* Cart Section - Desktop - Sticky */}
+      <div className="lg:sticky lg:top-0 lg:h-[calc(100vh-6rem)] overflow-y-auto">
         <ShoppingCart
           showMobileCart={showMobileCart}
           cart={cart}
@@ -189,6 +187,7 @@ const POS: React.FC = () => {
           handleBarcodeScan={handleBarcodeScan}
         />
       </div>
+
 
       <MobileCartToggleButton
         onClick={() => setShowMobileCart(true)}

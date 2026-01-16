@@ -47,7 +47,7 @@ function CartProductSection({
 }) {
   // Pagination state
   const [page, setPage] = useState(1);
-  const pageSize = 20;
+  const pageSize = 100;
 
   // Filter states for API
   const { user } = useAuth();
