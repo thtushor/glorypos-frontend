@@ -14,7 +14,7 @@ import {
 } from "@/types/ProductType";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { FaChevronDown, FaChevronUp, FaFilter, FaSearch } from "react-icons/fa";
+import { FaChevronDown, FaChevronUp, FaFilter, FaSearch, FaSortAmountDown, FaSortAmountUp } from "react-icons/fa";
 import Spinner from "../Spinner";
 import money from "@/utils/money";
 import { formatCurrency, successToast } from "@/utils/utils";
@@ -58,7 +58,7 @@ function CartProductSection({
 
   const [searchKey, setSearchKey] = useState("");
   //   const [sku, setSku] = useState("");
-  const [shopId, setShopId] = useState(user?.id?.toString()||"");
+  const [shopId, setShopId] = useState(user?.id?.toString() || "");
 
   const [selectedCategory, setSelectedCategory] = useState<number | "all">(
     "all"
@@ -72,7 +72,7 @@ function CartProductSection({
 
   const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
   const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
-  
+
   const [selectedGender, setSelectedGender] = useState<
     "men" | "women" | "others" | "all"
   >("all");
@@ -82,6 +82,9 @@ function CartProductSection({
     min: undefined,
     max: undefined,
   });
+
+  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
 
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
 
@@ -100,6 +103,8 @@ function CartProductSection({
     if (selectedUnit !== "all") params.unitId = selectedUnit;
     if (selectedGender !== "all") params.gender = selectedGender;
     if (modelNo) params.modelNo = modelNo;
+    if (sortBy) params.sortBy = sortBy;
+    if (sortOrder) params.sortOrder = sortOrder;
 
     // Add price range filters
     if (
@@ -136,6 +141,8 @@ function CartProductSection({
     selectedGender,
     modelNo,
     priceRange,
+    sortBy,
+    sortOrder,
   ]);
 
   // Products query with pagination
@@ -362,7 +369,7 @@ function CartProductSection({
 
             {/* Expandable Filter Content */}
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${isFiltersExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${isFiltersExpanded ? "max-h-98 opacity-100" : "max-h-0 opacity-0"
                 }`}
             >
               <div className="p-4 space-y-4 bg-gray-50">
@@ -514,6 +521,51 @@ function CartProductSection({
                       }}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-white hover:border-gray-400 transition-colors"
                     />
+                  </div>
+
+                  {/* Sorting Filter */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                      Sort By
+                    </label>
+                    <div className="flex items-center border border-gray-300 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-brand-primary focus-within:border-transparent bg-white hover:border-gray-400 transition-colors">
+                      <select
+                        value={sortBy}
+                        onChange={(e) => {
+                          setSortBy(e.target.value);
+                          handleFilterChange();
+                        }}
+                        className="flex-1 px-3 py-2 text-sm outline-none bg-transparent"
+                      >
+                        <option value="createdAt">Date Created</option>
+                        <option value="name">Name</option>
+                        <option value="id">ID</option>
+                        <option value="stock">Stock</option>
+                        <option value="price">Price</option>
+                        <option value="status">Status</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSortOrder((prev) =>
+                            prev === "ASC" ? "DESC" : "ASC"
+                          );
+                          handleFilterChange();
+                        }}
+                        className="px-3 py-2 bg-gray-100 hover:bg-gray-200 border-l border-gray-300 transition-colors flex items-center justify-center"
+                        title={
+                          sortOrder === "ASC"
+                            ? "Sort Ascending"
+                            : "Sort Descending"
+                        }
+                      >
+                        {sortOrder === "ASC" ? (
+                          <FaSortAmountUp className="text-brand-primary h-4 w-4" />
+                        ) : (
+                          <FaSortAmountDown className="text-brand-primary h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
