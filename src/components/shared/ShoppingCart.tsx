@@ -659,578 +659,580 @@ function ShoppingCart({
 
   return (
     <>
-      <div
-        className={` bg-white  rounded-lg shadow flex flex-col xl:flex ${showMobileCart ? "flex" : "hidden"
-          }`}
-      >
-        {/* Mobile Cart Header */}
-        <div className="xl:hidden flex items-center justify-between p-4 border-b">
-          <h2 className="font-semibold text-lg">Shopping Cart</h2>
-          <button
-            onClick={() => onClose()}
-            className="p-2 hover:bg-gray-100 rounded-full"
-          >
-            <FaTimes className="w-5 h-5" />
-          </button>
-        </div>
 
-        {/* Customer Info */}
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-2 text-gray-600 mb-4">
-            <FaUser className="w-5 h-5" />
-            <span className="font-medium">Customer Information</span>
-          </div>
-          <div className="space-y-2">
-            <input
-              type="text"
-              placeholder="Customer Name"
-              value={customerInfo.name}
-              onChange={(e) =>
-                setCustomerInfo((prev) => ({ ...prev, name: e.target.value }))
-              }
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary"
-            />
-            <input
-              type="tel"
-              placeholder="Phone Number"
-              value={customerInfo.phone}
-              onChange={(e) =>
-                setCustomerInfo((prev) => ({ ...prev, phone: e.target.value }))
-              }
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary"
-            />
-          </div>
-        </div>
-
-        {/* Cart Items */}
-        <div className="flex-1 p-4 overflow-y-auto">
-          {cart.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <FaShoppingCart className="w-8 h-8 mx-auto mb-2" />
-                <p>Cart is empty</p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {cart.map((item) => {
-                // Use the helper function to get sales price (reactive)
-                const salesPrice = getItemSalesPrice(item);
-                const discount = adjustments.discountAdjustments[item.id] || {
-                  type:
-                    (item.discountType as "percentage" | "amount") ||
-                    "percentage",
-                  value: Number(item.discountAmount || 0),
-                };
-                const finalPrice = calculateItemFinalPrice(item);
-
-                return (
-                  <div
-                    key={item.id}
-                    className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200"
-                  >
-                    <img
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className="w-12 h-12 rounded object-cover flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      {/* <h4 className="font-medium text-sm">{item.name}</h4> */}
-
-                      {/* Product Title + Meta Info */}
-                      <div className="space-y-1">
-                        <h4 className="font-semibold text-sm text-gray-900 leading-tight">
-                          {item?.name}
-                        </h4>
-
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-500">
-                          {/* Category */}
-                          {item?.selectedVariant?.Category?.name
-                            ? item?.selectedVariant?.Category?.name
-                            : item?.Category?.name && (
-                              <span className="flex items-center gap-1">
-                                <span className="font-medium text-gray-600">
-                                  Category:
-                                </span>
-                                {item?.selectedVariant?.Category?.name
-                                  ? item?.selectedVariant?.Category?.name
-                                  : item?.Category?.name}
-                              </span>
-                            )}
-
-                          {/* Brand */}
-                          {item?.Brand?.name && (
-                            <span className="flex items-center gap-1">
-                              <span className="font-medium text-gray-600">
-                                Brand:
-                              </span>
-                              {item.Brand.name}
-                            </span>
-                          )}
-
-                          {/* Color */}
-                          {item?.selectedVariant?.Color?.name
-                            ? item?.selectedVariant?.Color?.name
-                            : item?.Color?.name && (
-                              <span className="flex items-center gap-1">
-                                <span className="font-medium text-gray-600">
-                                  Color:
-                                </span>
-                                <span
-                                  className="w-3 h-3 rounded-full border"
-                                  style={{
-                                    backgroundColor: item?.selectedVariant
-                                      ?.Color?.code
-                                      ? item?.selectedVariant?.Color?.code
-                                      : item?.Color?.code,
-                                  }}
-                                />
-                                {item?.selectedVariant?.Color?.name
-                                  ? item?.selectedVariant?.Color?.name
-                                  : item?.Color?.name}
-                              </span>
-                            )}
-                        </div>
-                      </div>
-
-                      {/* Sales Price Input */}
-                      <div className="mt-2 space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs text-gray-500 whitespace-nowrap">
-                            Sales Price:
-                          </label>
-                          <div className="flex items-center gap-1 flex-1">
-                            <span className="text-xs text-gray-500">$</span>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              disabled={!canEditOrder}
-                              value={getNumericValue(salesPrice)}
-                              onChange={(e) => {
-                                const filtered = filterNumericInput(
-                                  e.target.value
-                                );
-                                const parsed = filtered === "" ? "" : filtered;
-                                console.log({ parsed, filtered });
-                                updateItemSalesPrice(
-                                  item.id || 0,
-                                  parsed as string
-                                );
-                              }}
-                              onBlur={(e) => {
-                                const filtered = filterNumericInput(
-                                  e.target.value
-                                );
-                                const parsed =
-                                  filtered === ""
-                                    ? 0
-                                    : parseCurrencyInput(filtered);
-                                updateItemSalesPrice(
-                                  item.id || 0,
-                                  formatCurrency(parsed)
-                                );
-                              }}
-                              className=" w-[100px] min-w-0 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Discount Input */}
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs text-gray-500 ">
-                            Discount:
-                          </label>
-                          <div className="flex items-center gap-1 flex-1">
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              disabled={!canEditOrder}
-                              value={getNumericValue(discount.value)}
-                              onChange={(e) => {
-                                const filtered = filterNumericInput(
-                                  e.target.value
-                                );
-                                const parsed =
-                                  filtered === ""
-                                    ? ""
-                                    : parseCurrencyInput(filtered);
-
-                                console.log({ finalValue: parsed });
-                                // Validate max for percentage
-                                const maxValue =
-                                  discount.type === "percentage"
-                                    ? 100
-                                    : undefined;
-                                const finalValue =
-                                  maxValue && parsed && parsed > maxValue
-                                    ? maxValue
-                                    : parsed;
-                                updateItemDiscount(
-                                  item.id || 0,
-                                  discount.type,
-                                  finalValue
-                                );
-                              }}
-                              onBlur={(e) => {
-                                const filtered = filterNumericInput(
-                                  e.target.value
-                                );
-                                const parsed =
-                                  filtered === ""
-                                    ? ""
-                                    : parseCurrencyInput(filtered);
-                                // Validate max for percentage
-                                const maxValue =
-                                  discount.type === "percentage"
-                                    ? 100
-                                    : undefined;
-                                const finalValue =
-                                  maxValue && parsed && parsed > maxValue
-                                    ? maxValue
-                                    : parsed;
-                                updateItemDiscount(
-                                  item.id || 0,
-                                  discount.type,
-                                  formatCurrency(finalValue)
-                                );
-                              }}
-                              className="w-[50px] px-2 py-1 text-xs border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                            />
-                            <select
-                              value={discount.type}
-                              disabled={!canEditOrder}
-                              onChange={(e) => {
-                                updateItemDiscount(
-                                  item.id || 0,
-                                  e.target.value as "percentage" | "amount",
-                                  discount.value
-                                );
-                              }}
-                              className="text-xs border-y border-r rounded-r bg-gray-50 px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                            >
-                              <option value="percentage">%</option>
-                              <option value="amount">฿</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        {/* Final Price Display */}
-                        <div className="flex items-center justify-between pt-1 border-t border-gray-300">
-                          <span className="text-xs font-semibold text-gray-700">
-                            Final Price:
-                          </span>
-                          <span className="text-sm font-bold text-brand-primary">
-                            {money.format(finalPrice)}
-                          </span>
-                        </div>
-
-                        {/* Quantity and Total */}
-                        <div className="flex items-center justify-between pt-1">
-                          <span className="text-xs text-gray-500">
-                            Qty: {item.quantity}
-                          </span>
-                          <span className="text-xs font-medium text-gray-700">
-                            Total: {money.format(finalPrice * item.quantity)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => updateQuantity(item?.cartItemId, -1)}
-                        className="p-2 sm:p-1 active:bg-gray-200 hover:bg-gray-200 rounded touch-manipulation"
-                        aria-label="Decrease quantity"
-                      >
-                        <FaMinus className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                      </button>
-                      <span className="w-8 sm:w-8 text-center text-sm sm:text-base font-medium">
-                        {item.quantity}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(item?.cartItemId, 1)}
-                        className="p-2 sm:p-1 active:bg-gray-200 hover:bg-gray-200 rounded touch-manipulation"
-                        aria-label="Increase quantity"
-                      >
-                        <FaPlus className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                      </button>
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="p-2 sm:p-1 text-red-500 active:bg-red-50 hover:bg-red-50 rounded touch-manipulation mt-1"
-                        aria-label="Remove item"
-                      >
-                        <FaTrash className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Totals and Checkout */}
-        <div className="p-4 border-t bg-gray-50">
-          <div className="space-y-3 mb-4">
-            <div className="flex justify-between text-xs sm:text-sm items-center">
-              <span>Subtotal</span>
-              <span className="font-medium">{money.format(subtotal)}</span>
-            </div>
-
-            {/* Tax Input */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-xs sm:text-sm">
-              <div className="flex items-center gap-2 flex-1">
-                <span>VAT</span>
-                <div className="flex items-center flex-1 sm:flex-initial">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={getNumericValue(adjustments?.tax?.value)}
-                    onChange={(e) => {
-                      const filtered = filterNumericInput(e.target.value);
-                      const parsed =
-                        filtered === ""
-                          ? ""
-                          : parseCurrencyInput(filtered);
-                      // Validate max for percentage
-                      const maxValue =
-                        adjustments.tax.type === "percentage" ? 100 : undefined;
-                      const finalValue =
-                        maxValue && parsed !== undefined && parsed && parsed > maxValue
-                          ? maxValue
-                          : parsed;
-                      updateTax(finalValue);
-                    }}
-                    onBlur={(e) => {
-                      const filtered = filterNumericInput(e.target.value);
-                      const parsed =
-                        filtered === "" ? "" : parseCurrencyInput(filtered);
-                      // Validate max for percentage
-                      const maxValue =
-                        adjustments.tax.type === "percentage" ? 100 : undefined;
-                      const finalValue =
-                        maxValue && parsed && parsed > maxValue ? maxValue : parsed;
-                      updateTax(finalValue);
-                    }}
-                    className="w-full sm:w-20 px-2 py-1.5 sm:py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                  />
-                  <select
-                    value={adjustments.tax.type}
-                    onChange={(e) =>
-                      setAdjustments((prev) => ({
-                        ...prev,
-                        tax: {
-                          ...prev.tax,
-                          type: e.target.value as "fixed" | "percentage",
-                        },
-                      }))
-                    }
-                    className="text-sm border-y border-r rounded-r bg-gray-50 px-2 py-1.5 sm:py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                  >
-                    <option value="fixed">$</option>
-                    <option value="percentage">%</option>
-                  </select>
-                </div>
-              </div>
-              <span className="font-medium sm:ml-auto">
-                {money.format(taxAmount)}
-              </span>
-            </div>
-
-            {/* Discount Input */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-xs sm:text-sm">
-              <div className="flex items-center gap-2 flex-1">
-                <span>Discount</span>
-                <div className="flex items-center flex-1 sm:flex-initial">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={getNumericValue(adjustments?.discount?.value)}
-                    onChange={(e) => {
-                      const filtered = filterNumericInput(e.target.value);
-                      const parsed =
-                        filtered === ""
-                          ? ""
-                          : parseCurrencyInput(filtered);
-                      // Validate max for percentage
-                      const maxValue =
-                        adjustments.discount.type === "percentage"
-                          ? 100
-                          : undefined;
-                      const finalValue =
-                        maxValue && parsed !== undefined && parsed && parsed > maxValue
-                          ? maxValue
-                          : parsed;
-                      updateDiscount(finalValue);
-                    }}
-                    onBlur={(e) => {
-                      const filtered = filterNumericInput(e.target.value);
-                      const parsed =
-                        filtered === "" ? "" : parseCurrencyInput(filtered);
-                      // Validate max for percentage
-                      const maxValue =
-                        adjustments.discount.type === "percentage"
-                          ? 100
-                          : undefined;
-                      const finalValue =
-                        maxValue && parsed && parsed > maxValue ? maxValue : parsed;
-                      updateDiscount(finalValue);
-                    }}
-                    className="w-full sm:w-20 px-2 py-1.5 sm:py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                  />
-                  <select
-                    value={adjustments.discount.type}
-                    onChange={(e) =>
-                      setAdjustments((prev) => ({
-                        ...prev,
-                        discount: {
-                          ...prev.discount,
-                          type: e.target.value as "fixed" | "percentage",
-                        },
-                      }))
-                    }
-                    className="text-sm border-y border-r rounded-r bg-gray-50 px-2 py-1.5 sm:py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                  >
-                    <option value="fixed">$</option>
-                    <option value="percentage">%</option>
-                  </select>
-                </div>
-              </div>
-              <span className="font-medium sm:ml-auto">
-                -{money.format(discountAmount)}
-              </span>
-            </div>
-
-            {/* Total */}
-            <div className="flex justify-between font-semibold text-base sm:text-lg pt-2 border-t">
-              <span>Total</span>
-              <span>{money.format(total)}</span>
-            </div>
-          </div>
-
-          {/* Staff Selection */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Staff <span className="text-red-500">*</span>
-            </label>
-            <div
-              onClick={() => setShowStaffModal(true)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white cursor-pointer hover:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary transition-colors"
+      <div className="lg:sticky lg:top-0 lg:h-[calc(100vh-6rem)] xl:max-w-[450px] overflow-y-auto pb-10">
+        <div
+          className={` bg-white  rounded-lg shadow flex flex-col xl:flex ${showMobileCart ? "flex" : "hidden"
+            }`}
+        >
+          {/* Mobile Cart Header */}
+          <div className="xl:hidden flex items-center justify-between p-4 border-b">
+            <h2 className="font-semibold text-lg">Shopping Cart</h2>
+            <button
+              onClick={() => onClose()}
+              className="p-2 hover:bg-gray-100 rounded-full"
             >
-              {selectedStaffId === "self-sell" ? (
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="font-medium text-gray-900">Self Sell</span>
-                    <span className="text-xs text-gray-500">
-                      Shop selling (No staff assigned)
-                    </span>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedStaffId(null);
-                    }}
-                    className="text-gray-400 hover:text-red-500"
-                  >
-                    <FaTimes className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : selectedStaffId ? (
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="font-medium text-gray-900">
-                      {
-                        activeStaffs.find(
-                          (staff: any) => staff.id === selectedStaffId
-                        )?.fullName
-                      }
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {
-                        activeStaffs.find(
-                          (staff: any) => staff.id === selectedStaffId
-                        )?.parent?.businessName
-                      }{" "}
-                      (ID: {selectedStaffId})
-                    </span>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedStaffId(null);
-                    }}
-                    className="text-gray-400 hover:text-red-500"
-                  >
-                    <FaTimes className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between text-gray-500">
-                  <span>Click to select staff or self sell</span>
-                  <FaChevronDown className="w-4 h-4" />
-                </div>
-              )}
+              <FaTimes className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Customer Info */}
+          <div className="p-4 border-b">
+            <div className="flex items-center gap-2 text-gray-600 mb-4">
+              <FaUser className="w-5 h-5" />
+              <span className="font-medium">Customer Information</span>
+            </div>
+            <div className="space-y-2">
+              <input
+                type="text"
+                placeholder="Customer Name"
+                value={customerInfo.name}
+                onChange={(e) =>
+                  setCustomerInfo((prev) => ({ ...prev, name: e.target.value }))
+                }
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary"
+              />
+              <input
+                type="tel"
+                placeholder="Phone Number"
+                value={customerInfo.phone}
+                onChange={(e) =>
+                  setCustomerInfo((prev) => ({ ...prev, phone: e.target.value }))
+                }
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary"
+              />
             </div>
           </div>
 
-          {/* Payment Button */}
-          <button
-            onClick={handlePaymentClick}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3.5 sm:py-3 bg-brand-primary text-white rounded-md active:bg-brand-hover hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors mb-4 text-base sm:text-sm touch-manipulation"
-            disabled={
-              !canCreateOrder ||
-              createOrderMutation.isPending ||
-              selectedStaffId === null ||
-              cart.length === 0
-            }
-          >
-            {createOrderMutation?.isPending ? (
-              <>
-                <Spinner size="16px" />
-                <span>Processing...</span>
-              </>
+          {/* Cart Items */}
+          <div className="flex-1 p-4 overflow-y-auto">
+            {cart.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-gray-500">
+                <div className="text-center">
+                  <FaShoppingCart className="w-8 h-8 mx-auto mb-2" />
+                  <p>Cart is empty</p>
+                </div>
+              </div>
             ) : (
-              <>
-                <FaCreditCard />
-                <span>Process Payment</span>
-              </>
+              <div className="space-y-4">
+                {cart.map((item) => {
+                  // Use the helper function to get sales price (reactive)
+                  const salesPrice = getItemSalesPrice(item);
+                  const discount = adjustments.discountAdjustments[item.id] || {
+                    type:
+                      (item.discountType as "percentage" | "amount") ||
+                      "percentage",
+                    value: Number(item.discountAmount || 0),
+                  };
+                  const finalPrice = calculateItemFinalPrice(item);
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200"
+                    >
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="w-12 h-12 rounded object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        {/* <h4 className="font-medium text-sm">{item.name}</h4> */}
+
+                        {/* Product Title + Meta Info */}
+                        <div className="space-y-1">
+                          <h4 className="font-semibold text-sm text-gray-900 leading-tight">
+                            {item?.name}
+                          </h4>
+
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-500">
+                            {/* Category */}
+                            {item?.selectedVariant?.Category?.name
+                              ? item?.selectedVariant?.Category?.name
+                              : item?.Category?.name && (
+                                <span className="flex items-center gap-1">
+                                  <span className="font-medium text-gray-600">
+                                    Category:
+                                  </span>
+                                  {item?.selectedVariant?.Category?.name
+                                    ? item?.selectedVariant?.Category?.name
+                                    : item?.Category?.name}
+                                </span>
+                              )}
+
+                            {/* Brand */}
+                            {item?.Brand?.name && (
+                              <span className="flex items-center gap-1">
+                                <span className="font-medium text-gray-600">
+                                  Brand:
+                                </span>
+                                {item.Brand.name}
+                              </span>
+                            )}
+
+                            {/* Color */}
+                            {item?.selectedVariant?.Color?.name
+                              ? item?.selectedVariant?.Color?.name
+                              : item?.Color?.name && (
+                                <span className="flex items-center gap-1">
+                                  <span className="font-medium text-gray-600">
+                                    Color:
+                                  </span>
+                                  <span
+                                    className="w-3 h-3 rounded-full border"
+                                    style={{
+                                      backgroundColor: item?.selectedVariant
+                                        ?.Color?.code
+                                        ? item?.selectedVariant?.Color?.code
+                                        : item?.Color?.code,
+                                    }}
+                                  />
+                                  {item?.selectedVariant?.Color?.name
+                                    ? item?.selectedVariant?.Color?.name
+                                    : item?.Color?.name}
+                                </span>
+                              )}
+                          </div>
+                        </div>
+
+                        {/* Sales Price Input */}
+                        <div className="mt-2 space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <label className="text-xs text-gray-500 whitespace-nowrap">
+                              Sales Price:
+                            </label>
+                            <div className="flex items-center gap-1 flex-1">
+                              <span className="text-xs text-gray-500">$</span>
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                disabled={!canEditOrder}
+                                value={getNumericValue(salesPrice)}
+                                onChange={(e) => {
+                                  const filtered = filterNumericInput(
+                                    e.target.value
+                                  );
+                                  const parsed = filtered === "" ? "" : filtered;
+                                  console.log({ parsed, filtered });
+                                  updateItemSalesPrice(
+                                    item.id || 0,
+                                    parsed as string
+                                  );
+                                }}
+                                onBlur={(e) => {
+                                  const filtered = filterNumericInput(
+                                    e.target.value
+                                  );
+                                  const parsed =
+                                    filtered === ""
+                                      ? 0
+                                      : parseCurrencyInput(filtered);
+                                  updateItemSalesPrice(
+                                    item.id || 0,
+                                    formatCurrency(parsed)
+                                  );
+                                }}
+                                className=" w-[100px] min-w-0 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Discount Input */}
+                          <div className="flex items-center gap-2">
+                            <label className="text-xs text-gray-500 ">
+                              Discount:
+                            </label>
+                            <div className="flex items-center gap-1 flex-1">
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                disabled={!canEditOrder}
+                                value={getNumericValue(discount.value)}
+                                onChange={(e) => {
+                                  const filtered = filterNumericInput(
+                                    e.target.value
+                                  );
+                                  const parsed =
+                                    filtered === ""
+                                      ? ""
+                                      : parseCurrencyInput(filtered);
+
+                                  console.log({ finalValue: parsed });
+                                  // Validate max for percentage
+                                  const maxValue =
+                                    discount.type === "percentage"
+                                      ? 100
+                                      : undefined;
+                                  const finalValue =
+                                    maxValue && parsed && parsed > maxValue
+                                      ? maxValue
+                                      : parsed;
+                                  updateItemDiscount(
+                                    item.id || 0,
+                                    discount.type,
+                                    finalValue
+                                  );
+                                }}
+                                onBlur={(e) => {
+                                  const filtered = filterNumericInput(
+                                    e.target.value
+                                  );
+                                  const parsed =
+                                    filtered === ""
+                                      ? ""
+                                      : parseCurrencyInput(filtered);
+                                  // Validate max for percentage
+                                  const maxValue =
+                                    discount.type === "percentage"
+                                      ? 100
+                                      : undefined;
+                                  const finalValue =
+                                    maxValue && parsed && parsed > maxValue
+                                      ? maxValue
+                                      : parsed;
+                                  updateItemDiscount(
+                                    item.id || 0,
+                                    discount.type,
+                                    formatCurrency(finalValue)
+                                  );
+                                }}
+                                className="w-[50px] px-2 py-1 text-xs border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                              />
+                              <select
+                                value={discount.type}
+                                disabled={!canEditOrder}
+                                onChange={(e) => {
+                                  updateItemDiscount(
+                                    item.id || 0,
+                                    e.target.value as "percentage" | "amount",
+                                    discount.value
+                                  );
+                                }}
+                                className="text-xs border-y border-r rounded-r bg-gray-50 px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                              >
+                                <option value="percentage">%</option>
+                                <option value="amount">฿</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Final Price Display */}
+                          <div className="flex items-center justify-between pt-1 border-t border-gray-300">
+                            <span className="text-xs font-semibold text-gray-700">
+                              Final Price:
+                            </span>
+                            <span className="text-sm font-bold text-brand-primary">
+                              {money.format(finalPrice)}
+                            </span>
+                          </div>
+
+                          {/* Quantity and Total */}
+                          <div className="flex items-center justify-between pt-1">
+                            <span className="text-xs text-gray-500">
+                              Qty: {item.quantity}
+                            </span>
+                            <span className="text-xs font-medium text-gray-700">
+                              Total: {money.format(finalPrice * item.quantity)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => updateQuantity(item?.cartItemId, -1)}
+                          className="p-2 sm:p-1 active:bg-gray-200 hover:bg-gray-200 rounded touch-manipulation"
+                          aria-label="Decrease quantity"
+                        >
+                          <FaMinus className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                        </button>
+                        <span className="w-8 sm:w-8 text-center text-sm sm:text-base font-medium">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item?.cartItemId, 1)}
+                          className="p-2 sm:p-1 active:bg-gray-200 hover:bg-gray-200 rounded touch-manipulation"
+                          aria-label="Increase quantity"
+                        >
+                          <FaPlus className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                        </button>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="p-2 sm:p-1 text-red-500 active:bg-red-50 hover:bg-red-50 rounded touch-manipulation mt-1"
+                          aria-label="Remove item"
+                        >
+                          <FaTrash className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
-          </button>
+          </div>
 
-          <button
-            onClick={() => setIsBarcodeScannerOpen(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors"
-          >
-            <FaQrcode className="w-5 h-5" />
-            <span>Scan Barcode</span>
-          </button>
+          {/* Totals and Checkout */}
+          <div className="p-4 border-t bg-gray-50">
+            <div className="space-y-3 mb-4">
+              <div className="flex justify-between text-xs sm:text-sm items-center">
+                <span>Subtotal</span>
+                <span className="font-medium">{money.format(subtotal)}</span>
+              </div>
 
+              {/* Tax Input */}
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-xs sm:text-sm">
+                <div className="flex items-center gap-2 flex-1">
+                  <span>VAT</span>
+                  <div className="flex items-center flex-1 sm:flex-initial">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={getNumericValue(adjustments?.tax?.value)}
+                      onChange={(e) => {
+                        const filtered = filterNumericInput(e.target.value);
+                        const parsed =
+                          filtered === ""
+                            ? ""
+                            : parseCurrencyInput(filtered);
+                        // Validate max for percentage
+                        const maxValue =
+                          adjustments.tax.type === "percentage" ? 100 : undefined;
+                        const finalValue =
+                          maxValue && parsed !== undefined && parsed && parsed > maxValue
+                            ? maxValue
+                            : parsed;
+                        updateTax(finalValue);
+                      }}
+                      onBlur={(e) => {
+                        const filtered = filterNumericInput(e.target.value);
+                        const parsed =
+                          filtered === "" ? "" : parseCurrencyInput(filtered);
+                        // Validate max for percentage
+                        const maxValue =
+                          adjustments.tax.type === "percentage" ? 100 : undefined;
+                        const finalValue =
+                          maxValue && parsed && parsed > maxValue ? maxValue : parsed;
+                        updateTax(finalValue);
+                      }}
+                      className="w-full sm:w-20 px-2 py-1.5 sm:py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                    />
+                    <select
+                      value={adjustments.tax.type}
+                      onChange={(e) =>
+                        setAdjustments((prev) => ({
+                          ...prev,
+                          tax: {
+                            ...prev.tax,
+                            type: e.target.value as "fixed" | "percentage",
+                          },
+                        }))
+                      }
+                      className="text-sm border-y border-r rounded-r bg-gray-50 px-2 py-1.5 sm:py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                    >
+                      <option value="fixed">$</option>
+                      <option value="percentage">%</option>
+                    </select>
+                  </div>
+                </div>
+                <span className="font-medium sm:ml-auto">
+                  {money.format(taxAmount)}
+                </span>
+              </div>
 
+              {/* Discount Input */}
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-xs sm:text-sm">
+                <div className="flex items-center gap-2 flex-1">
+                  <span>Discount</span>
+                  <div className="flex items-center flex-1 sm:flex-initial">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={getNumericValue(adjustments?.discount?.value)}
+                      onChange={(e) => {
+                        const filtered = filterNumericInput(e.target.value);
+                        const parsed =
+                          filtered === ""
+                            ? ""
+                            : parseCurrencyInput(filtered);
+                        // Validate max for percentage
+                        const maxValue =
+                          adjustments.discount.type === "percentage"
+                            ? 100
+                            : undefined;
+                        const finalValue =
+                          maxValue && parsed !== undefined && parsed && parsed > maxValue
+                            ? maxValue
+                            : parsed;
+                        updateDiscount(finalValue);
+                      }}
+                      onBlur={(e) => {
+                        const filtered = filterNumericInput(e.target.value);
+                        const parsed =
+                          filtered === "" ? "" : parseCurrencyInput(filtered);
+                        // Validate max for percentage
+                        const maxValue =
+                          adjustments.discount.type === "percentage"
+                            ? 100
+                            : undefined;
+                        const finalValue =
+                          maxValue && parsed && parsed > maxValue ? maxValue : parsed;
+                        updateDiscount(finalValue);
+                      }}
+                      className="w-full sm:w-20 px-2 py-1.5 sm:py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                    />
+                    <select
+                      value={adjustments.discount.type}
+                      onChange={(e) =>
+                        setAdjustments((prev) => ({
+                          ...prev,
+                          discount: {
+                            ...prev.discount,
+                            type: e.target.value as "fixed" | "percentage",
+                          },
+                        }))
+                      }
+                      className="text-sm border-y border-r rounded-r bg-gray-50 px-2 py-1.5 sm:py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                    >
+                      <option value="fixed">$</option>
+                      <option value="percentage">%</option>
+                    </select>
+                  </div>
+                </div>
+                <span className="font-medium sm:ml-auto">
+                  -{money.format(discountAmount)}
+                </span>
+              </div>
 
-          {/* Delete Order Button - Only shown when editing an existing order */}
-          {orderId && canDeleteOrder && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <button
-                onClick={handleDeleteOrder}
-                disabled={deleteOrderMutation.isPending || !canDeleteOrder}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-md hover:bg-red-100 hover:border-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
-              >
-                {deleteOrderMutation.isPending ? (
-                  <>
-                    <Spinner size="16px" />
-                    <span>Deleting Order...</span>
-                  </>
-                ) : (
-                  <>
-                    <FaTrash className="w-4 h-4" />
-                    <span>Delete Order</span>
-                  </>
-                )}
-              </button>
+              {/* Total */}
+              <div className="flex justify-between font-semibold text-base sm:text-lg pt-2 border-t">
+                <span>Total</span>
+                <span>{money.format(total)}</span>
+              </div>
             </div>
-          )}
+
+            {/* Staff Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Staff <span className="text-red-500">*</span>
+              </label>
+              <div
+                onClick={() => setShowStaffModal(true)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white cursor-pointer hover:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary transition-colors"
+              >
+                {selectedStaffId === "self-sell" ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-900">Self Sell</span>
+                      <span className="text-xs text-gray-500">
+                        Shop selling (No staff assigned)
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedStaffId(null);
+                      }}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      <FaTimes className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : selectedStaffId ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-900">
+                        {
+                          activeStaffs.find(
+                            (staff: any) => staff.id === selectedStaffId
+                          )?.fullName
+                        }
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {
+                          activeStaffs.find(
+                            (staff: any) => staff.id === selectedStaffId
+                          )?.parent?.businessName
+                        }{" "}
+                        (ID: {selectedStaffId})
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedStaffId(null);
+                      }}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      <FaTimes className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between text-gray-500">
+                    <span>Click to select staff or self sell</span>
+                    <FaChevronDown className="w-4 h-4" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Payment Button */}
+            <button
+              onClick={handlePaymentClick}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 sm:py-3 bg-brand-primary text-white rounded-md active:bg-brand-hover hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors mb-4 text-base sm:text-sm touch-manipulation"
+              disabled={
+                !canCreateOrder ||
+                createOrderMutation.isPending ||
+                selectedStaffId === null ||
+                cart.length === 0
+              }
+            >
+              {createOrderMutation?.isPending ? (
+                <>
+                  <Spinner size="16px" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <FaCreditCard />
+                  <span>Process Payment</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={() => setIsBarcodeScannerOpen(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors"
+            >
+              <FaQrcode className="w-5 h-5" />
+              <span>Scan Barcode</span>
+            </button>
+
+
+
+            {/* Delete Order Button - Only shown when editing an existing order */}
+            {orderId && canDeleteOrder && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button
+                  onClick={handleDeleteOrder}
+                  disabled={deleteOrderMutation.isPending || !canDeleteOrder}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-md hover:bg-red-100 hover:border-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                >
+                  {deleteOrderMutation.isPending ? (
+                    <>
+                      <Spinner size="16px" />
+                      <span>Deleting Order...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaTrash className="w-4 h-4" />
+                      <span>Delete Order</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
       {/* shopping cart */}
 
       {/* Staff Selection Modal */}
