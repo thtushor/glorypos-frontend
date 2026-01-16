@@ -39,14 +39,14 @@ export function useUrlFilters<T extends Record<string, any>>({
     // Initialize filters from URL on mount
     useEffect(() => {
         const initialFilters = { ...defaultValues };
-        let hasUrlParams = false;
+        // let hasUrlParams = false;
 
         // Read all URL params and populate initial filters
         for (const key in defaultValues) {
             const urlValue = searchParams.get(key);
 
             if (urlValue !== null) {
-                hasUrlParams = true;
+                // hasUrlParams = true;
 
                 // Use custom deserializer if provided
                 if (serializers[key]?.deserialize) {
