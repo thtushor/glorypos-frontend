@@ -72,7 +72,7 @@ const Products: React.FC = () => {
     "men" | "women" | "others" | "all"
   >("all");
   const [modelNo, setModelNo] = useState("");
-  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [sortBy, setSortBy] = useState<string>("name");
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
 
   useEffect(() => {

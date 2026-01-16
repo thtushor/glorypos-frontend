@@ -83,7 +83,7 @@ function CartProductSection({
     max: undefined,
   });
 
-  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [sortBy, setSortBy] = useState<string>("name");
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
 
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
