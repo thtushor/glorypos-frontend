@@ -29,6 +29,8 @@ import money from "@/utils/money";
 import ProductImageSlider from "@/components/shared/ProductImageSlider";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
+import { useUrlFilters } from "@/hooks/useUrlFilters";
+
 
 // Add this interface at the top
 
@@ -56,37 +58,61 @@ const Products: React.FC = () => {
   const currentShopId = user?.child?.id ?? user?.id;
   const hasAppliedDefaultShop = useRef(false);
 
-  // Pagination state
-  const [page, setPage] = useState(1);
+  // Use URL filters hook for persistent filter state
+  const { filters, setFilter, isInitialized } = useUrlFilters({
+    defaultValues: {
+      page: 1,
+      searchKey: "",
+      shopId: "",
+      categoryId: "all" as number | "all",
+      brandId: "all" as number | "all",
+      unitId: "all" as number | "all",
+      gender: "all" as "men" | "women" | "others" | "all",
+      modelNo: "",
+      minPrice: undefined as number | undefined,
+      maxPrice: undefined as number | undefined,
+      sortBy: "name",
+      sortOrder: "ASC" as "ASC" | "DESC",
+    },
+    serializers: {
+      categoryId: {
+        serialize: (value) => String(value),
+        deserialize: (value) => (value === "all" ? "all" : Number(value)),
+      },
+      brandId: {
+        serialize: (value) => String(value),
+        deserialize: (value) => (value === "all" ? "all" : Number(value)),
+      },
+      unitId: {
+        serialize: (value) => String(value),
+        deserialize: (value) => (value === "all" ? "all" : Number(value)),
+      },
+      minPrice: {
+        serialize: (value) => String(value),
+        deserialize: (value) => {
+          const num = Number(value);
+          return num > 0 ? num : undefined;
+        },
+      },
+      maxPrice: {
+        serialize: (value) => String(value),
+        deserialize: (value) => {
+          const num = Number(value);
+          return num > 0 ? num : undefined;
+        },
+      },
+    },
+  });
+
   const pageSize = 20;
 
-  // Filter states for API
-  const [searchKey, setSearchKey] = useState("");
-  const [shopId, setShopId] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<number | "all">(
-    "all"
-  );
-  const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
-  const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
-  const [selectedGender, setSelectedGender] = useState<
-    "men" | "women" | "others" | "all"
-  >("all");
-  const [modelNo, setModelNo] = useState("");
-  const [sortBy, setSortBy] = useState<string>("name");
-  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
-
+  // Apply default shop ID on mount
   useEffect(() => {
-    if (!hasAppliedDefaultShop.current && currentShopId) {
-      setShopId(String(currentShopId));
+    if (!hasAppliedDefaultShop.current && currentShopId && !filters.shopId) {
+      setFilter("shopId", String(currentShopId));
       hasAppliedDefaultShop.current = true;
     }
-  }, [currentShopId]);
-
-  // Price range filter for API
-  const [priceRange, setPriceRange] = useState<{ min?: number; max?: number }>({
-    min: undefined,
-    max: undefined,
-  });
+  }, [currentShopId, filters.shopId, setFilter]);
 
   // Form state
   const [formData, setFormData] = useState<ProductFormData>({
@@ -120,58 +146,59 @@ const Products: React.FC = () => {
   // Build query parameters
   const queryParams: ProductQueryParams = useMemo(() => {
     const params: ProductQueryParams = {
-      page,
+      page: filters.page,
       pageSize,
     };
 
-    if (searchKey) params.searchKey = searchKey;
-    if (shopId) params.shopId = shopId;
-    if (selectedCategory !== "all") params.categoryId = selectedCategory;
-    if (selectedBrand !== "all") params.brandId = selectedBrand;
-    if (selectedUnit !== "all") params.unitId = selectedUnit;
-    if (selectedGender !== "all") params.gender = selectedGender;
-    if (modelNo) params.modelNo = modelNo;
-    if (sortBy) params.sortBy = sortBy;
-    if (sortOrder) params.sortOrder = sortOrder;
+    if (filters.searchKey) params.searchKey = filters.searchKey;
+    if (filters.shopId) params.shopId = filters.shopId;
+    if (filters.categoryId !== "all") params.categoryId = filters.categoryId;
+    if (filters.brandId !== "all") params.brandId = filters.brandId;
+    if (filters.unitId !== "all") params.unitId = filters.unitId;
+    if (filters.gender !== "all") params.gender = filters.gender;
+    if (filters.modelNo) params.modelNo = filters.modelNo;
+    if (filters.sortBy) params.sortBy = filters.sortBy;
+    if (filters.sortOrder) params.sortOrder = filters.sortOrder;
 
     // Add price range filters
     if (
-      priceRange?.min &&
-      priceRange?.min !== undefined &&
-      priceRange?.min !== null &&
-      priceRange?.min > 0
+      filters.minPrice &&
+      filters.minPrice !== undefined &&
+      filters.minPrice !== null &&
+      filters.minPrice > 0
     ) {
-      params.minPrice = priceRange?.min;
+      params.minPrice = filters.minPrice;
     }
     if (
-      priceRange?.max &&
-      priceRange?.max !== undefined &&
-      priceRange?.max !== null &&
-      priceRange?.max > 0
+      filters.maxPrice &&
+      filters.maxPrice !== undefined &&
+      filters.maxPrice !== null &&
+      filters.maxPrice > 0
     ) {
-      params.maxPrice = priceRange?.max;
+      params.maxPrice = filters.maxPrice;
     }
 
     return params;
   }, [
-    page,
-    pageSize,
-    searchKey,
-    shopId,
-    selectedCategory,
-    selectedBrand,
-    selectedUnit,
-    selectedGender,
-    modelNo,
-    priceRange,
-    sortBy,
-    sortOrder,
+    filters.page,
+    filters.searchKey,
+    filters.shopId,
+    filters.categoryId,
+    filters.brandId,
+    filters.unitId,
+    filters.gender,
+    filters.modelNo,
+    filters.minPrice,
+    filters.maxPrice,
+    filters.sortBy,
+    filters.sortOrder,
   ]);
 
   // Products query with pagination
   const { data: productsResponse, isLoading: isLoadingProducts } = useQuery({
     queryKey: ["products", queryParams],
     queryFn: () => fetchProducts(queryParams),
+    enabled: isInitialized, // Only fetch after URL params are initialized
   });
 
   console.log(productsResponse);
@@ -221,10 +248,12 @@ const Products: React.FC = () => {
     },
   });
 
+
   // Reset to page 1 when filters change
   const handleFilterChange = () => {
-    setPage(1);
+    setFilter("page", 1);
   };
+
 
   // Handlers
 
@@ -324,14 +353,14 @@ const Products: React.FC = () => {
 
       {/* API Filters */}
       <InventoryFilters
-        searchKey={searchKey}
-        shopId={shopId}
+        searchKey={filters.searchKey}
+        shopId={filters.shopId}
         onSearchKeyChange={(value) => {
-          setSearchKey(value);
+          setFilter("searchKey", value);
           handleFilterChange();
         }}
         onShopIdChange={(value) => {
-          setShopId(value);
+          setFilter("shopId", value);
           handleFilterChange();
         }}
         searchPlaceholder="Search products..."
@@ -340,10 +369,10 @@ const Products: React.FC = () => {
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
         <select
-          value={selectedCategory}
+          value={filters.categoryId}
           onChange={(e) => {
             const value = e.target.value;
-            setSelectedCategory(value === "all" ? "all" : Number(value));
+            setFilter("categoryId", value === "all" ? "all" : Number(value));
             handleFilterChange();
           }}
           className="border rounded-lg px-3 py-2"
@@ -357,10 +386,10 @@ const Products: React.FC = () => {
         </select>
 
         <select
-          value={selectedBrand}
+          value={filters.brandId}
           onChange={(e) => {
             const value = e.target.value;
-            setSelectedBrand(value === "all" ? "all" : Number(value));
+            setFilter("brandId", value === "all" ? "all" : Number(value));
             handleFilterChange();
           }}
           className="border rounded-lg px-3 py-2"
@@ -374,10 +403,10 @@ const Products: React.FC = () => {
         </select>
 
         <select
-          value={selectedUnit}
+          value={filters.unitId}
           onChange={(e) => {
             const value = e.target.value;
-            setSelectedUnit(value === "all" ? "all" : Number(value));
+            setFilter("unitId", value === "all" ? "all" : Number(value));
             handleFilterChange();
           }}
           className="border rounded-lg px-3 py-2"
@@ -392,10 +421,11 @@ const Products: React.FC = () => {
 
         {/* Gender Filter */}
         <select
-          value={selectedGender}
+          value={filters.gender}
           onChange={(e) => {
             const value = e.target.value;
-            setSelectedGender(
+            setFilter(
+              "gender",
               value === "all" ? "all" : (value as "men" | "women" | "others")
             );
             handleFilterChange();
@@ -412,9 +442,9 @@ const Products: React.FC = () => {
         <input
           type="text"
           placeholder="Model Number"
-          value={modelNo}
+          value={filters.modelNo}
           onChange={(e) => {
-            setModelNo(e.target.value);
+            setFilter("modelNo", e.target.value);
             handleFilterChange();
           }}
           className="border rounded-lg px-3 py-2"
@@ -423,9 +453,9 @@ const Products: React.FC = () => {
         {/* Sorting Group */}
         <div className="flex items-center border rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-brand-primary">
           <select
-            value={sortBy}
+            value={filters.sortBy}
             onChange={(e) => {
-              setSortBy(e.target.value);
+              setFilter("sortBy", e.target.value);
               handleFilterChange();
             }}
             className="flex-1 px-3 py-2 outline-none border-r bg-transparent text-sm"
@@ -439,13 +469,13 @@ const Products: React.FC = () => {
           </select>
           <button
             onClick={() => {
-              setSortOrder((prev) => (prev === "ASC" ? "DESC" : "ASC"));
+              setFilter("sortOrder", filters.sortOrder === "ASC" ? "DESC" : "ASC");
               handleFilterChange();
             }}
             className="px-3 py-2 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-center"
-            title={sortOrder === "ASC" ? "Sort Ascending" : "Sort Descending"}
+            title={filters.sortOrder === "ASC" ? "Sort Ascending" : "Sort Descending"}
           >
-            {sortOrder === "ASC" ? (
+            {filters.sortOrder === "ASC" ? (
               <FaSortAmountUp className="text-brand-primary h-4 w-4" />
             ) : (
               <FaSortAmountDown className="text-brand-primary h-4 w-4" />
@@ -459,12 +489,9 @@ const Products: React.FC = () => {
         <input
           type="text"
           placeholder="Min Price"
-          value={priceRange?.min || ""}
+          value={filters.minPrice || ""}
           onChange={(e) => {
-            setPriceRange({
-              ...priceRange,
-              min: Number(e.target.value) || undefined,
-            });
+            setFilter("minPrice", Number(e.target.value) || undefined);
             handleFilterChange();
           }}
           className="border rounded-lg px-3 py-2 w-32"
@@ -473,12 +500,9 @@ const Products: React.FC = () => {
         <input
           type="text"
           placeholder="Max Price"
-          value={priceRange?.max || ""}
+          value={filters.maxPrice || ""}
           onChange={(e) => {
-            setPriceRange({
-              ...priceRange,
-              max: Number(e.target.value) || undefined,
-            });
+            setFilter("maxPrice", Number(e.target.value) || undefined);
             handleFilterChange();
           }}
           className="border rounded-lg px-3 py-2 w-32"
@@ -669,22 +693,22 @@ const Products: React.FC = () => {
         )}
       </div>
 
+
       {/* Pagination */}
-      {
-        pagination.totalPages > 0 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={pagination.page}
-              totalPages={pagination.totalPages}
-              totalItems={pagination.totalItems}
-              pageSize={pagination.pageSize}
-              hasNextPage={pagination.hasNextPage}
-              hasPreviousPage={pagination.hasPreviousPage}
-              onPageChange={(page) => setPage(page)}
-            />
-          </div>
-        )
-      }
+      {pagination.totalPages > 0 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            pageSize={pagination.pageSize}
+            hasNextPage={pagination.hasNextPage}
+            hasPreviousPage={pagination.hasPreviousPage}
+            onPageChange={(page) => setFilter("page", page)}
+          />
+        </div>
+      )}
+
 
       {/* Product Form Modal */}
       <Modal
