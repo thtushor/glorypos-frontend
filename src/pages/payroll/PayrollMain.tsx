@@ -54,7 +54,7 @@ interface ChildUser {
   id: number;
   fullName: string;
   email: string;
-  phone: string | null;
+  phone?: string;
   role: string;
   status: "active" | "inactive";
 
@@ -73,6 +73,7 @@ interface ChildUser {
   };
   baseSalary: number | null;
   requiredDailyHours: number | null;
+  salaryFrequency?: "daily" | "weekly" | "monthly";
   createdAt: string;
   updatedAt: string;
   parentUserId: number;
@@ -430,12 +431,15 @@ const PayrollMain = () => {
                   </td>
 
                   <td className="px-6 py-4">
-                    <div className="flex flex-col">
+                    <div className="flex flex-col gap-1">
                       <span className="text-sm">
                         ฿{user.baseSalary || "N/A"}
                       </span>
                       <span className="text-xs text-gray-500">
                         {user.requiredDailyHours || "N/A"} hrs/day
+                      </span>
+                      <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800 capitalize w-fit">
+                        {user.salaryFrequency || "monthly"}
                       </span>
                     </div>
                   </td>
