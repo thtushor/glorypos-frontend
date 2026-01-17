@@ -98,6 +98,7 @@ interface StaffProfileData {
     parentUserId: number;
     baseSalary: string;
     requiredDailyHours: number;
+    salaryFrequency?: "daily" | "weekly" | "monthly";
     createdAt: string;
     updatedAt: string;
     parent: Parent;
@@ -114,6 +115,7 @@ interface UpdateFormData {
     permissions: UserPermissions;
     baseSalary: number;
     requiredDailyHours: number;
+    salaryFrequency?: "daily" | "weekly" | "monthly";
     imageUrl?: string;
 }
 
@@ -162,6 +164,7 @@ const StaffProfilePage = () => {
                 permissions: normalizePermissions(profileData.permissions),
                 baseSalary: parseFloat(profileData.baseSalary),
                 requiredDailyHours: profileData.requiredDailyHours,
+                salaryFrequency: profileData.salaryFrequency || "monthly",
             });
             return response.data;
         },
@@ -349,6 +352,7 @@ const StaffProfilePage = () => {
                                                         permissions: profile.permissions,
                                                         baseSalary: parseFloat(profile.baseSalary),
                                                         requiredDailyHours: profile.requiredDailyHours,
+                                                        salaryFrequency: profile.salaryFrequency || "monthly",
                                                     });
                                                     setPreviewImage(null);
                                                 }}
@@ -613,6 +617,30 @@ const StaffProfilePage = () => {
                                                         }
                                                         className="pl-9 sm:pl-10 md:pl-12 w-full py-2 sm:py-2.5 md:py-3 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
                                                     />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
+                                                    Salary Type
+                                                </label>
+                                                <div className="relative">
+                                                    <FaMoneyBillWave className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10 text-xs sm:text-sm" />
+                                                    <select
+                                                        disabled={!isEditing}
+                                                        value={formData?.salaryFrequency || "monthly"}
+                                                        onChange={(e) =>
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                salaryFrequency: e.target.value as "daily" | "weekly" | "monthly",
+                                                            }))
+                                                        }
+                                                        className="pl-9 sm:pl-10 md:pl-12 w-full py-2 sm:py-2.5 md:py-3 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300 appearance-none"
+                                                    >
+                                                        <option value="daily">Daily</option>
+                                                        <option value="weekly">Weekly</option>
+                                                        <option value="monthly">Monthly</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                         </div>

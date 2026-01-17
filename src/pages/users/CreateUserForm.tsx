@@ -9,6 +9,7 @@ import {
   FaUserShield,
   FaMoneyBill,
   FaClock,
+  FaPhone,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import { CREATE_CHILD_USER_URL } from "@/api/api";
@@ -30,6 +31,8 @@ interface UserFormData {
   permissions: Permission;
   baseSalary: number; // Added
   requiredDailyHours: number; // Added
+  salaryFrequency: "daily" | "weekly" | "monthly";
+  phone: string;
 }
 
 interface CreateUserFormProps {
@@ -42,6 +45,8 @@ interface CreateUserFormProps {
     permissions: Permission;
     baseSalary?: number | null; // Added
     requiredDailyHours?: number | null; // Added
+    salaryFrequency?: "daily" | "weekly" | "monthly";
+    phone?: string;
   } | null;
   onSuccess: () => void;
 }
@@ -61,6 +66,8 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
     baseSalary: 0, // Added
     // TODO:: 8 WILL DYNAMIC IN BACKEND LATER
     requiredDailyHours: 8, // Added default
+    salaryFrequency: "monthly",
+    phone: "",
   });
 
   useEffect(() => {
@@ -74,6 +81,8 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
         permissions: user.permissions,
         baseSalary: user.baseSalary ?? 0, // Added
         requiredDailyHours: user.requiredDailyHours ?? 8, // Added
+        salaryFrequency: user.salaryFrequency ?? "monthly",
+        phone: user.phone ?? "",
       });
     }
   }, [user]);
@@ -142,6 +151,16 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           required
           label="Email Address"
+        />
+
+        <InputWithIcon
+          type="text"
+          name="phone"
+          icon={<FaPhone />}
+          placeholder="Phone Number"
+          value={formData.phone}
+          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+          label="Phone Number"
         />
 
         <InputWithIcon
@@ -226,6 +245,26 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
           min={1}
           label="Required Daily Hours"
         />
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Salary Type
+          </label>
+          <select
+            value={formData.salaryFrequency}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                salaryFrequency: e.target.value as "daily" | "weekly" | "monthly",
+              })
+            }
+            className="mt-1 border block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm rounded-md"
+          >
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
 
         {/* <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
