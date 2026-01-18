@@ -1030,8 +1030,21 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                   <input
                     type="number"
                     value={editableAdvanceDeduction}
-                    onChange={(e) => setEditableAdvanceDeduction(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) || 0;
+                      const maxAdvance = payrollDetails.outstandingAdvance;
+                      // Ensure value is between 0 and outstanding advance
+                      if (value > maxAdvance) {
+                        setEditableAdvanceDeduction(maxAdvance);
+                      } else if (value < 0) {
+                        setEditableAdvanceDeduction(0);
+                      } else {
+                        setEditableAdvanceDeduction(value);
+                      }
+                    }}
+                    min={0}
                     max={payrollDetails.outstandingAdvance}
+                    step="0.01"
                     className="w-full px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                   />
                 </div>
