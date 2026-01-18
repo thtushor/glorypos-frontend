@@ -27,6 +27,31 @@ interface PayrollDetails {
   fullName: string;
   salaryMonth: string;
   baseSalary: number;
+  effectiveBaseSalary: number;
+  salaryFrequency: "monthly" | "daily" | "weekly";
+  salaryCalculationDetails: {
+    monthlyRate?: number;
+    dailyRate?: number;
+    weeklyRate?: number;
+    payrollStartDate: string;
+    payrollEndDate: string;
+    totalDaysInMonth?: number;
+    workingDays?: number;
+    calculatedSalary?: number;
+    firstWeekStartDate?: string;
+    completeWeeks?: number;
+    daysBeforeFirstWeek?: number;
+    partialWeekDays?: number;
+    weekDetails?: Array<{
+      weekNumber: number;
+      startDate: string;
+      endDate: string;
+      status: string;
+      remainingDays?: number;
+      note?: string;
+    }>;
+    note?: string;
+  };
   totalWorkingDays: number;
   totalWeekendDays: number;
   totalHolidayDays: number;
@@ -463,7 +488,7 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                   {/* Basic Info */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="bg-white rounded-lg p-3 shadow-sm">
-                      <p className="text-xs text-gray-500">Base Salary</p>
+                      <p className="text-xs text-gray-500">Base Salary ({payrollDetails.salaryFrequency})</p>
                       <p className="text-lg font-bold text-gray-800">{money.format(payrollDetails.baseSalary)}</p>
                     </div>
                     <div className="bg-white rounded-lg p-3 shadow-sm">
@@ -479,6 +504,124 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
                       <p className={`text-lg font-bold ${payrollDetails.status === 'PENDING' ? 'text-orange-600' : 'text-green-600'}`}>
                         {payrollDetails.status}
                       </p>
+                    </div>
+                  </div>
+
+                  {/* Salary Calculation Details */}
+                  <div className="bg-white rounded-lg p-3 shadow-sm">
+                    <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <FiDollarSign className="text-emerald-600" />
+                      Salary Calculation Details ({payrollDetails.salaryFrequency.toUpperCase()})
+                    </h4>
+                    <div className="space-y-2">
+                      {/* Monthly Frequency */}
+                      {payrollDetails.salaryFrequency === "monthly" && (
+                        <div className="bg-emerald-50 rounded-md p-3 border border-emerald-200">
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                            <div>
+                              <p className="text-xs text-gray-500">Monthly Rate</p>
+                              <p className="font-semibold text-emerald-700">{money.format(payrollDetails.salaryCalculationDetails.monthlyRate || 0)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Period</p>
+                              <p className="font-semibold text-gray-700">
+                                {payrollDetails.salaryCalculationDetails.payrollStartDate} to {payrollDetails.salaryCalculationDetails.payrollEndDate}
+                              </p>
+                            </div>
+                            <div className="col-span-2 md:col-span-1">
+                              <p className="text-xs text-gray-500">Note</p>
+                              <p className="font-semibold text-gray-700 text-xs">{payrollDetails.salaryCalculationDetails.note || "Fixed monthly salary"}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Daily Frequency */}
+                      {payrollDetails.salaryFrequency === "daily" && (
+                        <div className="bg-blue-50 rounded-md p-3 border border-blue-200">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                            <div>
+                              <p className="text-xs text-gray-500">Daily Rate</p>
+                              <p className="font-semibold text-blue-700">{money.format(payrollDetails.salaryCalculationDetails.dailyRate || 0)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Working Days</p>
+                              <p className="font-semibold text-gray-700">{payrollDetails.salaryCalculationDetails.workingDays || 0}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Total Days in Month</p>
+                              <p className="font-semibold text-gray-700">{payrollDetails.salaryCalculationDetails.totalDaysInMonth || 0}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Calculated Salary</p>
+                              <p className="font-semibold text-blue-700">{money.format(payrollDetails.salaryCalculationDetails.calculatedSalary || 0)}</p>
+                            </div>
+                            <div className="col-span-2">
+                              <p className="text-xs text-gray-500">Period</p>
+                              <p className="font-semibold text-gray-700 text-xs">
+                                {payrollDetails.salaryCalculationDetails.payrollStartDate} to {payrollDetails.salaryCalculationDetails.payrollEndDate}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Weekly Frequency */}
+                      {payrollDetails.salaryFrequency === "weekly" && (
+                        <div className="bg-purple-50 rounded-md p-3 border border-purple-200">
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                              <div>
+                                <p className="text-xs text-gray-500">Weekly Rate</p>
+                                <p className="font-semibold text-purple-700">{money.format(payrollDetails.salaryCalculationDetails.weeklyRate || 0)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">Complete Weeks</p>
+                                <p className="font-semibold text-gray-700">{payrollDetails.salaryCalculationDetails.completeWeeks || 0}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">Partial Week Days</p>
+                                <p className="font-semibold text-gray-700">{payrollDetails.salaryCalculationDetails.partialWeekDays || 0}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">Calculated Salary</p>
+                                <p className="font-semibold text-purple-700">{money.format(payrollDetails.salaryCalculationDetails.calculatedSalary || 0)}</p>
+                              </div>
+                            </div>
+
+                            {payrollDetails.salaryCalculationDetails.weekDetails && payrollDetails.salaryCalculationDetails.weekDetails.length > 0 && (
+                              <div className="border-t border-purple-200 pt-2">
+                                <p className="text-xs font-semibold text-purple-700 mb-2">Week Breakdown:</p>
+                                <div className="space-y-1">
+                                  {payrollDetails.salaryCalculationDetails.weekDetails.map((week, index) => (
+                                    <div key={index} className="bg-white rounded p-2 text-xs">
+                                      <div className="flex justify-between items-center">
+                                        <span className="font-semibold text-gray-700">Week {week.weekNumber}</span>
+                                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${week.status === 'complete' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                                          }`}>
+                                          {week.status}
+                                        </span>
+                                      </div>
+                                      <p className="text-gray-600 mt-1">
+                                        {week.startDate} to {week.endDate}
+                                      </p>
+                                      {week.note && (
+                                        <p className="text-orange-600 mt-1 text-xs italic">{week.note}</p>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {payrollDetails.salaryCalculationDetails.note && (
+                              <div className="bg-orange-50 rounded p-2 border border-orange-200">
+                                <p className="text-xs text-orange-700">📌 {payrollDetails.salaryCalculationDetails.note}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
