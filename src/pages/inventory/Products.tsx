@@ -37,6 +37,7 @@ import { useUrlFilters } from "@/hooks/useUrlFilters";
 // Add this interface for the view modal
 interface ViewModalProps {
   product: Product;
+  user: any;
   onClose: () => void;
 }
 
@@ -738,6 +739,7 @@ const Products: React.FC = () => {
           <ViewProductModal
             product={viewProduct}
             onClose={() => setViewProduct(null)}
+            user={user}
           />
         )}
       </Modal>
@@ -768,7 +770,8 @@ const Products: React.FC = () => {
 
 export default Products;
 
-export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
+export const ViewProductModal: React.FC<ViewModalProps> = ({ product, user }) => { 
+  console.log(user);
   const [selectedSku, setSelectedSku] = useState<{
     sku: string;
     name: string;
@@ -777,6 +780,7 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
     modelNo?: string;
     shopName?: string;
   } | null>(null);
+ 
 
   // Add this function to handle barcode printing
   const handlePrintBarcode = (
@@ -879,7 +883,7 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
                         product?.Category?.name,
                         product?.Brand?.name,
                         product?.modelNo || undefined,
-                        product.User?.fullName
+                        user?.businessName
                       )
                     }
                     className="p-1.5 text-gray-600 hover:text-brand-primary hover:bg-gray-100 rounded-full transition-colors"
@@ -995,7 +999,7 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
                             product.Category?.name,
                             product?.Brand?.name,
                             product?.modelNo || undefined,
-                            product?.User?.fullName
+                            user?.businessName
                           )
                         }
                         className="p-1.5 text-gray-600 hover:text-brand-primary hover:bg-gray-100 rounded-full transition-colors"
