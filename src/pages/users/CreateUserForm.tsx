@@ -10,6 +10,7 @@ import {
   FaMoneyBill,
   FaClock,
   FaPhone,
+  FaCalendar,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import { CREATE_CHILD_USER_URL } from "@/api/api";
@@ -32,6 +33,7 @@ interface UserFormData {
   baseSalary: number; // Added
   requiredDailyHours: number; // Added
   salaryFrequency: "daily" | "weekly" | "monthly";
+  salaryStartDate: string | null; // Added
   phone: string;
 }
 
@@ -46,6 +48,7 @@ interface CreateUserFormProps {
     baseSalary?: number | null; // Added
     requiredDailyHours?: number | null; // Added
     salaryFrequency?: "daily" | "weekly" | "monthly";
+    salaryStartDate?: string | null; // Added
     phone?: string;
   } | null;
   onSuccess: () => void;
@@ -67,6 +70,7 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
     // TODO:: 8 WILL DYNAMIC IN BACKEND LATER
     requiredDailyHours: 8, // Added default
     salaryFrequency: "monthly",
+    salaryStartDate: null, // Added
     phone: "",
   });
 
@@ -82,6 +86,7 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
         baseSalary: user.baseSalary ?? 0, // Added
         requiredDailyHours: user.requiredDailyHours ?? 8, // Added
         salaryFrequency: user.salaryFrequency ?? "monthly",
+        salaryStartDate: user.salaryStartDate ?? null, // Added
         phone: user.phone ?? "",
       });
     }
@@ -264,6 +269,30 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
           </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Salary Start Date
+          </label>
+          <div className="relative">
+            <input
+              type="date"
+              value={formData.salaryStartDate || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  salaryStartDate: e.target.value || null,
+                })
+              }
+              className="mt-1 border block w-full pl-10 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm rounded-md"
+              placeholder="Select salary start date"
+            />
+            <FaCalendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            Leave empty to prevent salary generation and advance salary requests
+          </p>
         </div>
 
         {/* <div>

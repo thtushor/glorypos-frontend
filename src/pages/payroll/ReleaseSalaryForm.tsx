@@ -11,6 +11,7 @@ import {
 import AXIOS from "@/api/network/Axios";
 import { useAuth } from "@/context/AuthContext";
 import money from "@/utils/money";
+import { toast } from "react-toastify";
 
 interface ChildUser {
   id: number;
@@ -210,6 +211,10 @@ const ReleaseSalaryForm: React.FC<ReleaseSalaryFormProps> = ({ onSuccess }) => {
       setEditablePaidAmount(0); // Default to 0, user must enter amount
       // Net payable will be calculated in useEffect
     },
+    onError: (error) => {
+      console.log(error)
+      toast.error(error?.message)
+    }
   });
 
   // Auto-scroll when payrollDetails appears

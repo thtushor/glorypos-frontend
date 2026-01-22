@@ -99,6 +99,7 @@ interface StaffProfileData {
     baseSalary: string;
     requiredDailyHours: number;
     salaryFrequency?: "daily" | "weekly" | "monthly";
+    salaryStartDate?: string | null;
     createdAt: string;
     updatedAt: string;
     parent: Parent;
@@ -116,6 +117,7 @@ interface UpdateFormData {
     baseSalary: number;
     requiredDailyHours: number;
     salaryFrequency?: "daily" | "weekly" | "monthly";
+    salaryStartDate?: string | null;
     imageUrl?: string;
 }
 
@@ -165,6 +167,7 @@ const StaffProfilePage = () => {
                 baseSalary: parseFloat(profileData.baseSalary),
                 requiredDailyHours: profileData.requiredDailyHours,
                 salaryFrequency: profileData.salaryFrequency || "monthly",
+                salaryStartDate: profileData.salaryStartDate || null,
             });
             return response.data;
         },
@@ -353,6 +356,7 @@ const StaffProfilePage = () => {
                                                         baseSalary: parseFloat(profile.baseSalary),
                                                         requiredDailyHours: profile.requiredDailyHours,
                                                         salaryFrequency: profile.salaryFrequency || "monthly",
+                                                        salaryStartDate: profile.salaryStartDate || null,
                                                     });
                                                     setPreviewImage(null);
                                                 }}
@@ -642,6 +646,30 @@ const StaffProfilePage = () => {
                                                         <option value="monthly">Monthly</option>
                                                     </select>
                                                 </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
+                                                    Salary Start Date
+                                                </label>
+                                                <div className="relative">
+                                                    <FaCalendarAlt className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
+                                                    <input
+                                                        type="date"
+                                                        disabled={!isEditing}
+                                                        value={formData?.salaryStartDate || ""}
+                                                        onChange={(e) =>
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                salaryStartDate: e.target.value || null,
+                                                            }))
+                                                        }
+                                                        className="pl-9 sm:pl-10 md:pl-12 w-full py-2 sm:py-2.5 md:py-3 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-300"
+                                                    />
+                                                </div>
+                                                <p className="mt-1 text-xs text-gray-500">
+                                                    Leave empty to prevent salary generation and advance salary requests
+                                                </p>
                                             </div>
                                         </div>
 

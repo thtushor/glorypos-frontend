@@ -58,6 +58,7 @@ interface ChildUser {
   baseSalary?: number | null;
   requiredDailyHours?: number | null;
   salaryFrequency?: "daily" | "weekly" | "monthly";
+  salaryStartDate?: string | null;
 }
 
 interface ChildUsersResponse {
