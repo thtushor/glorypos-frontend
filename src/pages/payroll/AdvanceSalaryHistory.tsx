@@ -24,6 +24,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useParams, Link } from "react-router-dom";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
+import money from "@/utils/money";
 
 interface AdvanceSalary {
   id: number;
@@ -484,10 +485,7 @@ const AdvanceSalaryHistory = () => {
                             {advance.UserRole.email}
                           </div>
                           <div className="text-xs font-medium text-gray-500">
-                            ID: {advance.userId} | Base: ฿
-                            {Number(advance.UserRole.baseSalary).toLocaleString(
-                              "th-TH"
-                            )}
+                            ID: {advance.userId} | Base: {money.format(Number(advance.UserRole.baseSalary))}
                           </div>
                           {advance.UserRole.parent && (
                             <div className="text-xs text-emerald-600">
@@ -514,8 +512,7 @@ const AdvanceSalaryHistory = () => {
                     {/* Amount */}
                     <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-base font-bold text-emerald-600">
-                        <FaDollarSign />฿
-                        {Number(advance.amount).toLocaleString("th-TH")}
+                        {money.format(Number(advance.amount))}
                       </div>
                     </td>
 
@@ -639,8 +636,7 @@ const AdvanceSalaryHistory = () => {
         {selectedAdvance && (
           <div className="mt-3 space-y-2 text-xs bg-gray-50 p-3 rounded">
             <p>
-              <strong>Amount:</strong> ฿
-              {Number(selectedAdvance.amount).toLocaleString("th-TH")}
+              <strong>Amount:</strong> {money.format(Number(selectedAdvance.amount))}
             </p>
             <p>
               <strong>Salary Month:</strong> {selectedAdvance.salaryMonth}
@@ -674,8 +670,7 @@ const AdvanceSalaryHistory = () => {
         {selectedAdvance && (
           <div className="mt-3 space-y-2 text-xs bg-gray-50 p-3 rounded">
             <p>
-              <strong>Amount:</strong> ฿
-              {Number(selectedAdvance.amount).toLocaleString("th-TH")}
+              <strong>Amount:</strong> {money.format(Number(selectedAdvance.amount))}
             </p>
             <p>
               <strong>Salary Month:</strong> {selectedAdvance.salaryMonth}

@@ -9,6 +9,7 @@ import { FaUser, FaCalendarAlt } from "react-icons/fa";
 import { useParams, Link } from "react-router-dom";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
+import money from "@/utils/money";
 
 interface SalaryHistory {
   id: number;
@@ -219,13 +220,13 @@ const PromotionHistory = () => {
                     <td className="px-4 py-3 whitespace-nowrap text-sm">
                       {item.previousSalary ? (
                         <span>
-                          ৳{Number(item.previousSalary).toLocaleString()} →{" "}
+                          {money.format(Number(item.previousSalary))} →{" "}
                           <strong>
-                            ৳{Number(item.salary).toLocaleString()}
+                            {money.format(Number(item.salary))}
                           </strong>
                         </span>
                       ) : (
-                        <strong>৳{Number(item.salary).toLocaleString()}</strong>
+                        <strong>{money.format(Number(item.salary))}</strong>
                       )}
                     </td>
 
