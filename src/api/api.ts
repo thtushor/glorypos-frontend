@@ -201,3 +201,4 @@ export const PAYROLL_RELEASE_HISTORY = `${BASE_URL}/payroll/release/history`;
 export const PAYROLL_ADVANCE_SALERY = `${BASE_URL}/payroll/advance-salary`;
 export const PAYROLL_ADVANCE_SALERY_STATUS = `${BASE_URL}/payroll/advance-salary/:id/status`;
 export const PAYROLL_ADVANCE_SALERY_DELETE = `${BASE_URL}/payroll/advance-salary`; // DELETE /:id
+export const PAYROLL_RELEASE_DELETE = `${BASE_URL}/payroll/payroll/release`; // DELETE /:id

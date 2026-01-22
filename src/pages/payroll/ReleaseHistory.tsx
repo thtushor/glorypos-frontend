@@ -1,10 +1,10 @@
 // src/pages/payroll/ReleaseHistory.tsx
 import { useState, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AXIOS from "@/api/network/Axios";
-import { PAYROLL_HISTORY } from "@/api/api";
+import { PAYROLL_HISTORY, PAYROLL_RELEASE_DELETE } from "@/api/api";
 import Spinner from "@/components/Spinner";
-import { FaCalendarAlt, FaPrint, FaEye, FaBuilding } from "react-icons/fa";
+import { FaCalendarAlt, FaPrint, FaEye, FaBuilding, FaTrash } from "react-icons/fa";
 import { FiUser } from "react-icons/fi";
 import money from "@/utils/money";
 import { useReactToPrint } from "react-to-print";
@@ -14,6 +14,7 @@ import { useParams, Link } from "react-router-dom";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
 import Modal from "@/components/Modal";
+import { toast } from "react-toastify";
 
 interface Release {
   id: number;
@@ -128,6 +129,9 @@ interface SubShopResponse {
 const ReleaseHistory = () => {
   const { hasPermission } = usePermission();
   const canViewOtherProfiles = hasPermission(PERMISSIONS.STAFF_PROFILE.VIEW_OTHER_PROFILES);
+  const canDeletePayroll = hasPermission(PERMISSIONS.PAYROLL.DELETE_PAYROLL);
+
+  const queryClient = useQueryClient();
 
   const { user } = useAuth();
   const params = useParams<{ staffId?: string }>();
@@ -154,6 +158,8 @@ const ReleaseHistory = () => {
   }, [staffId]);
 
   const [selectedPayslip, setSelectedPayslip] = useState<Release | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [payrollToDelete, setPayrollToDelete] = useState<Release | null>(null);
   const payslipRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useReactToPrint({
@@ -209,6 +215,25 @@ const ReleaseHistory = () => {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const url = `${PAYROLL_RELEASE_DELETE}/${id}`;
+      const res = await AXIOS.delete(url);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Payroll record deleted successfully. Advance and loan deductions have been reversed.");
+      queryClient.invalidateQueries({ queryKey: ["release-history"] });
+      setShowDeleteModal(false);
+      setPayrollToDelete(null);
+    },
+    onError: (err: any) => {
+      toast.error(
+        err?.response?.data?.message || "Failed to delete payroll record"
+      );
+    },
+  });
+
   const releases: Release[] = data?.releases || [];
   const pagination: Pagination | undefined = data?.pagination;
 
@@ -227,6 +252,17 @@ const ReleaseHistory = () => {
       year: "numeric",
       month: "long",
     });
+  };
+
+  const handleDeleteClick = (item: Release) => {
+    setPayrollToDelete(item);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    if (payrollToDelete) {
+      deleteMutation.mutate(payrollToDelete.id);
+    }
   };
 
   return (
@@ -543,13 +579,26 @@ const ReleaseHistory = () => {
 
                     {/* Actions */}
                     <td className="px-6 py-5">
-                      <button
-                        onClick={() => setSelectedPayslip(item)}
-                        className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition text-sm font-medium"
-                      >
-                        <FaEye />
-                        Payslip
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedPayslip(item)}
+                          className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition text-sm font-medium"
+                        >
+                          <FaEye />
+                          Payslip
+                        </button>
+                        {canDeletePayroll && (
+                          <button
+                            onClick={() => handleDeleteClick(item)}
+                            disabled={deleteMutation.isPending}
+                            className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium disabled:opacity-50"
+                            title="Delete Payroll"
+                          >
+                            <FaTrash />
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -815,8 +864,89 @@ const ReleaseHistory = () => {
           </>
         )}
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => !deleteMutation.isPending && setShowDeleteModal(false)}
+        maxWidth="md"
+      >
+        <div className="p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Delete Payroll Record</h2>
+
+          {payrollToDelete && (
+            <>
+              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800 mb-2">
+                  <strong>Warning:</strong> Deleting this payroll record will:
+                </p>
+                <ul className="text-sm text-yellow-700 list-disc list-inside space-y-1">
+                  <li>Permanently delete the payroll record</li>
+                  {parseFloat(payrollToDelete.advanceAmount) > 0 && (
+                    <li>Reverse advance salary deduction of {money.format(parseFloat(payrollToDelete.advanceAmount))}</li>
+                  )}
+                  {parseFloat(payrollToDelete.loanDeduction) > 0 && (
+                    <li>Reverse loan deduction of {money.format(parseFloat(payrollToDelete.loanDeduction))}</li>
+                  )}
+                </ul>
+              </div>
+
+              <div className="mb-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Employee:</span>
+                  <span className="font-semibold">{payrollToDelete.UserRole.fullName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Month:</span>
+                  <span className="font-semibold">{formatMonth(payrollToDelete.salaryMonth)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Net Payable:</span>
+                  <span className="font-semibold">{money.format(parseFloat(payrollToDelete.netPayableSalary))}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Paid Amount:</span>
+                  <span className="font-semibold">{money.format(parseFloat(payrollToDelete.paidAmount))}</span>
+                </div>
+              </div>
+
+              <p className="text-sm text-red-600 mb-4">
+                This action cannot be undone. Are you sure you want to delete this payroll record?
+              </p>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleteMutation.isPending}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={deleteMutation.isPending}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {deleteMutation.isPending ? (
+                    <>
+                      <Spinner size="16px" color="white" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <FaTrash />
+                      Delete
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
     </div>
   );
+
 };
 
 export default ReleaseHistory;
