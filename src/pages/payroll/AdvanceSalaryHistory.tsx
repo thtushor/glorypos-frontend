@@ -6,6 +6,7 @@ import AXIOS from "@/api/network/Axios";
 import {
   PAYROLL_ADVANCE_SALERY,
   PAYROLL_ADVANCE_SALERY_STATUS,
+  PAYROLL_ADVANCE_SALERY_DELETE,
   CHILD_USERS_URL,
   SUB_SHOPS_URL,
 } from "@/api/api";
@@ -18,6 +19,7 @@ import {
   FaCalendarAlt,
   FaDollarSign,
   FaBuilding,
+  FaTrash,
 } from "react-icons/fa";
 import { FiUser } from "react-icons/fi";
 import { useAuth } from "@/context/AuthContext";
@@ -156,6 +158,8 @@ const ConfirmationModal = ({
 const AdvanceSalaryHistory = () => {
   const { hasPermission } = usePermission();
   const canViewOtherProfiles = hasPermission(PERMISSIONS.STAFF_PROFILE.VIEW_OTHER_PROFILES);
+  const canApproveAdvanceSalary = hasPermission(PERMISSIONS.PAYROLL.APPROVE_ADVANCE_SALARY);
+  const canDeleteAdvanceSalary = hasPermission(PERMISSIONS.PAYROLL.DELETE_ADVANCE_SALARY);
 
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -181,6 +185,7 @@ const AdvanceSalaryHistory = () => {
   // === Modal States ===
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedAdvance, setSelectedAdvance] = useState<AdvanceSalary | null>(
     null
   );
@@ -270,6 +275,25 @@ const AdvanceSalaryHistory = () => {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const url = `${PAYROLL_ADVANCE_SALERY_DELETE}/${id}`;
+      const res = await AXIOS.delete(url);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Advance salary record deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["advanceSalary"] });
+      setShowDeleteModal(false);
+      setSelectedAdvance(null);
+    },
+    onError: (err: any) => {
+      toast.error(
+        err?.response?.data?.message || "Failed to delete advance salary record"
+      );
+    },
+  });
+
   const advances: AdvanceSalary[] = data?.advances || [];
   const pagination = data?.pagination;
 
@@ -315,6 +339,17 @@ const AdvanceSalaryHistory = () => {
         id: selectedAdvance.id,
         status: "REJECTED",
       });
+    }
+  };
+
+  const openDelete = (advance: AdvanceSalary) => {
+    setSelectedAdvance(advance);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedAdvance) {
+      deleteMutation.mutate(selectedAdvance.id);
     }
   };
 
@@ -540,33 +575,61 @@ const AdvanceSalaryHistory = () => {
                     <td className="px-6 py-5 whitespace-nowrap text-sm">
                       {advance.status === "PENDING" ? (
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => openApprove(advance)}
-                            disabled={updateStatusMutation.isPending}
-                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
-                            title="Approve"
-                          >
-                            <FaCheck size={14} />
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => openReject(advance)}
-                            disabled={updateStatusMutation.isPending}
-                            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
-                            title="Reject"
-                          >
-                            <FaTimes size={14} />
-                            Reject
-                          </button>
+                          {canApproveAdvanceSalary && (
+                            <>
+                              <button
+                                onClick={() => openApprove(advance)}
+                                disabled={updateStatusMutation.isPending || deleteMutation.isPending}
+                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+                                title="Approve"
+                              >
+                                <FaCheck size={14} />
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => openReject(advance)}
+                                disabled={updateStatusMutation.isPending || deleteMutation.isPending}
+                                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
+                                title="Reject"
+                              >
+                                <FaTimes size={14} />
+                                Reject
+                              </button>
+                            </>
+                          )}
+                          {canDeleteAdvanceSalary && (
+                            <button
+                              onClick={() => openDelete(advance)}
+                              disabled={updateStatusMutation.isPending || deleteMutation.isPending}
+                              className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50 flex items-center gap-1"
+                              title="Delete"
+                            >
+                              <FaTrash size={14} />
+                              Delete
+                            </button>
+                          )}
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-500">
-                          {advance.status === "APPROVED" ? (
-                            <span className="text-green-600">✓ Approved</span>
-                          ) : (
-                            <span className="text-red-600">✗ Rejected</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">
+                            {advance.status === "APPROVED" ? (
+                              <span className="text-green-600">✓ Approved</span>
+                            ) : (
+                              <span className="text-red-600">✗ Rejected</span>
+                            )}
+                          </span>
+                          {canDeleteAdvanceSalary && (
+                            <button
+                              onClick={() => openDelete(advance)}
+                              disabled={deleteMutation.isPending}
+                              className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50 flex items-center gap-1"
+                              title="Delete"
+                            >
+                              <FaTrash size={14} />
+                              Delete
+                            </button>
                           )}
-                        </span>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -682,6 +745,43 @@ const AdvanceSalaryHistory = () => {
         )}
         <p className="text-xs text-red-600 mt-2">
           This action cannot be undone. The employee will be notified.
+        </p>
+      </ConfirmationModal>
+
+      {/* === Delete Modal === */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() =>
+          !deleteMutation.isPending && setShowDeleteModal(false)
+        }
+        title="Delete Advance Salary"
+        onConfirm={confirmDelete}
+        isPending={deleteMutation.isPending}
+        confirmText="Delete"
+        confirmColor="red"
+      >
+        <p>
+          Are you sure you want to delete this advance salary request from{" "}
+          <strong>{selectedAdvance?.UserRole.fullName}</strong>?
+        </p>
+        {selectedAdvance && (
+          <div className="mt-3 space-y-2 text-xs bg-gray-50 p-3 rounded">
+            <p>
+              <strong>Amount:</strong> {money.format(Number(selectedAdvance.amount))}
+            </p>
+            <p>
+              <strong>Salary Month:</strong> {selectedAdvance.salaryMonth}
+            </p>
+            <p>
+              <strong>Status:</strong> {selectedAdvance.status}
+            </p>
+            <p>
+              <strong>Reason:</strong> {selectedAdvance.reason}
+            </p>
+          </div>
+        )}
+        <p className="text-xs text-red-600 mt-2">
+          This action cannot be undone. The record will be permanently deleted.
         </p>
       </ConfirmationModal>
     </div>
