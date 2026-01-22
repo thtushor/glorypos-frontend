@@ -89,12 +89,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           console.error("Camera access error:", err);
           const errorMessage =
             err.message?.includes("Permission") ||
-            err.message?.includes("permission")
+              err.message?.includes("permission")
               ? "Camera permission denied. Please allow camera access in your browser settings."
               : err.message?.includes("NotFoundError") ||
                 err.message?.includes("not found")
-              ? "No camera found. Please connect a camera or use manual input."
-              : `Failed to access cameras: ${err.message || "Unknown error"}`;
+                ? "No camera found. Please connect a camera or use manual input."
+                : `Failed to access cameras: ${err.message || "Unknown error"}`;
           setError(errorMessage);
         });
     }
@@ -311,7 +311,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       scannerRef.current = html5QrCode;
 
       if (isUnmountingRef.current || isSwitchingCameraRef.current) {
-        html5QrCode.stop().catch(() => {});
+        html5QrCode.stop().catch(() => { });
         scannerRef.current = null;
         setIsScanning(false);
         return;
@@ -369,14 +369,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       console.error("Scanner start error:", err);
       setError(
         err.message ||
-          "Failed to start camera. Please check permissions and try again."
+        "Failed to start camera. Please check permissions and try again."
       );
       setIsScanning(false);
 
       // Clean up failed scanner instance
       if (scannerRef.current) {
         try {
-          await scannerRef.current.stop().catch(() => {});
+          await scannerRef.current.stop().catch(() => { });
         } catch {
           // Ignore
         }
@@ -628,12 +628,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 <option key={camera.id} value={camera.id}>
                   {camera.label ||
                     (camera.label?.toLowerCase().includes("front") ||
-                    camera.id.includes("front")
+                      camera.id.includes("front")
                       ? "Front Camera"
                       : camera.label?.toLowerCase().includes("back") ||
                         camera.id.includes("back")
-                      ? "Back Camera"
-                      : `Camera ${camera.id.slice(0, 8)}`)}
+                        ? "Back Camera"
+                        : `Camera ${camera.id.slice(0, 8)}`)}
                 </option>
               ))}
             </select>
@@ -656,11 +656,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         <div
           id="barcode-scanner-container"
           ref={scannerContainerRef}
-          className={`w-full bg-black rounded-lg overflow-hidden ${
-            isScanning || isSwitchingCameraRef.current
-              ? "min-h-[300px]"
-              : "min-h-[200px] flex items-center justify-center"
-          }`}
+          className={`w-full bg-black rounded-lg overflow-hidden ${isScanning || isSwitchingCameraRef.current
+            ? "min-h-[300px]"
+            : "min-h-[200px] flex items-center justify-center"
+            }`}
         >
           {!isScanning && !error && !isSwitchingCameraRef.current && (
             <div className="text-center text-white p-8">
@@ -694,14 +693,50 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         {error && (
           <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-sm text-red-800">{error}</p>
-            {cameraId && !isSwitchingCameraRef.current && (
-              <button
-                onClick={() => startScanning()}
-                className="mt-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
-              >
-                Retry
-              </button>
-            )}
+            <div className="flex gap-2 mt-2">
+              {cameraId && !isSwitchingCameraRef.current && (
+                <button
+                  onClick={() => startScanning()}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+                >
+                  Retry
+                </button>
+              )}
+              {error.toLowerCase().includes("permission") && (
+                <button
+                  onClick={async () => {
+                    try {
+                      // Check if we're in a React Native WebView
+                      const isReactNative = !!(window as any).ReactNativeWebView;
+
+                      if (isReactNative) {
+                        // Request permission from React Native
+                        (window as any).ReactNativeWebView?.postMessage(
+                          JSON.stringify({
+                            type: 'REQUEST_CAMERA_PERMISSION',
+                          })
+                        );
+                      } else {
+                        // Request camera access from browser
+                        const stream = await navigator.mediaDevices.getUserMedia({
+                          video: { facingMode: 'environment' },
+                        });
+                        // Permission granted, stop the stream and reload cameras
+                        stream.getTracks().forEach(track => track.stop());
+                        window.location.reload();
+                      }
+                    } catch (err: any) {
+                      console.error('Permission request error:', err);
+                      setError('Failed to request camera permission. Please enable it manually in your browser/app settings.');
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm flex items-center gap-2"
+                >
+                  <FaCamera className="w-4 h-4" />
+                  Request Camera Permission
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
