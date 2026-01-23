@@ -17,7 +17,7 @@ import {
   FaTimes,
   FaUser,
   FaCalendarAlt,
-  FaDollarSign,
+  // FaDollarSign,
   FaBuilding,
   FaTrash,
 } from "react-icons/fa";
