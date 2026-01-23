@@ -861,7 +861,7 @@ const StaffProfilePage = () => {
                                     <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 text-white">
                                         <h2 className="text-base sm:text-lg md:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2">
                                             <FaCalendarAlt className="text-sm sm:text-base" />
-                                            <span className="text-sm sm:text-base md:text-lg">Current Month ({format(new Date(profile.currentMonthSalary.salaryMonth), "MMM yyyy")})</span>
+                                            <span className="text-sm sm:text-base md:text-lg">Current Month ({format(new Date(profile.currentMonthSalary?.salaryMonth), "MMM yyyy")})</span>
                                         </h2>
                                         <div className="space-y-2 sm:space-y-3">
                                             <div className="flex justify-between items-center pb-2 border-b border-white/20">
