@@ -858,38 +858,38 @@ const StaffProfilePage = () => {
                                     </div>
 
                                     {/* Current Month Salary */}
-                                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 text-white">
+                                    {profile?.currentMonthSalary && Object.keys(profile.currentMonthSalary).length > 0 && <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 text-white">
                                         <h2 className="text-base sm:text-lg md:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2">
                                             <FaCalendarAlt className="text-sm sm:text-base" />
-                                            <span className="text-sm sm:text-base md:text-lg">Current Month ({format(new Date(profile.currentMonthSalary?.salaryMonth), "MMM yyyy")})</span>
+                                            <span className="text-sm sm:text-base md:text-lg">Current Month ({format(new Date(profile?.currentMonthSalary?.salaryMonth), "MMM yyyy")})</span>
                                         </h2>
                                         <div className="space-y-2 sm:space-y-3">
                                             <div className="flex justify-between items-center pb-2 border-b border-white/20">
                                                 <span className="text-xs sm:text-sm opacity-90">Base Salary</span>
-                                                <span className="font-bold text-sm sm:text-base">{money.format(profile.currentMonthSalary.baseSalary)}</span>
+                                                <span className="font-bold text-sm sm:text-base">{money.format(profile?.currentMonthSalary?.baseSalary)}</span>
                                             </div>
                                             <div className="flex justify-between items-center pb-2 border-b border-white/20">
                                                 <span className="text-xs sm:text-sm opacity-90">Commission</span>
-                                                <span className="font-bold text-sm sm:text-base">{money.format(profile.currentMonthSalary.totalCommission)}</span>
+                                                <span className="font-bold text-sm sm:text-base">{money.format(profile?.currentMonthSalary?.totalCommission)}</span>
                                             </div>
                                             <div className="flex justify-between items-center pb-2 border-b border-white/20">
                                                 <span className="text-xs sm:text-sm opacity-90">Working Days</span>
-                                                <span className="font-bold text-sm sm:text-base">{profile.currentMonthSalary.totalWorkingDays}</span>
+                                                <span className="font-bold text-sm sm:text-base">{profile?.currentMonthSalary?.totalWorkingDays}</span>
                                             </div>
                                             <div className="flex justify-between items-center pb-2 border-b border-white/20">
                                                 <span className="text-xs sm:text-sm opacity-90">Leave Days</span>
-                                                <span className="font-bold text-sm sm:text-base">{profile.currentMonthSalary.totalLeaveDays}</span>
+                                                <span className="font-bold text-sm sm:text-base">{profile?.currentMonthSalary?.totalLeaveDays}</span>
                                             </div>
                                             <div className="flex justify-between items-center pt-2 bg-white/10 rounded-lg p-2 sm:p-3 mt-2 sm:mt-3">
                                                 <span className="font-semibold text-xs sm:text-sm md:text-base">Total Payable</span>
-                                                <span className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold">{money.format(profile.currentMonthSalary.totalPayable)}</span>
+                                                <span className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold">{money.format(profile?.currentMonthSalary?.totalPayable)}</span>
                                             </div>
                                             <div className="flex justify-between items-center bg-white/10 rounded-lg p-2 sm:p-3">
                                                 <span className="font-semibold text-xs sm:text-sm md:text-base">Remaining Due</span>
-                                                <span className="text-sm sm:text-base md:text-lg lg:text-xl font-bold">{money.format(profile.currentMonthSalary.currentMonthRemainingDue)}</span>
+                                                <span className="text-sm sm:text-base md:text-lg lg:text-xl font-bold">{money.format(profile?.currentMonthSalary?.currentMonthRemainingDue)}</span>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div>}
                                 </div>
                             </div>
                         ) : (
