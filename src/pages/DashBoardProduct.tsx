@@ -198,6 +198,7 @@ function DashBoardProduct({
         <ShoppingCart
           cart={cart}
           setCart={setCart}
+          maxWidth=" "
           orderId={orderId}
           adjustments={adjustments}
           setAdjustments={setAdjustments}

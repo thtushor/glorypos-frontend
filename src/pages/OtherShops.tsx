@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FaSearch,
@@ -191,10 +191,84 @@ const OtherShops = () => {
     });
   };
 
+  // Form ref for edit modal validation
+  const editFormRef = useRef<HTMLFormElement>(null);
+
   const handleUpdateShop = (formData: Partial<SubShop>) => {
     if (!selectedShop) return;
     updateShopMutation.mutate({ ...formData, shopId: selectedShop.id });
   };
+
+  // Handler for edit form submission
+  const handleEditFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    handleUpdateShop({
+      fullName: formData.get("fullName") as string,
+      email: formData.get("email") as string,
+      phoneNumber: formData.get("phoneNumber") as string,
+      location: formData.get("location") as string,
+      businessName: formData.get("businessName") as string,
+      businessType: formData.get("businessType") as string,
+      shopType: formData.get("shopType") as 'normal' | 'restaurant' | undefined,
+      accountStatus: formData.get("accountStatus") as
+        | "active"
+        | "inactive",
+      accountType: formData.get("accountType") as
+        | "super admin"
+        | "admin"
+        | "shop",
+      stuffCommission: formData.get("stuffCommission")
+        ? Number(formData.get("stuffCommission"))
+        : undefined,
+    });
+  };
+
+  // Use ref to store latest handleEditFormSubmit to avoid stale closures
+  const handleEditFormSubmitRef = useRef(handleEditFormSubmit);
+  useEffect(() => {
+    handleEditFormSubmitRef.current = handleEditFormSubmit;
+  });
+
+  // Global keyboard event listener for Enter key - works anytime edit modal is open
+  useEffect(() => {
+    if (!showEditModal) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only trigger if Enter is pressed and not in a textarea
+      if (e.key === "Enter" && !e.shiftKey) {
+        const target = e.target as HTMLElement;
+        const isTextarea = target.tagName === "TEXTAREA";
+        
+        // If focused on textarea, allow normal Enter behavior for newlines
+        if (isTextarea) return;
+        
+        // Prevent default to avoid form submission conflicts
+        e.preventDefault();
+        
+        // Submit form if not currently processing
+        if (!updateShopMutation.isPending) {
+          // Get the form element and trigger validation
+          const form = editFormRef.current;
+          if (form) {
+            // Check if form is valid (triggers HTML5 validation)
+            if (form.checkValidity()) {
+              // Form is valid, submit it
+              handleEditFormSubmitRef.current(e as any);
+            } else {
+              // Form is invalid, trigger validation UI
+              form.reportValidity();
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showEditModal, updateShopMutation.isPending]);
 
   return (
     <div className="md:p-3 space-y-6">
@@ -584,29 +658,8 @@ const OtherShops = () => {
       >
         {selectedShop && (
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData(e.currentTarget);
-              handleUpdateShop({
-                fullName: formData.get("fullName") as string,
-                email: formData.get("email") as string,
-                phoneNumber: formData.get("phoneNumber") as string,
-                location: formData.get("location") as string,
-                businessName: formData.get("businessName") as string,
-                businessType: formData.get("businessType") as string,
-                shopType: formData.get("shopType") as 'normal' | 'restaurant' | undefined,
-                accountStatus: formData.get("accountStatus") as
-                  | "active"
-                  | "inactive",
-                accountType: formData.get("accountType") as
-                  | "super admin"
-                  | "admin"
-                  | "shop",
-                stuffCommission: formData.get("stuffCommission")
-                  ? Number(formData.get("stuffCommission"))
-                  : undefined,
-              });
-            }}
+            ref={editFormRef}
+            onSubmit={handleEditFormSubmit}
             className="space-y-4"
           >
             {/* Show parent ID if selected shop id and parent id are different */}

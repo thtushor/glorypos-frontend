@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useRef } from "react";
 import { PAYROLL_ADVANCE_SALERY, CHILD_USERS_URL } from "@/api/api";
 import AXIOS from "@/api/network/Axios";
 import { FaSpinner } from "react-icons/fa";
@@ -120,8 +121,44 @@ const AdvanceSalaryForm = ({ onSuccess }: AdvanceSalaryFormProps) => {
     },
   });
 
+  // Form ref for validation
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Global keyboard event listener for Enter key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only trigger if Enter is pressed and not in a textarea
+      if (e.key === "Enter" && !e.shiftKey) {
+        const target = e.target as HTMLElement;
+        const isTextarea = target.tagName === "TEXTAREA";
+        
+        // If focused on textarea, allow normal Enter behavior for newlines
+        if (isTextarea) return;
+        
+        // Prevent default to avoid form submission conflicts
+        e.preventDefault();
+        
+        // Submit form if not currently processing
+        if (!advanceSalaryMutation.isPending) {
+          // Get the form element
+          const form = formRef.current;
+          if (form) {
+            // Trigger react-hook-form submit which handles validation
+            handleSubmit((data) => advanceSalaryMutation.mutate(data))();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [advanceSalaryMutation.isPending, handleSubmit]);
+
   return (
     <form
+      ref={formRef}
       onSubmit={handleSubmit((data) => advanceSalaryMutation.mutate(data))}
       className="space-y-4"
     >

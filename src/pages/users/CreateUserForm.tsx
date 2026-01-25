@@ -1,5 +1,5 @@
 // Updated pages/users/CreateUserForm.tsx - Added baseSalary and requiredDailyHours fields
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import {
@@ -116,10 +116,57 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
     },
   });
 
+  // Form ref for validation
+  const formRef = useRef<HTMLFormElement>(null);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     mutation.mutate(formData);
   };
+
+  // Use ref to store latest handleSubmit to avoid stale closures
+  const handleSubmitRef = useRef(handleSubmit);
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  });
+
+  // Global keyboard event listener for Enter key - works anytime modal is open
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only trigger if Enter is pressed and not in a textarea
+      if (e.key === "Enter" && !e.shiftKey) {
+        const target = e.target as HTMLElement;
+        const isTextarea = target.tagName === "TEXTAREA";
+        
+        // If focused on textarea, allow normal Enter behavior for newlines
+        if (isTextarea) return;
+        
+        // Prevent default to avoid form submission conflicts
+        e.preventDefault();
+        
+        // Submit form if not currently processing
+        if (!mutation.isPending) {
+          // Get the form element and trigger validation
+          const form = formRef.current;
+          if (form) {
+            // Check if form is valid (triggers HTML5 validation)
+            if (form.checkValidity()) {
+              // Form is valid, submit it
+              handleSubmitRef.current(e as any);
+            } else {
+              // Form is invalid, trigger validation UI
+              form.reportValidity();
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [mutation.isPending]);
 
   // const handlePermissionChange = (key: keyof Permission) => {
   //   setFormData({
@@ -132,7 +179,7 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
   // };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
         <InputWithIcon
           type="text"

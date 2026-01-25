@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import AXIOS from "@/api/network/Axios";
 import Spinner from "@/components/Spinner";
 import { toast } from "react-toastify";
@@ -94,6 +94,9 @@ const ProfilePage = () => {
     }
   };
 
+  // Form ref for validation
+  const formRef = useRef<HTMLFormElement>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -120,6 +123,52 @@ const ProfilePage = () => {
 
     updateProfileMutation.mutate(submitData);
   };
+
+  // Use ref to store latest handleSubmit to avoid stale closures
+  const handleSubmitRef = useRef(handleSubmit);
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  });
+
+  // Global keyboard event listener for Enter key - works when editing
+  useEffect(() => {
+    if (!isEditing) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only trigger if Enter is pressed and not in a textarea
+      if (e.key === "Enter" && !e.shiftKey) {
+        const target = e.target as HTMLElement;
+        const isTextarea = target.tagName === "TEXTAREA";
+        
+        // If focused on textarea, allow normal Enter behavior for newlines
+        if (isTextarea) return;
+        
+        // Prevent default to avoid form submission conflicts
+        e.preventDefault();
+        
+        // Submit form if not currently processing
+        if (!updateProfileMutation.isPending) {
+          // Get the form element and trigger validation
+          const form = formRef.current;
+          if (form) {
+            // Check if form is valid (triggers HTML5 validation)
+            if (form.checkValidity()) {
+              // Form is valid, submit it
+              handleSubmitRef.current(e as any);
+            } else {
+              // Form is invalid, trigger validation UI
+              form.reportValidity();
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isEditing, updateProfileMutation.isPending]);
 
   if (isLoading) {
     return (
@@ -182,7 +231,7 @@ const ProfilePage = () => {
 
         {/* Profile Content */}
         <div className="px-8 py-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Full Name */}
               <div>

@@ -88,7 +88,8 @@ function ShoppingCart({
   initialKOTInfo,
   initialPaymentInfo,
   initialStaffId = null,
-  enableEnterSubmit = true
+  enableEnterSubmit = true,
+  maxWidth = "xl:max-w-[450px]"
 }: {
   cart: CartItem[];
   adjustments: CartAdjustments;
@@ -110,6 +111,7 @@ function ShoppingCart({
   initialPaymentInfo?: PartialPayment;
   initialStaffId?: "self-sell" | number | null;
   enableEnterSubmit?: boolean;
+  maxWidth?: string; // Tailwind class for max width (e.g., "xl:max-w-[450px]", "xl:max-w-[600px]", etc.)
 }) {
   // const { user } = useAuth();
   const { hasPermission } = usePermission();
@@ -650,7 +652,7 @@ function ShoppingCart({
   return (
     <>
 
-      <div className="lg:sticky lg:top-0 lg:h-[calc(100vh-6rem)] xl:max-w-[450px] overflow-y-auto pb-10">
+      <div className={`lg:sticky lg:top-0 lg:h-[calc(100vh-6rem)] ${maxWidth} overflow-y-auto pb-10`}>
         <div
           className={` bg-white  rounded-lg shadow flex flex-col xl:flex ${showMobileCart ? "flex" : "hidden"
             }`}
