@@ -1,4 +1,4 @@
-import { useState, FormEvent, ChangeEvent } from "react";
+import { useState, FormEvent, ChangeEvent, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -91,10 +91,57 @@ const Register: React.FC = () => {
     },
   });
 
+  // Form ref for validation
+  const formRef = useRef<HTMLFormElement>(null);
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     mutation.mutate(formData);
   };
+
+  // Use ref to store latest handleSubmit to avoid stale closures
+  const handleSubmitRef = useRef(handleSubmit);
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  });
+
+  // Global keyboard event listener for Enter key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only trigger if Enter is pressed and not in a textarea
+      if (e.key === "Enter" && !e.shiftKey) {
+        const target = e.target as HTMLElement;
+        const isTextarea = target.tagName === "TEXTAREA";
+        
+        // If focused on textarea, allow normal Enter behavior for newlines
+        if (isTextarea) return;
+        
+        // Prevent default to avoid form submission conflicts
+        e.preventDefault();
+        
+        // Submit form if not currently processing
+        if (!mutation.isPending) {
+          // Get the form element and trigger validation
+          const form = formRef.current;
+          if (form) {
+            // Check if form is valid (triggers HTML5 validation)
+            if (form.checkValidity()) {
+              // Form is valid, submit it
+              handleSubmitRef.current(e as any);
+            } else {
+              // Form is invalid, trigger validation UI
+              form.reportValidity();
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [mutation.isPending]);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -125,7 +172,7 @@ const Register: React.FC = () => {
         )}
 
         {/* Form */}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form ref={formRef} className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Full Name Field */}
             <div className="space-y-2">
