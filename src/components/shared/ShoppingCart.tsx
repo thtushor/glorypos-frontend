@@ -11,9 +11,9 @@ import {
   FaCheckCircle,
   FaChevronDown,
   FaCreditCard,
-  FaExclamationCircle,
+  // FaExclamationCircle,
   FaMinus,
-  FaMoneyBill,
+  // FaMoneyBill,
   FaPlus,
   FaQrcode,
   FaSearch,
@@ -21,8 +21,8 @@ import {
   FaTimes,
   FaTrash,
   FaUser,
-  FaUtensils,
-  FaWallet,
+  // FaUtensils,
+  // FaWallet,
 } from "react-icons/fa";
 import Modal from "../Modal";
 import AXIOS from "@/api/network/Axios";
@@ -111,7 +111,7 @@ function ShoppingCart({
   initialStaffId?: "self-sell" | number | null;
   enableEnterSubmit?: boolean;
 }) {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const { hasPermission } = usePermission();
 
   // Permission checks
@@ -792,7 +792,7 @@ function ShoppingCart({
                               Sales Price:
                             </label>
                             <div className="flex items-center gap-1 flex-1">
-                              <span className="text-xs text-gray-500">$</span>
+                              <span className="text-xs text-gray-500">฿</span>
                               <input
                                 type="text"
                                 inputMode="decimal"

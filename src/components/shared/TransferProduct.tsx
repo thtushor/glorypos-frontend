@@ -12,7 +12,7 @@ import {
 import AXIOS from "@/api/network/Axios";
 import { successToast, uploadFile } from "@/utils/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
 import InputWithIcon from "../InputWithIcon";
 import {
@@ -173,6 +173,9 @@ function TransferProduct({
     });
 
     // Handlers
+    // Form ref for validation
+    const formRef = useRef<HTMLFormElement>(null);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -219,6 +222,50 @@ function TransferProduct({
             setIsLoadingImage(false);
         }
     };
+
+    // Use ref to store latest handleSubmit to avoid stale closures
+    const handleSubmitRef = useRef(handleSubmit);
+    useEffect(() => {
+        handleSubmitRef.current = handleSubmit;
+    });
+
+    // Global keyboard event listener for Enter key - works anytime modal is open
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Only trigger if Enter is pressed and not in a textarea
+            if (e.key === "Enter" && !e.shiftKey) {
+                const target = e.target as HTMLElement;
+                const isTextarea = target.tagName === "TEXTAREA";
+                
+                // If focused on textarea, allow normal Enter behavior for newlines
+                if (isTextarea) return;
+                
+                // Prevent default to avoid form submission conflicts
+                e.preventDefault();
+                
+                // Submit form if not currently processing
+                if (!transferMutation.isPending && !isLoadingImage) {
+                    // Get the form element and trigger validation
+                    const form = formRef.current;
+                    if (form) {
+                        // Check if form is valid (triggers HTML5 validation)
+                        if (form.checkValidity()) {
+                            // Form is valid, submit it
+                            handleSubmitRef.current(e as any);
+                        } else {
+                            // Form is invalid, trigger validation UI
+                            form.reportValidity();
+                        }
+                    }
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [transferMutation.isPending, isLoadingImage]);
 
     // Handler for input and textarea elements
     const handleInputChange = (
@@ -369,7 +416,7 @@ function TransferProduct({
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
             {/* Shop Selection - Most Important Field */}
             <div className="bg-brand-primary/10 border-2 border-brand-primary rounded-lg p-4">
                 <label className="block text-lg font-semibold text-gray-900 mb-2">
