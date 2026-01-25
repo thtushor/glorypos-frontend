@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { FaPlus, FaEdit, FaTrash, FaRuler } from "react-icons/fa";
@@ -48,6 +48,7 @@ const Units = () => {
     shortName: "",
     status: "active",
   });
+  const formRef = useRef<HTMLFormElement>(null);
 
   // Filter states
   const [searchKey, setSearchKey] = useState("");
@@ -118,6 +119,12 @@ const Units = () => {
     }
   };
 
+  // Use ref to store latest handleSubmit to avoid stale closures
+  const handleSubmitRef = useRef(handleSubmit);
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  });
+
   const handleEdit = (unit: Unit) => {
     setFormData({
       id: unit.id,
@@ -142,6 +149,46 @@ const Units = () => {
       status: "active",
     });
   };
+
+  // Global keyboard event listener for Enter key - works anytime modal is open
+  useEffect(() => {
+    if (!isModalOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only trigger if Enter is pressed and not in a textarea
+      if (e.key === "Enter" && !e.shiftKey) {
+        const target = e.target as HTMLElement;
+        const isTextarea = target.tagName === "TEXTAREA";
+        
+        // If focused on textarea, allow normal Enter behavior for newlines
+        if (isTextarea) return;
+        
+        // Prevent default to avoid form submission conflicts
+        e.preventDefault();
+        
+        // Submit form if not currently processing
+        if (!createMutation.isPending && !updateMutation.isPending) {
+          // Get the form element and trigger validation
+          const form = formRef.current;
+          if (form) {
+            // Check if form is valid (triggers HTML5 validation)
+            if (form.checkValidity()) {
+              // Form is valid, submit it
+              handleSubmitRef.current(e as any);
+            } else {
+              // Form is invalid, trigger validation UI
+              form.reportValidity();
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isModalOpen, createMutation.isPending, updateMutation.isPending]);
 
   return (
     <div className="space-y-6">
@@ -287,7 +334,7 @@ const Units = () => {
         onClose={() => setIsModalOpen(false)}
         title={formData.id ? "Edit Unit" : "Add Unit"}
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Name*
