@@ -33,7 +33,7 @@ import Spinner from "../Spinner";
 import ErrorBoundary from "../ErrorBoundary";
 import BarcodeScanner from "../BarcodeScanner";
 import { FaUserGear } from "react-icons/fa6";
-import { useAuth } from "@/context/AuthContext";
+// import { useAuth } from "@/context/AuthContext";
 import Invoice from "../Invoice";
 import { CartItem } from "@/types/cartItemType";
 import { usePermission } from "@/hooks/usePermission";
