@@ -611,28 +611,28 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
         {/* KOT Receipt (Hidden, only for printing) */}
         <div style={{ display: 'none' }}>
-          <div ref={kotRef} className="p-6 max-w-md mx-auto">
+          <div ref={kotRef} className="p-4 mx-auto" style={{ width: '80mm', fontSize: '10px' }}>
             {/* KOT Header */}
-            <div className="text-center mb-4 border-b-2 border-black pb-3">
-              <h1 className="text-base font-bold">KITCHEN ORDER TICKET</h1>
-              <p className="text-xs mt-1">{invoiceData.businessInfo.name}</p>
-              <p className="text-xs mt-1">{new Date(invoiceData.date).toLocaleString()}</p>
+            <div className="text-center mb-3 border-b-2 border-black pb-2">
+              <h1 className="text-xs font-bold">KITCHEN ORDER TICKET</h1>
+              <p className="text-[9px] mt-1">{invoiceData.businessInfo.name}</p>
+              <p className="text-[9px] mt-1">{new Date(invoiceData.date).toLocaleString()}</p>
             </div>
 
             {/* Order Info */}
-            <div className="mb-4 text-sm space-y-1">
-              <div className="flex justify-between font-bold text-xs">
+            <div className="mb-3 text-[10px] space-y-1">
+              <div className="flex justify-between font-bold text-[9px]">
                 <span>Order #:</span>
                 <span>{invoiceData.invoiceNumber}</span>
               </div>
               {invoiceData.tableNumber && (
-                <div className="flex justify-between font-bold text-xs">
+                <div className="flex justify-between font-bold text-[9px]">
                   <span>Table:</span>
                   <span>{invoiceData.tableNumber}</span>
                 </div>
               )}
               {invoiceData.guestNumber && (
-                <div className="flex justify-between">
+                <div className="flex justify-between text-[9px]">
                   <span>Guests:</span>
                   <span>{invoiceData.guestNumber}</span>
                 </div>
@@ -640,31 +640,31 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             </div>
 
             {/* Items Table */}
-            <div className="mb-4">
-              <table className="w-full text-sm border-collapse">
+            <div className="mb-3">
+              <table className="w-full text-[10px] border-collapse">
                 <thead>
                   <tr className="border-y-2 border-black">
-                    <th className="text-left py-2 px-1">Item</th>
-                    <th className="text-center py-2 px-1 w-16">Qty</th>
-                    <th className="text-left py-2 px-1 w-24">Remarks</th>
+                    <th className="text-left py-1 px-1">Item</th>
+                    <th className="text-center py-1 px-1 w-12">Qty</th>
+                    <th className="text-left py-1 px-1 w-20">Remarks</th>
                   </tr>
                 </thead>
                 <tbody>
                   {invoiceData.items.map((item, index) => (
                     <tr key={index} className="border-b">
-                      <td className="py-3 px-1">
+                      <td className="py-2 px-1">
                         <div>
-                          <p className="font-bold text-base">{item.productName}</p>
+                          <p className="font-bold text-[10px]">{item.productName}</p>
                           {item.details && (
-                            <p className="text-xs text-gray-600 mt-0.5">{item.details}</p>
+                            <p className="text-[9px] text-gray-600 mt-0.5">{item.details}</p>
                           )}
                         </div>
                       </td>
-                      <td className="text-center py-3 px-1">
-                        <span className="font-bold text-lg">{item.quantity}</span>
+                      <td className="text-center py-2 px-1">
+                        <span className="font-bold text-xs">{item.quantity}</span>
                       </td>
-                      <td className="py-3 px-1">
-                        <div className="border-b border-gray-300 min-h-[30px]">
+                      <td className="py-2 px-1">
+                        <div className="border-b border-gray-300 min-h-[25px]">
                           {/* Empty space for handwritten remarks */}
                         </div>
                       </td>
@@ -678,16 +678,16 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             {invoiceData.specialNotes !== undefined &&
               invoiceData.specialNotes !== null &&
               String(invoiceData.specialNotes).trim() !== "" && (
-                <div className="mb-4 p-3 border-2 border-black rounded">
-                  <h3 className="font-bold text-sm mb-1">SPECIAL INSTRUCTIONS:</h3>
-                  <p className="text-sm whitespace-pre-wrap font-medium">{String(invoiceData.specialNotes)}</p>
+                <div className="mb-3 p-2 border-2 border-black rounded">
+                  <h3 className="font-bold text-[10px] mb-1">SPECIAL INSTRUCTIONS:</h3>
+                  <p className="text-[10px] whitespace-pre-wrap font-medium">{String(invoiceData.specialNotes)}</p>
                 </div>
               )}
 
             {/* Footer */}
-            <div className="mt-6 pt-3 border-t-2 border-black text-center">
-              <p className="text-sm font-medium">Total Items: {invoiceData.items.reduce((sum, item) => sum + item.quantity, 0)}</p>
-              <p className="text-xs mt-2 text-gray-600">Please prepare this order</p>
+            <div className="mt-4 pt-2 border-t-2 border-black text-center">
+              <p className="text-[10px] font-medium">Total Items: {invoiceData.items.reduce((sum, item) => sum + item.quantity, 0)}</p>
+              <p className="text-[9px] mt-1 text-gray-600">Please prepare this order</p>
             </div>
           </div>
         </div>
