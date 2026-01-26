@@ -574,6 +574,11 @@ function ShoppingCart({
       );
       return;
     }
+    // if kot table number is empty, show toast error
+    if (user?.shopType === "restaurant" && !kotData.tableNumber) {
+      toast.error("Please enter table number before printing KOT");
+      return;
+    }
     createOrderMutation.mutate({ cartItems: cart });
   };
 
@@ -587,6 +592,12 @@ function ShoppingCart({
     if (selectedStaffId === null) {
       setShowStaffModal(true);
       toast.error("Please select staff or self sell before printing KOT");
+      return;
+    }
+
+    // if kot table number is empty, show toast error
+    if (!kotData.tableNumber) {
+      toast.error("Please enter table number before printing KOT");
       return;
     }
 

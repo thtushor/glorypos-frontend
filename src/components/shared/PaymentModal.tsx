@@ -62,6 +62,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 }) => {
   const { user } = useAuth();
 
+  console.log("hasNewProduct", hasNewProduct);
+
   // Calculate payment totals with proper decimal handling
   const paymentTotal = useMemo(() => {
     const sum =
@@ -105,8 +107,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           const isRestaurant = user?.shopType === "restaurant";
           
           // Print KOT if restaurant OR if hasNewProduct is true (mixed order with new items)
-          if (isRestaurant || hasNewProduct) {
-            if (onProcessPrintKOT) {
+          if (isRestaurant) {
+            if (onProcessPrintKOT && hasNewProduct) {
               onProcessPrintKOT();
             } else {
               // Fallback to payment if KOT handler not available
@@ -173,6 +175,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                       tableNumber: e.target.value,
                     }))
                   }
+                  required
                   placeholder="e.g., T1, Table 5, A-12"
                   className="w-full px-4 py-2.5 border-2 border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
                 />

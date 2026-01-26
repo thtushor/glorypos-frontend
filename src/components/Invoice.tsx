@@ -614,19 +614,19 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           <div ref={kotRef} className="p-6 max-w-md mx-auto">
             {/* KOT Header */}
             <div className="text-center mb-4 border-b-2 border-black pb-3">
-              <h1 className="text-2xl font-bold">KITCHEN ORDER TICKET</h1>
-              <p className="text-sm mt-1">{invoiceData.businessInfo.name}</p>
+              <h1 className="text-base font-bold">KITCHEN ORDER TICKET</h1>
+              <p className="text-xs mt-1">{invoiceData.businessInfo.name}</p>
               <p className="text-xs mt-1">{new Date(invoiceData.date).toLocaleString()}</p>
             </div>
 
             {/* Order Info */}
             <div className="mb-4 text-sm space-y-1">
-              <div className="flex justify-between font-bold text-base">
+              <div className="flex justify-between font-bold text-xs">
                 <span>Order #:</span>
                 <span>{invoiceData.invoiceNumber}</span>
               </div>
               {invoiceData.tableNumber && (
-                <div className="flex justify-between font-bold text-base">
+                <div className="flex justify-between font-bold text-xs">
                   <span>Table:</span>
                   <span>{invoiceData.tableNumber}</span>
                 </div>
