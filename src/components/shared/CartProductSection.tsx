@@ -763,7 +763,7 @@ function CartProductSection({
                       <button
                         type="button"
                         onClick={() => handleAddToCart(product)}
-                        disabled={!canCreateOrder}
+                        disabled={getTotalStock(product)<=0 || !canCreateOrder}
                         className="mt-4 w-full md:font-medium text-[14px] px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
                       >
                         Add to Cart

@@ -6,7 +6,7 @@ import {
   parseCurrencyInput,
   successToast,
 } from "@/utils/utils";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   FaCheckCircle,
   FaChevronDown,
@@ -33,7 +33,7 @@ import Spinner from "../Spinner";
 import ErrorBoundary from "../ErrorBoundary";
 import BarcodeScanner from "../BarcodeScanner";
 import { FaUserGear } from "react-icons/fa6";
-// import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import Invoice from "../Invoice";
 import { CartItem } from "@/types/cartItemType";
 import { usePermission } from "@/hooks/usePermission";
@@ -113,7 +113,7 @@ function ShoppingCart({
   enableEnterSubmit?: boolean;
   maxWidth?: string; // Tailwind class for max width (e.g., "xl:max-w-[450px]", "xl:max-w-[600px]", etc.)
 }) {
-  // const { user } = useAuth();
+  const { user } = useAuth();
   const { hasPermission } = usePermission();
 
   // Permission checks
@@ -648,6 +648,85 @@ function ShoppingCart({
     setSelectedStaffId(initialStaffId);
   }, [initialStaffId])
 
+  // Ref for cart section highlighting
+  const cartSectionRef = useRef<HTMLDivElement>(null);
+
+  // Global Enter key handler for cart flow
+  useEffect(() => {
+    if (!enableEnterSubmit) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only trigger if Enter is pressed and not in a textarea or input
+      if (e.key === "Enter" && !e.shiftKey) {
+        const target = e.target as HTMLElement;
+        const isTextarea = target.tagName === "TEXTAREA";
+        const isInput = target.tagName === "INPUT" && (target as HTMLInputElement).type !== "submit";
+        const isSelect = target.tagName === "SELECT";
+        
+        // If focused on textarea, input, or select, allow normal behavior
+        if (isTextarea || (isInput && !isSelect)) return;
+        
+        // Don't trigger if payment modal is handling it
+        if (showPaymentModal) return;
+        
+        // Don't trigger if staff modal is open (let it handle its own Enter)
+        if (showStaffModal) return;
+        
+        // Prevent default to avoid form submission conflicts
+        e.preventDefault();
+
+        // Flow 1: Check if cart is empty
+        if (cart.length === 0) {
+          toast.warn("Please add at least one product to the cart");
+          // Highlight the cart section
+          if (cartSectionRef.current) {
+            cartSectionRef.current.classList.add("ring-4", "ring-yellow-400", "ring-opacity-75");
+            setTimeout(() => {
+              cartSectionRef.current?.classList.remove("ring-4", "ring-yellow-400", "ring-opacity-75");
+            }, 2000);
+            // Scroll to cart section
+            cartSectionRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
+          return;
+        }
+
+        // Flow 2: If cart has items, check staff selection
+        if (selectedStaffId === null) {
+          // Open staff modal
+          setShowStaffModal(true);
+          return;
+        }
+
+        // Flow 3: If staff is selected, open payment modal
+        if (!showPaymentModal) {
+          setPartialPayment({
+            cashAmount: total,
+            cardAmount: 0,
+            walletAmount: 0,
+          });
+          setShowPaymentModal(true);
+          return;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [enableEnterSubmit, cart.length, selectedStaffId, showPaymentModal, showStaffModal, total]);
+
+  // Refs for handlers to avoid stale closures
+  const handleProcessPaymentRef = useRef(handleProcessPayment);
+  const handleProcessPrintKOTRef = useRef(handleProcessPrintKOT);
+  
+  useEffect(() => {
+    handleProcessPaymentRef.current = handleProcessPayment;
+    handleProcessPrintKOTRef.current = handleProcessPrintKOT;
+  }, [handleProcessPayment, handleProcessPrintKOT]);
+
+  // Note: PaymentModal now handles its own Enter key logic based on restaurant type and hasNewProduct
+  // ShoppingCart's payment modal Enter handler is disabled to avoid conflicts
 
   return (
     <>
@@ -697,7 +776,7 @@ function ShoppingCart({
           </div>
 
           {/* Cart Items */}
-          <div className="flex-1 p-4 overflow-y-auto">
+          <div ref={cartSectionRef} className="flex-1 p-4 overflow-y-auto transition-all duration-300">
             {cart.length === 0 ? (
               <div className="h-full flex items-center justify-center text-gray-500">
                 <div className="text-center">
@@ -1459,6 +1538,12 @@ function ShoppingCart({
         onProcessPrintKOT={handleProcessPrintKOT}
         isProcessing={createOrderMutation.isPending}
         enableEnterSubmit={enableEnterSubmit}
+        hasNewProduct={(() => {
+          // Check if there are items without orderItemId (new products added to existing order)
+          // This means some items are new (no orderItemId) - mixed order scenario
+          const itemsWithoutOrderItemId = cart.filter(item => !item.orderItemId);
+          return itemsWithoutOrderItemId.length > 0;
+        })()}
       />
 
       <Modal

@@ -42,6 +42,7 @@ interface PaymentModalProps {
   onProcessPrintKOT?: () => void;
   isProcessing?: boolean;
   enableEnterSubmit?: boolean;
+  hasNewProduct?: boolean; // If true, print KOT on Enter (for mixed orders with new items)
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -56,6 +57,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   onProcessPrintKOT,
   isProcessing = false,
   enableEnterSubmit = true,
+  hasNewProduct = false,
+  // hasAdjustment = false,
 }) => {
   const { user } = useAuth();
 
@@ -99,7 +102,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         
         // Process payment regardless of completion status (validation happens in handler)
         if (!isProcessing) {
-          onProcessPayment();
+          const isRestaurant = user?.shopType === "restaurant";
+          
+          // Print KOT if restaurant OR if hasNewProduct is true (mixed order with new items)
+          if (isRestaurant || hasNewProduct) {
+            if (onProcessPrintKOT) {
+              onProcessPrintKOT();
+            } else {
+              // Fallback to payment if KOT handler not available
+              onProcessPayment();
+            }
+          } else {
+            // Normal payment process for non-restaurant shops
+            onProcessPayment();
+          }
         }
       }
     };
@@ -108,7 +124,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, enableEnterSubmit, isProcessing, onProcessPayment]);
+  }, [isOpen, enableEnterSubmit, isProcessing, onProcessPayment, onProcessPrintKOT, user?.shopType, hasNewProduct]);
 
   const handleQuickPayment = (method: "cash" | "card" | "mobile_banking") => {
     setPartialPayment({
