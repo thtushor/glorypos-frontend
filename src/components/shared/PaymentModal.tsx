@@ -65,7 +65,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   console.log("hasNewProduct", hasNewProduct);
 
   // Generate table options 1-30 (reusable)
-  const tableOptions = useMemo(() => Array.from({ length: 30 }, (_, i) => String(i + 1)), []);
+  const tableOptions = useMemo(() => Array.from({ length: 20 }, (_, i) => String(i + 1)), []);
 
   const [tempSelectValue, setTempSelectValue] = useState(kotData?.tableNumber);
 
