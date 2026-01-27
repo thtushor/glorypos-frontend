@@ -135,7 +135,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   // Initialize tempSelectValue based on whether value exists in tableOptions
   useEffect(() => {
-    if (kotData?.tableNumber) {
+    if (kotData?.tableNumber && !tempSelectValue) {
       // Check if value exists in predefined table options
       const isExist = tableOptions.includes(kotData.tableNumber);
       if (isExist) {
@@ -143,10 +143,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       } else {
         setTempSelectValue("custom");
       }
-    } else {
-      setTempSelectValue("");
     }
-  }, [kotData?.tableNumber, tableOptions]);
+  }, [isOpen, tableOptions, tempSelectValue]);
 
   const handleQuickPayment = (method: "cash" | "card" | "mobile_banking") => {
     setPartialPayment({
