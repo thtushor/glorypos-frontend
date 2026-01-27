@@ -64,6 +64,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   console.log("hasNewProduct", hasNewProduct);
 
+  // Generate table options 1-30 (reusable)
+  const tableOptions = useMemo(() => Array.from({ length: 30 }, (_, i) => String(i + 1)), []);
+
   const [tempSelectValue, setTempSelectValue] = useState(kotData?.tableNumber);
 
   // Calculate payment totals with proper decimal handling
@@ -130,6 +133,21 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     };
   }, [isOpen, enableEnterSubmit, isProcessing, onProcessPayment, onProcessPrintKOT, user?.shopType, hasNewProduct]);
 
+  // Initialize tempSelectValue based on whether value exists in tableOptions
+  useEffect(() => {
+    if (kotData?.tableNumber) {
+      // Check if value exists in predefined table options
+      const isExist = tableOptions.includes(kotData.tableNumber);
+      if (isExist) {
+        setTempSelectValue(kotData.tableNumber);
+      } else {
+        setTempSelectValue("custom");
+      }
+    } else {
+      setTempSelectValue("");
+    }
+  }, [kotData?.tableNumber, tableOptions]);
+
   const handleQuickPayment = (method: "cash" | "card" | "mobile_banking") => {
     setPartialPayment({
       cashAmount: method === "cash" ? total : 0,
@@ -169,19 +187,16 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   Table Number <span className="text-red-500">*</span>
                 </label>
                 {(() => {
-                  // Generate table options 1-30
-                  const tableOptions = Array.from({ length: 30 }, (_, i) => String(i + 1));
-
                   // Check if current value matches any predefined option
                   const isCustomValue = kotData.tableNumber && !tableOptions.includes(kotData.tableNumber);
                   const selectValue = isCustomValue ? "custom" : kotData.tableNumber || "";
 
-                  console.log({ selectValue })
+                  console.log({ selectValue, tempSelectValue })
 
                   return (
                     <>
                       <select
-                        value={selectValue}
+                        value={tempSelectValue || selectValue}
                         onChange={(e) => {
                           const value = e.target.value;
                           if (value === "custom") {
