@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FaCheckCircle,
   FaCreditCard,
@@ -63,6 +63,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const { user } = useAuth();
 
   console.log("hasNewProduct", hasNewProduct);
+
+  const [tempSelectValue, setTempSelectValue] = useState(kotData?.tableNumber);
 
   // Calculate payment totals with proper decimal handling
   const paymentTotal = useMemo(() => {
@@ -186,14 +188,16 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                             // When switching to custom, keep current value if it's custom, otherwise clear
                             setKotData((prev) => ({
                               ...prev,
-                              tableNumber: isCustomValue ? prev.tableNumber : "custom",
+                              tableNumber: isCustomValue ? prev.tableNumber : "",
                             }));
+                            setTempSelectValue(value);
                           } else {
                             // Set the selected table number
                             setKotData((prev) => ({
                               ...prev,
                               tableNumber: value,
                             }));
+                            setTempSelectValue(value);
                           }
                         }}
                         required={!isCustomValue}
@@ -209,7 +213,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                       </select>
 
                       {/* Show custom input when "custom" is selected or value doesn't match predefined options */}
-                      {(selectValue === "custom") && (
+                      {(tempSelectValue === "custom") && (
                         <input
                           type="text"
                           value={kotData.tableNumber}
