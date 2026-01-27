@@ -545,8 +545,8 @@ function ShoppingCart({
       toast.error("Cart is empty");
       return;
     }
-    // Show staff selection modal if no staff is selected
-    if (selectedStaffId === null) {
+    // Show staff selection modal if no staff is selected (skip for restaurant)
+    if (user?.shopType !== "restaurant" && selectedStaffId === null) {
       setShowStaffModal(true);
       return;
     }
@@ -588,8 +588,8 @@ function ShoppingCart({
       return;
     }
 
-    // Require staff selection similar to payment flow
-    if (selectedStaffId === null) {
+    // Require staff selection similar to payment flow (skip for restaurant)
+    if (user?.shopType !== "restaurant" && selectedStaffId === null) {
       setShowStaffModal(true);
       toast.error("Please select staff or self sell before printing KOT");
       return;
@@ -673,16 +673,16 @@ function ShoppingCart({
         const isTextarea = target.tagName === "TEXTAREA";
         const isInput = target.tagName === "INPUT" && (target as HTMLInputElement).type !== "submit";
         const isSelect = target.tagName === "SELECT";
-        
+
         // If focused on textarea, input, or select, allow normal behavior
         if (isTextarea || (isInput && !isSelect)) return;
-        
+
         // Don't trigger if payment modal is handling it
         if (showPaymentModal) return;
-        
+
         // Don't trigger if staff modal is open (let it handle its own Enter)
         if (showStaffModal) return;
-        
+
         // Prevent default to avoid form submission conflicts
         e.preventDefault();
 
@@ -701,8 +701,8 @@ function ShoppingCart({
           return;
         }
 
-        // Flow 2: If cart has items, check staff selection
-        if (selectedStaffId === null) {
+        // Flow 2: If cart has items, check staff selection (skip for restaurant)
+        if (user?.shopType !== "restaurant" && selectedStaffId === null) {
           // Open staff modal
           setShowStaffModal(true);
           return;
@@ -730,7 +730,7 @@ function ShoppingCart({
   // Refs for handlers to avoid stale closures
   const handleProcessPaymentRef = useRef(handleProcessPayment);
   const handleProcessPrintKOTRef = useRef(handleProcessPrintKOT);
-  
+
   useEffect(() => {
     handleProcessPaymentRef.current = handleProcessPayment;
     handleProcessPrintKOTRef.current = handleProcessPrintKOT;
@@ -1192,69 +1192,71 @@ function ShoppingCart({
             </div>
 
             {/* Staff Selection */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Staff <span className="text-red-500">*</span>
-              </label>
-              <div
-                onClick={() => setShowStaffModal(true)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white cursor-pointer hover:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary transition-colors"
-              >
-                {selectedStaffId === "self-sell" ? (
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="font-medium text-gray-900">Self Sell</span>
-                      <span className="text-xs text-gray-500">
-                        Shop selling (No staff assigned)
-                      </span>
+            {user?.shopType !== "restaurant" && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Staff <span className="text-red-500">*</span>
+                </label>
+                <div
+                  onClick={() => setShowStaffModal(true)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white cursor-pointer hover:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary transition-colors"
+                >
+                  {selectedStaffId === "self-sell" ? (
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900">Self Sell</span>
+                        <span className="text-xs text-gray-500">
+                          Shop selling (No staff assigned)
+                        </span>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedStaffId(null);
+                        }}
+                        className="text-gray-400 hover:text-red-500"
+                      >
+                        <FaTimes className="w-4 h-4" />
+                      </button>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedStaffId(null);
-                      }}
-                      className="text-gray-400 hover:text-red-500"
-                    >
-                      <FaTimes className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : selectedStaffId ? (
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="font-medium text-gray-900">
-                        {
-                          activeStaffs.find(
-                            (staff: any) => staff.id === selectedStaffId
-                          )?.fullName
-                        }
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {
-                          activeStaffs.find(
-                            (staff: any) => staff.id === selectedStaffId
-                          )?.parent?.businessName
-                        }{" "}
-                        (ID: {selectedStaffId})
-                      </span>
+                  ) : selectedStaffId ? (
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900">
+                          {
+                            activeStaffs.find(
+                              (staff: any) => staff.id === selectedStaffId
+                            )?.fullName
+                          }
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {
+                            activeStaffs.find(
+                              (staff: any) => staff.id === selectedStaffId
+                            )?.parent?.businessName
+                          }{" "}
+                          (ID: {selectedStaffId})
+                        </span>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedStaffId(null);
+                        }}
+                        className="text-gray-400 hover:text-red-500"
+                      >
+                        <FaTimes className="w-4 h-4" />
+                      </button>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedStaffId(null);
-                      }}
-                      className="text-gray-400 hover:text-red-500"
-                    >
-                      <FaTimes className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between text-gray-500">
-                    <span>Click to select staff or self sell</span>
-                    <FaChevronDown className="w-4 h-4" />
-                  </div>
-                )}
+                  ) : (
+                    <div className="flex items-center justify-between text-gray-500">
+                      <span>Click to select staff or self sell</span>
+                      <FaChevronDown className="w-4 h-4" />
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Payment Button */}
             <button
@@ -1263,7 +1265,7 @@ function ShoppingCart({
               disabled={
                 !canCreateOrder ||
                 createOrderMutation.isPending ||
-                selectedStaffId === null ||
+                (user?.shopType !== "restaurant" && selectedStaffId === null) ||
                 cart.length === 0
               }
             >

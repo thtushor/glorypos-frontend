@@ -95,17 +95,17 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       if (e.key === "Enter" && !e.shiftKey) {
         const target = e.target as HTMLElement;
         const isTextarea = target.tagName === "TEXTAREA";
-        
+
         // If focused on textarea, allow normal Enter behavior for newlines
         if (isTextarea) return;
-        
+
         // Prevent default to avoid form submission conflicts
         e.preventDefault();
-        
+
         // Process payment regardless of completion status (validation happens in handler)
         if (!isProcessing) {
           const isRestaurant = user?.shopType === "restaurant";
-          
+
           // Print KOT if restaurant OR if hasNewProduct is true (mixed order with new items)
           if (isRestaurant) {
             if (onProcessPrintKOT && hasNewProduct) {
@@ -166,19 +166,67 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 <label className="block text-sm font-medium text-orange-900 mb-2">
                   Table Number <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={kotData.tableNumber}
-                  onChange={(e) =>
-                    setKotData((prev) => ({
-                      ...prev,
-                      tableNumber: e.target.value,
-                    }))
-                  }
-                  required
-                  placeholder="e.g., T1, Table 5, A-12"
-                  className="w-full px-4 py-2.5 border-2 border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
-                />
+                {(() => {
+                  // Generate table options 1-30
+                  const tableOptions = Array.from({ length: 30 }, (_, i) => String(i + 1));
+
+                  // Check if current value matches any predefined option
+                  const isCustomValue = kotData.tableNumber && !tableOptions.includes(kotData.tableNumber);
+                  const selectValue = isCustomValue ? "custom" : kotData.tableNumber || "";
+
+                  console.log({ selectValue })
+
+                  return (
+                    <>
+                      <select
+                        value={selectValue}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "custom") {
+                            // When switching to custom, keep current value if it's custom, otherwise clear
+                            setKotData((prev) => ({
+                              ...prev,
+                              tableNumber: isCustomValue ? prev.tableNumber : "custom",
+                            }));
+                          } else {
+                            // Set the selected table number
+                            setKotData((prev) => ({
+                              ...prev,
+                              tableNumber: value,
+                            }));
+                          }
+                        }}
+                        required={!isCustomValue}
+                        className="w-full px-4 py-2.5 border-2 border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+                      >
+                        <option value="">Select Table Number</option>
+                        {tableOptions.map((num) => (
+                          <option key={num} value={num}>
+                            Table {num}
+                          </option>
+                        ))}
+                        <option value="custom">Custom / Others</option>
+                      </select>
+
+                      {/* Show custom input when "custom" is selected or value doesn't match predefined options */}
+                      {(selectValue === "custom") && (
+                        <input
+                          type="text"
+                          value={kotData.tableNumber}
+                          onChange={(e) =>
+                            setKotData((prev) => ({
+                              ...prev,
+                              tableNumber: e.target.value,
+                            }))
+                          }
+                          required
+                          placeholder="Enter custom table number (e.g., T1, VIP-A, A-12)"
+                          className="w-full px-4 py-2.5 border-2 border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white mt-2"
+                        />
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Guest Count */}
@@ -297,18 +345,16 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
           <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
             <div
-              className={`p-2 sm:p-3 rounded-lg transition-all ${
-                partialPayment.cashAmount > 0
-                  ? "bg-green-100 border-2 border-green-400 shadow-sm"
-                  : "bg-transparent"
-              }`}
+              className={`p-2 sm:p-3 rounded-lg transition-all ${partialPayment.cashAmount > 0
+                ? "bg-green-100 border-2 border-green-400 shadow-sm"
+                : "bg-transparent"
+                }`}
             >
               <p
-                className={`text-xs mb-1 ${
-                  partialPayment.cashAmount > 0
-                    ? "text-green-700 font-semibold"
-                    : "text-gray-500"
-                }`}
+                className={`text-xs mb-1 ${partialPayment.cashAmount > 0
+                  ? "text-green-700 font-semibold"
+                  : "text-gray-500"
+                  }`}
               >
                 Cash
                 {partialPayment.cashAmount > 0 && (
@@ -316,28 +362,25 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 )}
               </p>
               <p
-                className={`text-base sm:text-lg font-semibold ${
-                  partialPayment.cashAmount > 0
-                    ? "text-green-700"
-                    : "text-gray-900"
-                }`}
+                className={`text-base sm:text-lg font-semibold ${partialPayment.cashAmount > 0
+                  ? "text-green-700"
+                  : "text-gray-900"
+                  }`}
               >
                 {money.format(partialPayment.cashAmount)}
               </p>
             </div>
             <div
-              className={`p-2 sm:p-3 rounded-lg transition-all ${
-                partialPayment.cardAmount > 0
-                  ? "bg-blue-100 border-2 border-blue-400 shadow-sm"
-                  : "bg-transparent"
-              }`}
+              className={`p-2 sm:p-3 rounded-lg transition-all ${partialPayment.cardAmount > 0
+                ? "bg-blue-100 border-2 border-blue-400 shadow-sm"
+                : "bg-transparent"
+                }`}
             >
               <p
-                className={`text-xs mb-1 ${
-                  partialPayment.cardAmount > 0
-                    ? "text-blue-700 font-semibold"
-                    : "text-gray-500"
-                }`}
+                className={`text-xs mb-1 ${partialPayment.cardAmount > 0
+                  ? "text-blue-700 font-semibold"
+                  : "text-gray-500"
+                  }`}
               >
                 Card
                 {partialPayment.cardAmount > 0 && (
@@ -345,28 +388,25 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 )}
               </p>
               <p
-                className={`text-base sm:text-lg font-semibold ${
-                  partialPayment.cardAmount > 0
-                    ? "text-blue-700"
-                    : "text-gray-900"
-                }`}
+                className={`text-base sm:text-lg font-semibold ${partialPayment.cardAmount > 0
+                  ? "text-blue-700"
+                  : "text-gray-900"
+                  }`}
               >
                 {money.format(partialPayment.cardAmount)}
               </p>
             </div>
             <div
-              className={`p-2 sm:p-3 rounded-lg transition-all ${
-                partialPayment.walletAmount > 0
-                  ? "bg-purple-100 border-2 border-purple-400 shadow-sm"
-                  : "bg-transparent"
-              }`}
+              className={`p-2 sm:p-3 rounded-lg transition-all ${partialPayment.walletAmount > 0
+                ? "bg-purple-100 border-2 border-purple-400 shadow-sm"
+                : "bg-transparent"
+                }`}
             >
               <p
-                className={`text-xs mb-1 ${
-                  partialPayment.walletAmount > 0
-                    ? "text-purple-700 font-semibold"
-                    : "text-gray-500"
-                }`}
+                className={`text-xs mb-1 ${partialPayment.walletAmount > 0
+                  ? "text-purple-700 font-semibold"
+                  : "text-gray-500"
+                  }`}
               >
                 Wallet
                 {partialPayment.walletAmount > 0 && (
@@ -374,11 +414,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 )}
               </p>
               <p
-                className={`text-base sm:text-lg font-semibold ${
-                  partialPayment.walletAmount > 0
-                    ? "text-purple-700"
-                    : "text-gray-900"
-                }`}
+                className={`text-base sm:text-lg font-semibold ${partialPayment.walletAmount > 0
+                  ? "text-purple-700"
+                  : "text-gray-900"
+                  }`}
               >
                 {money.format(partialPayment.walletAmount)}
               </p>
@@ -390,13 +429,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 Total Paid:
               </span>
               <span
-                className={`text-lg sm:text-xl font-bold ${
-                  isPaymentComplete
-                    ? "text-green-600"
-                    : isPaymentOver
-                      ? "text-yellow-600"
-                      : "text-gray-900"
-                }`}
+                className={`text-lg sm:text-xl font-bold ${isPaymentComplete
+                  ? "text-green-600"
+                  : isPaymentOver
+                    ? "text-yellow-600"
+                    : "text-gray-900"
+                  }`}
               >
                 {money.format(paymentTotal)}
               </span>
@@ -407,9 +445,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   Remaining:
                 </span>
                 <span
-                  className={`text-base sm:text-lg font-semibold ${
-                    isPaymentOver ? "text-yellow-600" : "text-red-600"
-                  }`}
+                  className={`text-base sm:text-lg font-semibold ${isPaymentOver ? "text-yellow-600" : "text-red-600"
+                    }`}
                 >
                   {isPaymentOver
                     ? `+${money.format(Math.abs(paymentRemaining))}`
@@ -429,31 +466,28 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <button
               type="button"
               onClick={() => handleQuickPayment("cash")}
-              className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${
-                partialPayment.cashAmount > 0 &&
+              className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${partialPayment.cashAmount > 0 &&
                 partialPayment.cardAmount === 0 &&
                 partialPayment.walletAmount === 0
-                  ? "bg-green-100 border-green-400 shadow-md"
-                  : "bg-green-50 border-green-200 active:bg-green-100 hover:bg-green-100 hover:border-green-300"
-              }`}
+                ? "bg-green-100 border-green-400 shadow-md"
+                : "bg-green-50 border-green-200 active:bg-green-100 hover:bg-green-100 hover:border-green-300"
+                }`}
             >
               <FaMoneyBill
-                className={`text-xl sm:text-2xl ${
-                  partialPayment.cashAmount > 0 &&
+                className={`text-xl sm:text-2xl ${partialPayment.cashAmount > 0 &&
                   partialPayment.cardAmount === 0 &&
                   partialPayment.walletAmount === 0
-                    ? "text-green-700"
-                    : "text-green-600"
-                }`}
+                  ? "text-green-700"
+                  : "text-green-600"
+                  }`}
               />
               <span
-                className={`text-xs sm:text-sm font-medium ${
-                  partialPayment.cashAmount > 0 &&
+                className={`text-xs sm:text-sm font-medium ${partialPayment.cashAmount > 0 &&
                   partialPayment.cardAmount === 0 &&
                   partialPayment.walletAmount === 0
-                    ? "text-green-800"
-                    : "text-green-700"
-                }`}
+                  ? "text-green-800"
+                  : "text-green-700"
+                  }`}
               >
                 Cash
                 {partialPayment.cashAmount > 0 &&
@@ -466,31 +500,28 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <button
               type="button"
               onClick={() => handleQuickPayment("card")}
-              className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${
-                partialPayment.cardAmount > 0 &&
+              className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${partialPayment.cardAmount > 0 &&
                 partialPayment.cashAmount === 0 &&
                 partialPayment.walletAmount === 0
-                  ? "bg-blue-100 border-blue-400 shadow-md"
-                  : "bg-blue-50 border-blue-200 active:bg-blue-100 hover:bg-blue-100 hover:border-blue-300"
-              }`}
+                ? "bg-blue-100 border-blue-400 shadow-md"
+                : "bg-blue-50 border-blue-200 active:bg-blue-100 hover:bg-blue-100 hover:border-blue-300"
+                }`}
             >
               <FaCreditCard
-                className={`text-xl sm:text-2xl ${
-                  partialPayment.cardAmount > 0 &&
+                className={`text-xl sm:text-2xl ${partialPayment.cardAmount > 0 &&
                   partialPayment.cashAmount === 0 &&
                   partialPayment.walletAmount === 0
-                    ? "text-blue-700"
-                    : "text-blue-600"
-                }`}
+                  ? "text-blue-700"
+                  : "text-blue-600"
+                  }`}
               />
               <span
-                className={`text-xs sm:text-sm font-medium ${
-                  partialPayment.cardAmount > 0 &&
+                className={`text-xs sm:text-sm font-medium ${partialPayment.cardAmount > 0 &&
                   partialPayment.cashAmount === 0 &&
                   partialPayment.walletAmount === 0
-                    ? "text-blue-800"
-                    : "text-blue-700"
-                }`}
+                  ? "text-blue-800"
+                  : "text-blue-700"
+                  }`}
               >
                 Card
                 {partialPayment.cardAmount > 0 &&
@@ -503,31 +534,28 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <button
               type="button"
               onClick={() => handleQuickPayment("mobile_banking")}
-              className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${
-                partialPayment.walletAmount > 0 &&
+              className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg border-2 transition-all touch-manipulation ${partialPayment.walletAmount > 0 &&
                 partialPayment.cashAmount === 0 &&
                 partialPayment.cardAmount === 0
-                  ? "bg-purple-100 border-purple-400 shadow-md"
-                  : "bg-purple-50 border-purple-200 active:bg-purple-100 hover:bg-purple-100 hover:border-purple-300"
-              }`}
+                ? "bg-purple-100 border-purple-400 shadow-md"
+                : "bg-purple-50 border-purple-200 active:bg-purple-100 hover:bg-purple-100 hover:border-purple-300"
+                }`}
             >
               <FaWallet
-                className={`text-xl sm:text-2xl ${
-                  partialPayment.walletAmount > 0 &&
+                className={`text-xl sm:text-2xl ${partialPayment.walletAmount > 0 &&
                   partialPayment.cashAmount === 0 &&
                   partialPayment.cardAmount === 0
-                    ? "text-purple-700"
-                    : "text-purple-600"
-                }`}
+                  ? "text-purple-700"
+                  : "text-purple-600"
+                  }`}
               />
               <span
-                className={`text-xs sm:text-sm font-medium ${
-                  partialPayment.walletAmount > 0 &&
+                className={`text-xs sm:text-sm font-medium ${partialPayment.walletAmount > 0 &&
                   partialPayment.cashAmount === 0 &&
                   partialPayment.cardAmount === 0
-                    ? "text-purple-800"
-                    : "text-purple-700"
-                }`}
+                  ? "text-purple-800"
+                  : "text-purple-700"
+                  }`}
               >
                 Wallet
                 {partialPayment.walletAmount > 0 &&
@@ -548,25 +576,22 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Cash Payment */}
           <div
-            className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${
-              partialPayment.cashAmount > 0
-                ? "bg-green-50 border-green-300"
-                : "bg-transparent border-transparent"
-            }`}
+            className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${partialPayment.cashAmount > 0
+              ? "bg-green-50 border-green-300"
+              : "bg-transparent border-transparent"
+              }`}
           >
             <label
-              className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${
-                partialPayment.cashAmount > 0
-                  ? "text-green-700"
-                  : "text-gray-700"
-              }`}
+              className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${partialPayment.cashAmount > 0
+                ? "text-green-700"
+                : "text-gray-700"
+                }`}
             >
               <FaMoneyBill
-                className={`text-sm sm:text-base ${
-                  partialPayment.cashAmount > 0
-                    ? "text-green-600"
-                    : "text-green-500"
-                }`}
+                className={`text-sm sm:text-base ${partialPayment.cashAmount > 0
+                  ? "text-green-600"
+                  : "text-green-500"
+                  }`}
               />
               Cash Amount
               {partialPayment.cashAmount > 0 && (
@@ -631,25 +656,22 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Card Payment */}
           <div
-            className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${
-              partialPayment.cardAmount > 0
-                ? "bg-blue-50 border-blue-300"
-                : "bg-transparent border-transparent"
-            }`}
+            className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${partialPayment.cardAmount > 0
+              ? "bg-blue-50 border-blue-300"
+              : "bg-transparent border-transparent"
+              }`}
           >
             <label
-              className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${
-                partialPayment.cardAmount > 0
-                  ? "text-blue-700"
-                  : "text-gray-700"
-              }`}
+              className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${partialPayment.cardAmount > 0
+                ? "text-blue-700"
+                : "text-gray-700"
+                }`}
             >
               <FaCreditCard
-                className={`text-sm sm:text-base ${
-                  partialPayment.cardAmount > 0
-                    ? "text-blue-600"
-                    : "text-blue-500"
-                }`}
+                className={`text-sm sm:text-base ${partialPayment.cardAmount > 0
+                  ? "text-blue-600"
+                  : "text-blue-500"
+                  }`}
               />
               Card Amount
               {partialPayment.cardAmount > 0 && (
@@ -714,25 +736,22 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Wallet Payment */}
           <div
-            className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${
-              partialPayment.walletAmount > 0
-                ? "bg-purple-50 border-purple-300"
-                : "bg-transparent border-transparent"
-            }`}
+            className={`space-y-2 p-3 sm:p-4 rounded-lg border-2 transition-all ${partialPayment.walletAmount > 0
+              ? "bg-purple-50 border-purple-300"
+              : "bg-transparent border-transparent"
+              }`}
           >
             <label
-              className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${
-                partialPayment.walletAmount > 0
-                  ? "text-purple-700"
-                  : "text-gray-700"
-              }`}
+              className={`flex items-center gap-2 text-xs sm:text-sm font-medium ${partialPayment.walletAmount > 0
+                ? "text-purple-700"
+                : "text-gray-700"
+                }`}
             >
               <FaWallet
-                className={`text-sm sm:text-base ${
-                  partialPayment.walletAmount > 0
-                    ? "text-purple-600"
-                    : "text-purple-500"
-                }`}
+                className={`text-sm sm:text-base ${partialPayment.walletAmount > 0
+                  ? "text-purple-600"
+                  : "text-purple-500"
+                  }`}
               />
               <span className="hidden sm:inline">
                 Wallet/Mobile Banking Amount
@@ -803,20 +822,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         {(partialPayment.cashAmount > 0 ||
           partialPayment.cardAmount > 0 ||
           partialPayment.walletAmount > 0) && (
-          <button
-            type="button"
-            onClick={() => {
-              setPartialPayment({
-                cashAmount: 0,
-                cardAmount: 0,
-                walletAmount: 0,
-              });
-            }}
-            className="w-full py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            Clear All
-          </button>
-        )}
+            <button
+              type="button"
+              onClick={() => {
+                setPartialPayment({
+                  cashAmount: 0,
+                  cardAmount: 0,
+                  walletAmount: 0,
+                });
+              }}
+              className="w-full py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Clear All
+            </button>
+          )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 border-t sticky bottom-0 bg-white pb-2 sm:pb-0">
@@ -832,11 +851,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               type="button"
               onClick={onProcessPrintKOT}
               disabled={!isPaymentComplete || isProcessing}
-              className={`flex-1 px-4 py-3.5 sm:py-3 text-white rounded-lg font-medium transition-all text-base sm:text-sm touch-manipulation ${
-                isPaymentComplete
-                  ? "bg-brand-primary active:bg-brand-hover hover:bg-brand-hover shadow-lg active:shadow-xl hover:shadow-xl"
-                  : "bg-gray-400 cursor-not-allowed"
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              className={`flex-1 px-4 py-3.5 sm:py-3 text-white rounded-lg font-medium transition-all text-base sm:text-sm touch-manipulation ${isPaymentComplete
+                ? "bg-brand-primary active:bg-brand-hover hover:bg-brand-hover shadow-lg active:shadow-xl hover:shadow-xl"
+                : "bg-gray-400 cursor-not-allowed"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {isProcessing ? (
                 <div className="flex items-center justify-center gap-2">
@@ -854,11 +872,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           <button
             type="submit"
             disabled={isProcessing}
-            className={`flex-1 px-4 py-3.5 sm:py-3 text-white rounded-lg font-medium transition-all text-base sm:text-sm touch-manipulation ${
-              isPaymentComplete
-                ? "bg-brand-primary active:bg-brand-hover hover:bg-brand-hover shadow-lg active:shadow-xl hover:shadow-xl"
-                : "bg-gray-400 cursor-not-allowed"
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`flex-1 px-4 py-3.5 sm:py-3 text-white rounded-lg font-medium transition-all text-base sm:text-sm touch-manipulation ${isPaymentComplete
+              ? "bg-brand-primary active:bg-brand-hover hover:bg-brand-hover shadow-lg active:shadow-xl hover:shadow-xl"
+              : "bg-gray-400 cursor-not-allowed"
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {isProcessing ? (
               <div className="flex items-center justify-center gap-2">
@@ -877,31 +894,28 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         {/* Validation Messages */}
         {!isPaymentComplete && paymentTotal > 0 && (
           <div
-            className={`p-3 rounded-lg ${
-              isPaymentOver
-                ? "bg-yellow-50 border border-yellow-200"
-                : "bg-red-50 border border-red-200"
-            }`}
+            className={`p-3 rounded-lg ${isPaymentOver
+              ? "bg-yellow-50 border border-yellow-200"
+              : "bg-red-50 border border-red-200"
+              }`}
           >
             <div className="flex items-start gap-2">
               <FaExclamationCircle
-                className={`mt-0.5 ${
-                  isPaymentOver ? "text-yellow-600" : "text-red-600"
-                }`}
+                className={`mt-0.5 ${isPaymentOver ? "text-yellow-600" : "text-red-600"
+                  }`}
               />
               <div className="flex-1">
                 <p
-                  className={`text-sm font-medium ${
-                    isPaymentOver ? "text-yellow-800" : "text-red-800"
-                  }`}
+                  className={`text-sm font-medium ${isPaymentOver ? "text-yellow-800" : "text-red-800"
+                    }`}
                 >
                   {isPaymentOver
                     ? `Payment exceeds total by ${money.format(
-                        paymentTotal - total
-                      )}. Please adjust amounts.`
+                      paymentTotal - total
+                    )}. Please adjust amounts.`
                     : `Payment incomplete. Please add ${money.format(
-                        paymentRemaining
-                      )} more to complete the payment.`}
+                      paymentRemaining
+                    )} more to complete the payment.`}
                 </p>
               </div>
             </div>
