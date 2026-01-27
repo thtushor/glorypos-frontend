@@ -191,8 +191,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   const isCustomValue = kotData.tableNumber && !tableOptions.includes(kotData.tableNumber);
                   const selectValue = isCustomValue ? "custom" : kotData.tableNumber || "";
 
-                  console.log({ selectValue, tempSelectValue })
-
                   return (
                     <>
                       <select
