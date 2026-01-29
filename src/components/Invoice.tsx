@@ -116,7 +116,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     documentTitle: invoiceData?.businessInfo?.name ? `KOT - ${invoiceData.businessInfo.name}` : "KOT",
     pageStyle: `
       @page {
-        size: 210px auto;
+        size: 80mm auto;
         margin: 0;
       }
       @media print {
@@ -627,7 +627,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         {/* KOT Receipt (Hidden, only for printing) */}
         <div style={{ display: 'none' }}>
           <div ref={kotRef} className="p-4 mx-auto" style={{
-            width: '210px',
+            width: '250px',
+            // width: '210px',
             fontSize: '9px',
             fontFamily: 'Arial, sans-serif',
             lineHeight: '1.2'

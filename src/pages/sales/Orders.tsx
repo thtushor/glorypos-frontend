@@ -100,10 +100,20 @@ const Orders: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [filters, setFilters] = useState<FilterParams>({
     page: 1,
     pageSize: 20,
-    shopId: user?.id?.toString()
+    shopId: user?.id?.toString(),
+    startDate: getTodayDate(),
+    endDate: getTodayDate()
   });
 
   const [isOpen, setIsOpen] = useState(false);
@@ -129,7 +139,6 @@ const Orders: React.FC = () => {
     },
   });
 
-  console.log({ ordersData });
 
   // Handle print invoice
   const handlePrintInvoice = () => {
@@ -236,17 +245,17 @@ const Orders: React.FC = () => {
       {/* Filters */}
       {showFilters && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-white rounded-lg shadow">
-          <select
-            value={filters.orderStatus || ""}
-            onChange={(e) => handleFilterChange("orderStatus", e.target.value)}
-            className="border rounded-lg p-2"
-          >
-            <option value="">All Order Status</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+          {user?.shopType === "restaurant" && (
+            <select
+              value={filters.orderStatus || ""}
+              onChange={(e) => handleFilterChange("orderStatus", e.target.value)}
+              className="border rounded-lg p-2"
+            >
+              <option value="">All Order Status</option>
+              <option value="processing">Processing</option>
+              <option value="completed">Completed</option>
+            </select>
+          )}
 
           <select
             value={filters.paymentStatus || ""}
