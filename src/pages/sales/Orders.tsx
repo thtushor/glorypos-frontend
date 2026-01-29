@@ -112,6 +112,7 @@ const Orders: React.FC = () => {
     page: 1,
     pageSize: 20,
     shopId: user?.id?.toString(),
+    orderStatus: user?.shopType === "restaurant" ? "processing" : "",
     startDate: getTodayDate(),
     endDate: getTodayDate()
   });
