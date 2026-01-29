@@ -21,6 +21,46 @@ const clearAuthCookies = (): void => {
 };
 
 /**
+ * Convert local date string (YYYY-MM-DD) to UTC format (YYYY-MM-DD)
+ * Takes a date in local timezone and returns the equivalent UTC date
+ */
+const convertLocalDateToUTC = (dateString: string): string => {
+  if (!dateString || typeof dateString !== 'string') return dateString;
+
+  // Check if the string matches YYYY-MM-DD format
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  if (!datePattern.test(dateString)) return dateString;
+
+  // Parse the date as local timezone
+  const localDate = new Date(dateString + 'T00:00:00');
+
+  // Get UTC components
+  const year = localDate.getUTCFullYear();
+  const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(localDate.getUTCDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
+/**
+ * Convert date parameters in request params to UTC
+ */
+const convertDateParamsToUTC = (params: any): any => {
+  if (!params || typeof params !== 'object') return params;
+
+  const dateKeys = ['startDate', 'endDate', 'startTime', 'endTime', 'date', 'fromDate', 'toDate'];
+  const convertedParams = { ...params };
+
+  dateKeys.forEach(key => {
+    if (convertedParams[key]) {
+      convertedParams[key] = convertLocalDateToUTC(convertedParams[key]);
+    }
+  });
+
+  return convertedParams;
+};
+
+/**
  * Interceptor for all requests
  */
 AXIOS.interceptors.request.use(
@@ -31,6 +71,11 @@ AXIOS.interceptors.request.use(
     // Add authorization header if token exists
     if (access_token) {
       config.headers.Authorization = `Bearer ${access_token}`;
+    }
+
+    // Convert date parameters to UTC
+    if (config.params) {
+      config.params = convertDateParamsToUTC(config.params);
     }
 
     return config;
