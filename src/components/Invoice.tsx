@@ -91,11 +91,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const kotRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef });
-  const kotPrintFn = useReactToPrint({ contentRef: kotRef });
 
   const { user } = useAuth();
-
-  // const auth = useAuth();
 
   const { data: invoiceData, isLoading } = useQuery<InvoiceData>({
     queryKey: ["invoice", orderId],
@@ -111,6 +108,24 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       }
     },
     enabled: !!orderId,
+  });
+
+  // KOT print function with dynamic document title
+  const kotPrintFn = useReactToPrint({
+    contentRef: kotRef,
+    documentTitle: invoiceData?.businessInfo?.name ? `KOT - ${invoiceData.businessInfo.name}` : "KOT",
+    pageStyle: `
+      @page {
+        size: 210px auto;
+        margin: 0;
+      }
+      @media print {
+        body {
+          margin: 0;
+          padding: 0;
+        }
+      }
+    `
   });
 
   // Transform invoice data to Order format for react-pos-engine
@@ -611,62 +626,83 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
         {/* KOT Receipt (Hidden, only for printing) */}
         <div style={{ display: 'none' }}>
-          <div ref={kotRef} className="p-4 mx-auto" style={{ width: '80mm', fontSize: '10px' }}>
+          <div ref={kotRef} className="p-4 mx-auto" style={{
+            width: '210px',
+            fontSize: '9px',
+            fontFamily: 'Arial, sans-serif',
+            lineHeight: '1.2'
+          }}>
             {/* KOT Header */}
-            <div className="text-center mb-3 border-b-2 border-black pb-2">
-              <h1 className="text-xs font-bold">KITCHEN ORDER TICKET</h1>
-              <p className="text-[9px] mt-1">{invoiceData.businessInfo.name}</p>
-              <p className="text-[9px] mt-1">{new Date(invoiceData.date).toLocaleString()}</p>
+            <div className="text-center mb-1">
+              <p style={{ fontSize: '10px', margin: '0 0 2px 0', fontWeight: '500' }}>
+                {invoiceData.businessInfo.name}
+              </p>
+              <h1 style={{ fontSize: '12px', fontWeight: 'bold', margin: 0, letterSpacing: '0.3px' }}>
+                KITCHEN ORDER TICKET
+              </h1>
             </div>
 
-            {/* Order Info */}
-            <div className="mb-3 text-[10px] space-y-1">
-              <div className="flex justify-between font-bold text-[9px]">
-                <span>Order #:</span>
-                <span>{invoiceData.invoiceNumber}</span>
+            {/* Table, Guest and Date Info */}
+            <div className="mb-1" style={{ fontSize: '9px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  {invoiceData.tableNumber && (
+                    <span style={{ fontWeight: 'bold' }}>Table: {invoiceData.tableNumber}</span>
+                  )}
+                  {invoiceData.tableNumber && invoiceData.guestNumber && (
+                    <span style={{ margin: '0 4px' }}>|</span>
+                  )}
+                  {invoiceData.guestNumber && (
+                    <span style={{ fontWeight: 'bold' }}>Guest: {invoiceData.guestNumber}</span>
+                  )}
+                </div>
+                <span style={{ fontSize: '8px' }}>
+                  {new Date(invoiceData.date).toLocaleString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                  })}
+                </span>
               </div>
-              {invoiceData.tableNumber && (
-                <div className="flex justify-between font-bold text-[9px]">
-                  <span>Table:</span>
-                  <span>{invoiceData.tableNumber}</span>
-                </div>
-              )}
-              {invoiceData.guestNumber && (
-                <div className="flex justify-between text-[9px]">
-                  <span>Guests:</span>
-                  <span>{invoiceData.guestNumber}</span>
-                </div>
-              )}
             </div>
+
+            {/* Customer Info */}
+            {/* <div className="mb-2 text-[11px]">
+              <div>
+                <span>Customer : {invoiceData.customer.name}</span>
+              </div>
+            </div> */}
+
+            {/* Separator Line */}
+            <div style={{ borderTop: '1px solid #000', margin: '4px 0' }}></div>
 
             {/* Items Table */}
-            <div className="mb-3">
-              <table className="w-full text-[10px] border-collapse">
+            <div style={{ marginBottom: '4px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9px' }}>
                 <thead>
-                  <tr className="border-y-2 border-black">
-                    <th className="text-left py-1 px-1">Item</th>
-                    <th className="text-center py-1 px-1 w-12">Qty</th>
-                    <th className="text-left py-1 px-1 w-20">Remarks</th>
+                  <tr style={{ borderBottom: '1px solid #000' }}>
+                    <th style={{ textAlign: 'left', padding: '3px 2px', width: '30px', fontWeight: 'bold' }}>No.</th>
+                    <th style={{ textAlign: 'left', padding: '3px 2px', fontWeight: 'bold' }}>Item Name</th>
+                    <th style={{ textAlign: 'right', padding: '3px 2px', width: '35px', fontWeight: 'bold' }}>Qty</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {invoiceData.items.map((item, index) => (
-                    <tr key={index} className="border-b">
-                      <td className="py-2 px-1">
+                  {invoiceData.items.map((item, index, arr) => (
+                    <tr key={index} style={{ borderBottom: index === arr.length - 1 ? 'none' : '1px dashed #000' }}>
+                      <td style={{ padding: '4px 2px', verticalAlign: 'top' }}>{index + 1}</td>
+                      <td style={{ padding: '4px 2px', verticalAlign: 'top' }}>
                         <div>
-                          <p className="font-bold text-[10px]">{item.productName}</p>
+                          <p style={{ margin: 0, fontWeight: '500' }}>{item.productName}</p>
                           {item.details && (
-                            <p className="text-[9px] text-gray-600 mt-0.5">{item.details}</p>
+                            <p style={{ margin: '1px 0 0 0', fontSize: '8px', color: '#666' }}>{item.details}</p>
                           )}
                         </div>
                       </td>
-                      <td className="text-center py-2 px-1">
-                        <span className="font-bold text-xs">{item.quantity}</span>
-                      </td>
-                      <td className="py-2 px-1">
-                        <div className="border-b border-gray-300 min-h-[25px]">
-                          {/* Empty space for handwritten remarks */}
-                        </div>
+                      <td style={{ padding: '4px 2px', verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold' }}>
+                        {item.quantity}
                       </td>
                     </tr>
                   ))}
@@ -674,21 +710,55 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
               </table>
             </div>
 
+            {/* Dashed Separator */}
+            <div style={{
+              borderTop: '1px dashed #000',
+              width: '100%',
+              margin: '4px 0'
+            }}></div>
+
+            {/* Total Items */}
+            <div style={{
+              fontSize: '9px',
+              textAlign: 'right',
+              fontWeight: 'bold',
+              padding: '2px 0'
+            }}>
+              <span>Total Items: {invoiceData.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
+            </div>
+
+            {/* Dashed Separator */}
+            <div style={{
+              borderTop: '1px dashed #000',
+              width: '100%',
+              margin: '4px 0'
+            }}></div>
+
             {/* Special Instructions */}
             {invoiceData.specialNotes !== undefined &&
               invoiceData.specialNotes !== null &&
               String(invoiceData.specialNotes).trim() !== "" && (
-                <div className="mb-3 p-2 border-2 border-black rounded">
-                  <h3 className="font-bold text-[10px] mb-1">SPECIAL INSTRUCTIONS:</h3>
-                  <p className="text-[10px] whitespace-pre-wrap font-medium">{String(invoiceData.specialNotes)}</p>
+                <div style={{
+                  marginTop: '4px',
+                  padding: '6px',
+                  border: '1px solid #000',
+                  borderRadius: '2px',
+                  backgroundColor: '#f9f9f9'
+                }}>
+                  <h3 style={{
+                    fontWeight: 'bold',
+                    fontSize: '9px',
+                    marginBottom: '3px',
+                    textTransform: 'uppercase'
+                  }}>Special Instructions:</h3>
+                  <p style={{
+                    fontSize: '9px',
+                    whiteSpace: 'pre-wrap',
+                    margin: 0,
+                    lineHeight: '1.3'
+                  }}>{String(invoiceData.specialNotes)}</p>
                 </div>
               )}
-
-            {/* Footer */}
-            <div className="mt-4 pt-2 border-t-2 border-black text-center">
-              <p className="text-[10px] font-medium">Total Items: {invoiceData.items.reduce((sum, item) => sum + item.quantity, 0)}</p>
-              <p className="text-[9px] mt-1 text-gray-600">Please prepare this order</p>
-            </div>
           </div>
         </div>
 
