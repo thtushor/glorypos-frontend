@@ -90,7 +90,21 @@ interface InvoiceProps {
 const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const kotRef = useRef<HTMLDivElement>(null);
-  const reactToPrintFn = useReactToPrint({ contentRef });
+  const reactToPrintFn = useReactToPrint({
+    contentRef,
+    pageStyle: `
+      @page {
+        size: 80mm auto;
+        margin: 0;
+      }
+      @media print {
+        body {
+          margin: 0;
+          padding: 0;
+        }
+      }
+    `
+  });
 
   const { user } = useAuth();
 
@@ -116,14 +130,16 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     documentTitle: invoiceData?.businessInfo?.name ? `KOT - ${invoiceData.businessInfo.name}` : "KOT",
     pageStyle: `
       @page {
-        size: 80mm auto;
+        size: 80mm auto; 
         margin: 0;
       }
       @media print {
         body {
-          margin: 0;
+          margin: 0; 
           padding: 0;
         }
+        /* Hide browser default headers/footers */
+        @page { margin: 0; }
       }
     `
   });
