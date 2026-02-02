@@ -124,24 +124,39 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     enabled: !!orderId,
   });
 
-  // KOT print function with dynamic document title
+  // KOT print function with dynamic document title - 58mm POS thermal printer
   const kotPrintFn = useReactToPrint({
     contentRef: kotRef,
     documentTitle: invoiceData?.businessInfo?.name ? `KOT - ${invoiceData.businessInfo.name}` : "KOT",
     pageStyle: `
       @page {
-        size: 80mm auto; 
-        margin: 0;
+        size: 58mm auto !important;
+        margin: 0 !important;
       }
       @media print {
-        body {
-          margin: 0; 
-          padding: 0;
+        html, body {
+          width: 58mm !important;
+          height: auto !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
-        /* Hide browser default headers/footers */
-        @page { margin: 0; }
+        #kot-print-content {
+          width: 58mm !important;
+          max-width: 58mm !important;
+          margin: 0 !important;
+          padding: 2mm !important;
+          box-sizing: border-box !important;
+        }
       }
-    `
+    `,
+    print: async (printIframe: HTMLIFrameElement) => {
+      const contentWindow = printIframe.contentWindow;
+      if (contentWindow) {
+        contentWindow.print();
+      }
+    }
   });
 
   // Transform invoice data to Order format for react-pos-engine
@@ -642,16 +657,18 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
         {/* KOT Receipt (Hidden, only for printing) */}
         <div style={{ display: 'none' }}>
-          <div ref={kotRef} className="p-4 mx-auto" style={{
-            width: '250px',
-            // width: '210px',
-            fontSize: '9px',
+          <div ref={kotRef} id="kot-print-content" style={{
+            width: '58mm',
+            maxWidth: '58mm',
+            fontSize: '8px',
             fontFamily: 'Arial, sans-serif',
-            lineHeight: '1.2'
+            lineHeight: '1.2',
+            padding: '2mm',
+            boxSizing: 'border-box'
           }}>
             {/* KOT Header */}
             <div className="text-center mb-1">
-              <p style={{ fontSize: '10px', margin: '0 0 2px 0', fontWeight: '500' }}>
+              <p style={{ fontSize: '9px', margin: '0 0 2px 0', fontWeight: '500' }}>
                 {invoiceData.businessInfo.name}
               </p>
               <h1 style={{ fontSize: '12px', fontWeight: 'bold', margin: 0, letterSpacing: '0.3px' }}>
