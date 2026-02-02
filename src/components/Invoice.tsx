@@ -90,6 +90,7 @@ interface InvoiceProps {
 const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const kotRef = useRef<HTMLDivElement>(null);
+  const invoiceRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({
     contentRef,
     pageStyle: `
@@ -147,6 +148,41 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           max-width: 58mm !important;
           margin: 0 !important;
           padding: 2mm !important;
+          box-sizing: border-box !important;
+        }
+      }
+    `,
+    print: async (printIframe: HTMLIFrameElement) => {
+      const contentWindow = printIframe.contentWindow;
+      if (contentWindow) {
+        contentWindow.print();
+      }
+    }
+  });
+
+  // Invoice print function - 80mm POS thermal printer with 4mm margin
+  const invoicePrintFn = useReactToPrint({
+    contentRef: invoiceRef,
+    documentTitle: invoiceData?.businessInfo?.name ? `Invoice - ${invoiceData.businessInfo.name}` : "Invoice",
+    pageStyle: `
+      @page {
+        size: 80mm auto !important;
+        margin: 0 !important;
+      }
+      @media print {
+        html, body {
+          width: 80mm !important;
+          height: auto !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        #invoice-print-content {
+          width: 80mm !important;
+          max-width: 80mm !important;
+          margin: 0 !important;
+          padding: 4mm !important;
           box-sizing: border-box !important;
         }
       }
@@ -359,6 +395,12 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const handleKOTPrint = () => {
     kotPrintFn();
   };
+
+  // Handle Invoice print (80mm POS thermal)
+  const handleInvoicePrint = () => {
+    invoicePrintFn();
+  };
+  console.log({ handlePrint })
 
   if (!orderId) return null;
 
@@ -796,6 +838,128 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           </div>
         </div>
 
+        {/* Invoice Receipt (Hidden, only for printing) - 80mm POS thermal */}
+        <div style={{ display: 'none' }}>
+          <div ref={invoiceRef} id="invoice-print-content" style={{
+            width: '80mm',
+            maxWidth: '80mm',
+            fontSize: '10px',
+            fontFamily: 'Arial, sans-serif',
+            lineHeight: '1.3',
+            padding: '4mm',
+            boxSizing: 'border-box',
+            backgroundColor: '#fff',
+            color: '#000'
+          }}>
+            {/* Header - Business Name */}
+            <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+              <h1 style={{ fontSize: '14px', fontWeight: 'bold', margin: '0 0 4px 0', textTransform: 'uppercase' }}>
+                {invoiceData.businessInfo.name}
+              </h1>
+              <p style={{ fontSize: '9px', margin: '2px 0', color: '#333' }}>
+                Order #: {invoiceData.invoiceNumber}
+              </p>
+              <p style={{ fontSize: '9px', margin: '2px 0', color: '#333' }}>
+                Date: {new Date(invoiceData.date).toLocaleDateString()}
+              </p>
+            </div>
+
+            {/* Separator */}
+            <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }}></div>
+
+            {/* Invoice Info */}
+            <div style={{ textAlign: 'center', fontSize: '9px', marginBottom: '6px' }}>
+              <p style={{ margin: '2px 0' }}>
+                Invoice #: {invoiceData.invoiceNumber}
+                {invoiceData.tableNumber && ` | Table: ${invoiceData.tableNumber}`}
+              </p>
+              <p style={{ margin: '2px 0' }}>
+                {invoiceData.guestNumber && `Guests: ${invoiceData.guestNumber} | `}
+                Payment Method: {invoiceData.payment.method === 'mobile_banking' ? 'Mobile Banking' : invoiceData.payment.method.toUpperCase()}
+              </p>
+              <p style={{ margin: '2px 0' }}>
+                Payment Status: {invoiceData.payment.status} | Order Status: {invoiceData.orderStatus}
+              </p>
+            </div>
+
+            {/* Separator */}
+            <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }}></div>
+
+            {/* Items Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '10px', padding: '4px 0', borderBottom: '1px dashed #000' }}>
+              <span style={{ width: '25px' }}>QTY</span>
+              <span style={{ flex: 1, paddingLeft: '8px' }}>ITEM</span>
+              <span style={{ width: '60px', textAlign: 'right' }}>TOTAL</span>
+            </div>
+
+            {/* Items */}
+            <div style={{ marginBottom: '6px' }}>
+              {invoiceData.items.map((item, index) => (
+                <div key={index} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '9px',
+                  padding: '4px 0',
+                  borderBottom: index < invoiceData.items.length - 1 ? '1px dashed #ccc' : 'none'
+                }}>
+                  <span style={{ width: '25px', color: '#666' }}>{item.quantity}</span>
+                  <span style={{ flex: 1, paddingLeft: '8px' }}>
+                    {item.productName}
+                    {item.details && ` - ${item.details}`}
+                  </span>
+                  <span style={{ width: '60px', textAlign: 'right' }}>
+                    {money.format(item.subtotal)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Separator */}
+            <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }}></div>
+
+            {/* Summary */}
+            <div style={{ fontSize: '10px', marginBottom: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                <span>Subtotal:</span>
+                <span>{money.format(Number(invoiceData.summary.subtotal))}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                <span>Tax:</span>
+                <span>{money.format(Number(invoiceData.summary.tax))}</span>
+              </div>
+              {Number(invoiceData.summary.discount) > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', color: '#c00' }}>
+                  <span>Discount:</span>
+                  <span>-{money.format(Number(invoiceData.summary.discount))}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Grand Total */}
+            <div style={{
+              borderTop: '2px solid #000',
+              borderBottom: '2px solid #000',
+              padding: '8px 0',
+              margin: '6px 0'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '14px' }}>
+                <span>GRAND TOTAL:</span>
+                <span>{money.format(Number(invoiceData.summary.total))}</span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ textAlign: 'center', marginTop: '8px' }}>
+              <p style={{ fontSize: '10px', fontWeight: '500', margin: '4px 0', color: '#0066cc' }}>
+                Thank you for your business!
+              </p>
+              <p style={{ fontSize: '8px', margin: '4px 0', color: '#666' }}>
+                {new Date(invoiceData.date).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Actions */}
         <div className="border-t px-6 py-4 flex justify-end gap-4">
           <button
@@ -813,7 +977,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             Print KOT
           </button>}
           <button
-            onClick={handlePrint}
+            onClick={handleInvoicePrint}
             disabled={!invoiceData || invoiceData.items.length === 0}
             className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
