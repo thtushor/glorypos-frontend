@@ -90,18 +90,34 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     pageStyle: `
-      @page { size: ${size.widthMm}mm ${size.heightMm}mm; margin: 0 !important; }
+      @page { 
+        size: ${size.widthMm}mm ${size.heightMm}mm !important; 
+        margin: 0 !important; 
+      }
       @media print {
         html, body { 
           margin: 0 !important; 
           padding: 0 !important; 
           width: ${size.widthMm}mm !important; 
-          height: ${size.heightMm}mm !important; 
+          height: ${size.heightMm}mm !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
-        /* Ensure no extra headers/footers interfere */
-        @page { margin: 0; }
+        #barcode-print-content {
+          width: ${size.widthMm}mm !important;
+          height: ${size.heightMm}mm !important;
+          margin: 0 !important;
+          padding: 2mm !important;
+          box-sizing: border-box !important;
+        }
       }
     `,
+    print: async (printIframe: HTMLIFrameElement) => {
+      const contentWindow = printIframe.contentWindow;
+      if (contentWindow) {
+        contentWindow.print();
+      }
+    }
   });
 
   return (
@@ -123,8 +139,8 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
                   key={s.id}
                   onClick={() => setSelectedSize(s)}
                   className={`p-4 rounded-2xl border-4 transition-all transform hover:scale-105 ${selectedSize.id === s.id
-                      ? "border-purple-600 bg-purple-50 shadow-2xl ring-4 ring-purple-200"
-                      : "border-gray-300 hover:border-gray-400"
+                    ? "border-purple-600 bg-purple-50 shadow-2xl ring-4 ring-purple-200"
+                    : "border-gray-300 hover:border-gray-400"
                     }`}
                 >
                   <div className="font-bold text-[12px] md:text-base">
@@ -155,12 +171,11 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
                 width: `${size.widthMm}mm`,
                 height: `${size.heightMm}mm`,
                 background: size.background || "white",
-                padding: "1.6mm",
+                padding: "2mm",
                 boxSizing: "border-box",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                paddingTop: "1.2mm",
               }}
             >
               {/* Top: Product Name + Shop Name */}
@@ -194,16 +209,16 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
           >
             <div
               ref={printRef}
+              id="barcode-print-content"
               style={{
                 width: `${size.widthMm}mm`,
                 height: `${size.heightMm}mm`,
                 background: size.background || "white",
-                padding: "1.6mm",
+                padding: "2mm",
                 boxSizing: "border-box",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                paddingTop: "1.2mm",
               }}
             >
               {/* Top: Product Name + Shop Name - Synced with Preview styles */}
