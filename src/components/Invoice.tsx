@@ -571,6 +571,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const handleKOTDownload = async () => {
     if (!kotRef.current || !invoiceData) {
       console.log('KOT download aborted: ref or invoiceData missing');
+      toast.error('Invoice data not available');
       return;
     }
 
@@ -588,15 +589,18 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       element.style.left = '-9999px';
       element.style.top = '0';
 
-      // Wait for the element to render
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Wait for the element to render properly
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       console.log('Capturing KOT with html2canvas...');
       const canvas = await html2canvas(element, {
         backgroundColor: '#ffffff',
-        scale: 2,
+        scale: 3,
         useCORS: true,
-        logging: true,
+        allowTaint: true,
+        logging: false,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
       });
 
       console.log('Canvas created:', canvas.width, 'x', canvas.height);
@@ -625,7 +629,6 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       console.log('KOT download triggered successfully');
       toast.success("KOT downloaded successfully");
 
-
     } catch (error) {
       console.error('KOT download failed:', error);
       toast.error('Failed to download KOT');
@@ -636,6 +639,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const handleInvoiceDownload = async () => {
     if (!invoiceRef.current || !invoiceData) {
       console.log('Invoice download aborted: ref or invoiceData missing');
+      toast.error('Invoice data not available');
       return;
     }
 
@@ -653,15 +657,18 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       element.style.left = '-9999px';
       element.style.top = '0';
 
-      // Wait for the element to render
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Wait for the element to render properly
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       console.log('Capturing Invoice with html2canvas...');
       const canvas = await html2canvas(element, {
         backgroundColor: '#ffffff',
-        scale: 2,
+        scale: 3,
         useCORS: true,
-        logging: true,
+        allowTaint: true,
+        logging: false,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
       });
 
       console.log('Canvas created:', canvas.width, 'x', canvas.height);
@@ -689,7 +696,6 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
       console.log('Invoice download triggered successfully');
       toast.success("Invoice downloaded successfully");
-
 
     } catch (error) {
       console.error('Invoice download failed:', error);
@@ -996,39 +1002,36 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         {/* KOT Receipt (Hidden, only for printing) */}
         <div style={{ display: 'none' }}>
           <div ref={kotRef} id="kot-print-content" style={{
-            width: '58mm',
-            maxWidth: '58mm',
-            fontSize: '8px',
+            width: '220px',
+            maxWidth: '220px',
+            fontSize: '11px',
             fontFamily: 'Arial, sans-serif',
-            lineHeight: '1.2',
-            padding: '2mm',
-            boxSizing: 'border-box'
+            lineHeight: '1.4',
+            padding: '8px',
+            boxSizing: 'border-box',
+            backgroundColor: '#ffffff',
+            color: '#000000'
           }}>
             {/* KOT Header */}
-            <div className="text-center mb-1">
-              <p style={{ fontSize: '9px', margin: '0 0 2px 0', fontWeight: '500' }}>
+            <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+              <p style={{ fontSize: '13px', margin: '0 0 4px 0', fontWeight: 'bold' }}>
                 {invoiceData.businessInfo.name}
               </p>
-              <h1 style={{ fontSize: '12px', fontWeight: 'bold', margin: 0, letterSpacing: '0.3px' }}>
+              <h1 style={{ fontSize: '16px', fontWeight: 'bold', margin: 0, letterSpacing: '0.5px' }}>
                 KITCHEN ORDER TICKET
               </h1>
             </div>
 
             {/* Table, Guest and Date Info */}
-            <div className="mb-1" style={{ fontSize: '9px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  {invoiceData.tableNumber && (
-                    <span style={{ fontWeight: 'bold' }}>Table: {invoiceData.tableNumber}</span>
-                  )}
-                  {invoiceData.tableNumber && invoiceData.guestNumber && (
-                    <span style={{ margin: '0 4px' }}>|</span>
-                  )}
-                  {invoiceData.guestNumber && (
-                    <span style={{ fontWeight: 'bold' }}>Guest: {invoiceData.guestNumber}</span>
-                  )}
-                </div>
-                <span style={{ fontSize: '8px' }}>
+            <div style={{ marginBottom: '8px', fontSize: '11px' }}>
+              <div style={{ marginBottom: '4px' }}>
+                {invoiceData.tableNumber && (
+                  <div style={{ fontWeight: 'bold' }}>Table: {invoiceData.tableNumber}</div>
+                )}
+                {invoiceData.guestNumber && (
+                  <div style={{ fontWeight: 'bold' }}>Guests: {invoiceData.guestNumber}</div>
+                )}
+                <div style={{ fontSize: '10px', marginTop: '4px' }}>
                   {new Date(invoiceData.date).toLocaleString('en-GB', {
                     day: '2-digit',
                     month: '2-digit',
@@ -1037,43 +1040,36 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                     minute: '2-digit',
                     hour12: true
                   })}
-                </span>
+                </div>
               </div>
             </div>
 
-            {/* Customer Info */}
-            {/* <div className="mb-2 text-[11px]">
-              <div>
-                <span>Customer : {invoiceData.customer.name}</span>
-              </div>
-            </div> */}
-
             {/* Separator Line */}
-            <div style={{ borderTop: '1px solid #000', margin: '4px 0' }}></div>
+            <div style={{ borderTop: '2px solid #000', margin: '8px 0' }}></div>
 
             {/* Items Table */}
-            <div style={{ marginBottom: '4px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9px' }}>
+            <div style={{ marginBottom: '8px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid #000' }}>
-                    <th style={{ textAlign: 'left', padding: '3px 2px', width: '30px', fontWeight: 'bold' }}>No.</th>
-                    <th style={{ textAlign: 'left', padding: '3px 2px', fontWeight: 'bold' }}>Item Name</th>
-                    <th style={{ textAlign: 'right', padding: '3px 2px', width: '35px', fontWeight: 'bold' }}>Qty</th>
+                  <tr style={{ borderBottom: '2px solid #000' }}>
+                    <th style={{ textAlign: 'left', padding: '6px 4px', width: '30px', fontWeight: 'bold' }}>No.</th>
+                    <th style={{ textAlign: 'left', padding: '6px 4px', fontWeight: 'bold' }}>Item Name</th>
+                    <th style={{ textAlign: 'right', padding: '6px 4px', width: '40px', fontWeight: 'bold' }}>Qty</th>
                   </tr>
                 </thead>
                 <tbody>
                   {invoiceData.items.map((item, index, arr) => (
                     <tr key={index} style={{ borderBottom: index === arr.length - 1 ? 'none' : '1px dashed #000' }}>
-                      <td style={{ padding: '4px 2px', verticalAlign: 'top' }}>{index + 1}</td>
-                      <td style={{ padding: '4px 2px', verticalAlign: 'top' }}>
+                      <td style={{ padding: '6px 4px', verticalAlign: 'top' }}>{index + 1}</td>
+                      <td style={{ padding: '6px 4px', verticalAlign: 'top' }}>
                         <div>
-                          <p style={{ margin: 0, fontWeight: '500' }}>{item.productName}</p>
+                          <p style={{ margin: 0, fontWeight: '600' }}>{item.productName}</p>
                           {item.details && (
-                            <p style={{ margin: '1px 0 0 0', fontSize: '8px', color: '#666' }}>{item.details}</p>
+                            <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: '#666' }}>{item.details}</p>
                           )}
                         </div>
                       </td>
-                      <td style={{ padding: '4px 2px', verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold' }}>
+                      <td style={{ padding: '6px 4px', verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold' }}>
                         {item.quantity}
                       </td>
                     </tr>
@@ -1084,50 +1080,43 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
             {/* Dashed Separator */}
             <div style={{
-              borderTop: '1px dashed #000',
+              borderTop: '2px dashed #000',
               width: '100%',
-              margin: '4px 0'
+              margin: '8px 0'
             }}></div>
 
             {/* Total Items */}
             <div style={{
-              fontSize: '9px',
+              fontSize: '12px',
               textAlign: 'right',
               fontWeight: 'bold',
-              padding: '2px 0'
+              padding: '4px 0'
             }}>
               <span>Total Items: {invoiceData.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
             </div>
-
-            {/* Dashed Separator */}
-            <div style={{
-              borderTop: '1px dashed #000',
-              width: '100%',
-              margin: '4px 0'
-            }}></div>
 
             {/* Special Instructions */}
             {invoiceData.specialNotes !== undefined &&
               invoiceData.specialNotes !== null &&
               String(invoiceData.specialNotes).trim() !== "" && (
                 <div style={{
-                  marginTop: '4px',
-                  padding: '6px',
-                  border: '1px solid #000',
-                  borderRadius: '2px',
+                  marginTop: '8px',
+                  padding: '8px',
+                  border: '2px solid #000',
+                  borderRadius: '4px',
                   backgroundColor: '#f9f9f9'
                 }}>
                   <h3 style={{
                     fontWeight: 'bold',
-                    fontSize: '9px',
-                    marginBottom: '3px',
+                    fontSize: '11px',
+                    marginBottom: '4px',
                     textTransform: 'uppercase'
                   }}>Special Instructions:</h3>
                   <p style={{
-                    fontSize: '9px',
+                    fontSize: '11px',
                     whiteSpace: 'pre-wrap',
                     margin: 0,
-                    lineHeight: '1.3'
+                    lineHeight: '1.4'
                   }}>{String(invoiceData.specialNotes)}</p>
                 </div>
               )}
@@ -1137,73 +1126,89 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         {/* Invoice Receipt (Hidden, only for printing) - 80mm POS thermal */}
         <div style={{ display: 'none' }}>
           <div ref={invoiceRef} id="invoice-print-content" style={{
-            width: '80mm',
-            maxWidth: '80mm',
-            fontSize: '10px',
+            width: '300px',
+            maxWidth: '300px',
+            fontSize: '12px',
             fontFamily: 'Arial, sans-serif',
-            lineHeight: '1.3',
-            padding: '4mm',
+            lineHeight: '1.4',
+            padding: '16px',
             boxSizing: 'border-box',
-            backgroundColor: '#fff',
-            color: '#000'
+            backgroundColor: '#ffffff',
+            color: '#000000'
           }}>
             {/* Header - Business Name */}
-            <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-              <h1 style={{ fontSize: '14px', fontWeight: 'bold', margin: '0 0 4px 0', textTransform: 'uppercase' }}>
+            <div style={{ textAlign: 'center', marginBottom: '12px' }}>
+              <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 8px 0', textTransform: 'uppercase' }}>
                 {invoiceData.businessInfo.name}
               </h1>
-              <p style={{ fontSize: '9px', margin: '2px 0', color: '#333' }}>
-                Order #: {invoiceData.invoiceNumber}
+              <p style={{ fontSize: '11px', margin: '4px 0', color: '#333' }}>
+                {invoiceData.businessInfo.address}
               </p>
-              <p style={{ fontSize: '9px', margin: '2px 0', color: '#333' }}>
-                Date: {new Date(invoiceData.date).toLocaleDateString()}
+              <p style={{ fontSize: '11px', margin: '4px 0', color: '#333' }}>
+                Tel: {invoiceData.businessInfo.phone}
               </p>
             </div>
 
             {/* Separator */}
-            <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }}></div>
+            <div style={{ borderTop: '2px solid #000', margin: '12px 0' }}></div>
+
+            {/* Invoice Title */}
+            <div style={{ textAlign: 'center', marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 8px 0' }}>INVOICE</h2>
+              <p style={{ fontSize: '11px', margin: '2px 0' }}>
+                Invoice #: {invoiceData.invoiceNumber}
+              </p>
+              <p style={{ fontSize: '11px', margin: '2px 0' }}>
+                Date: {new Date(invoiceData.date).toLocaleString()}
+              </p>
+            </div>
 
             {/* Invoice Info */}
-            <div style={{ textAlign: 'center', fontSize: '9px', marginBottom: '6px' }}>
+            <div style={{ fontSize: '11px', marginBottom: '12px' }}>
+              {invoiceData.tableNumber && (
+                <p style={{ margin: '2px 0' }}>
+                  <strong>Table:</strong> {invoiceData.tableNumber}
+                </p>
+              )}
+              {invoiceData.guestNumber && (
+                <p style={{ margin: '2px 0' }}>
+                  <strong>Guests:</strong> {invoiceData.guestNumber}
+                </p>
+              )}
               <p style={{ margin: '2px 0' }}>
-                Invoice #: {invoiceData.invoiceNumber}
-                {invoiceData.tableNumber && ` | Table: ${invoiceData.tableNumber}`}
+                <strong>Customer:</strong> {invoiceData.customer.name}
               </p>
               <p style={{ margin: '2px 0' }}>
-                {invoiceData.guestNumber && `Guests: ${invoiceData.guestNumber} | `}
-                Payment Method: {invoiceData.payment.method === 'mobile_banking' ? 'Mobile Banking' : invoiceData.payment.method.toUpperCase()}
-              </p>
-              <p style={{ margin: '2px 0' }}>
-                Payment Status: {invoiceData.payment.status} | Order Status: {invoiceData.orderStatus}
+                <strong>Phone:</strong> {invoiceData.customer.phone}
               </p>
             </div>
 
             {/* Separator */}
-            <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }}></div>
+            <div style={{ borderTop: '2px solid #000', margin: '12px 0' }}></div>
 
             {/* Items Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '10px', padding: '4px 0', borderBottom: '1px dashed #000' }}>
-              <span style={{ width: '25px' }}>QTY</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '12px', padding: '6px 0', borderBottom: '2px solid #000' }}>
+              <span style={{ width: '40px' }}>QTY</span>
               <span style={{ flex: 1, paddingLeft: '8px' }}>ITEM</span>
-              <span style={{ width: '60px', textAlign: 'right' }}>TOTAL</span>
+              <span style={{ width: '70px', textAlign: 'right' }}>TOTAL</span>
             </div>
 
             {/* Items */}
-            <div style={{ marginBottom: '6px' }}>
+            <div style={{ marginBottom: '12px' }}>
               {invoiceData.items.map((item, index) => (
                 <div key={index} style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: '9px',
-                  padding: '4px 0',
+                  fontSize: '11px',
+                  padding: '6px 0',
                   borderBottom: index < invoiceData.items.length - 1 ? '1px dashed #ccc' : 'none'
                 }}>
-                  <span style={{ width: '25px', color: '#666' }}>{item.quantity}</span>
+                  <span style={{ width: '40px', color: '#000' }}>{item.quantity}</span>
                   <span style={{ flex: 1, paddingLeft: '8px' }}>
                     {item.productName}
-                    {item.details && ` - ${item.details}`}
+                    {item.details && <span style={{ color: '#666', fontSize: '10px', display: 'block' }}>{item.details}</span>}
                   </span>
-                  <span style={{ width: '60px', textAlign: 'right' }}>
+                  <span style={{ width: '70px', textAlign: 'right', fontWeight: '500' }}>
                     {money.format(item.subtotal)}
                   </span>
                 </div>
@@ -1211,21 +1216,21 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             </div>
 
             {/* Separator */}
-            <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }}></div>
+            <div style={{ borderTop: '2px solid #000', margin: '12px 0' }}></div>
 
             {/* Summary */}
-            <div style={{ fontSize: '10px', marginBottom: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+            <div style={{ fontSize: '12px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
                 <span>Subtotal:</span>
                 <span>{money.format(Number(invoiceData.summary.subtotal))}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
-                <span>Tax:</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+                <span>Tax ({invoiceData.summary.taxRate}):</span>
                 <span>{money.format(Number(invoiceData.summary.tax))}</span>
               </div>
               {Number(invoiceData.summary.discount) > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', color: '#c00' }}>
-                  <span>Discount:</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#c00' }}>
+                  <span>Discount ({invoiceData.summary.discountRate}):</span>
                   <span>-{money.format(Number(invoiceData.summary.discount))}</span>
                 </div>
               )}
@@ -1235,22 +1240,50 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             <div style={{
               borderTop: '2px solid #000',
               borderBottom: '2px solid #000',
-              padding: '8px 0',
-              margin: '6px 0'
+              padding: '10px 0',
+              margin: '12px 0'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '16px' }}>
                 <span>GRAND TOTAL:</span>
                 <span>{money.format(Number(invoiceData.summary.total))}</span>
               </div>
             </div>
 
+            {/* Payment Info */}
+            <div style={{ fontSize: '11px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                <span>Payment Method:</span>
+                <span>{invoiceData.payment.method === 'mobile_banking' ? 'Mobile Banking' : invoiceData.payment.method.toUpperCase()}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                <span>Payment Status:</span>
+                <span>{invoiceData.payment.status}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                <span>Paid Amount:</span>
+                <span style={{ color: '#0a0', fontWeight: 'bold' }}>{money.format(Number(invoiceData.payment.paidAmount))}</span>
+              </div>
+              {invoiceData.payment.remainingAmount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', color: '#c00' }}>
+                  <span>Remaining:</span>
+                  <span style={{ fontWeight: 'bold' }}>{money.format(Number(invoiceData.payment.remainingAmount))}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Separator */}
+            <div style={{ borderTop: '1px dashed #000', margin: '12px 0' }}></div>
+
             {/* Footer */}
-            <div style={{ textAlign: 'center', marginTop: '8px' }}>
-              <p style={{ fontSize: '10px', fontWeight: '500', margin: '4px 0', color: '#0066cc' }}>
+            <div style={{ textAlign: 'center', marginTop: '12px' }}>
+              <p style={{ fontSize: '12px', fontWeight: '600', margin: '6px 0' }}>
                 Thank you for your business!
               </p>
-              <p style={{ fontSize: '8px', margin: '4px 0', color: '#666' }}>
-                {new Date(invoiceData.date).toLocaleString()}
+              <p style={{ fontSize: '10px', margin: '4px 0', color: '#666' }}>
+                {invoiceData.businessInfo.email}
+              </p>
+              <p style={{ fontSize: '10px', margin: '4px 0', color: '#666' }}>
+                Tax ID: {invoiceData.businessInfo.taxId}
               </p>
             </div>
           </div>
