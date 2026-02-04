@@ -650,6 +650,95 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       toast.error('Failed to download invoice');
     }
   };
+
+  // Thermal KOT Print (Server-side)
+  const handleThermalKOTPrint = async () => {
+    if (!invoiceData) return;
+
+    setPrinting(true);
+    setError(null);
+
+    try {
+      const printerInterface = localStorage.getItem('printerInterface') || 'tcp://192.168.1.100';
+
+      const response = await fetch('http://localhost:3000/api/thermal-print/kot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invoiceNumber: invoiceData.invoiceNumber,
+          tableNumber: invoiceData.tableNumber,
+          guestNumber: invoiceData.guestNumber,
+          date: invoiceData.date,
+          items: invoiceData.items,
+          specialNotes: invoiceData.specialNotes,
+          businessName: invoiceData.businessInfo.name,
+          printerInterface
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Print failed');
+      }
+
+      toast.success('KOT printed successfully via thermal printer!');
+    } catch (error: any) {
+      console.error("Thermal KOT print error:", error);
+      setError(error.message);
+      toast.error(`Thermal print failed: ${error.message}`);
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  // Thermal Invoice Print (Server-side)
+  const handleThermalInvoicePrint = async () => {
+    if (!invoiceData) return;
+
+    setPrinting(true);
+    setError(null);
+
+    try {
+      const printerInterface = localStorage.getItem('printerInterface') || 'tcp://192.168.1.100';
+
+      const response = await fetch('http://localhost:3000/api/thermal-print/invoice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invoiceNumber: invoiceData.invoiceNumber,
+          tableNumber: invoiceData.tableNumber,
+          guestNumber: invoiceData.guestNumber,
+          date: invoiceData.date,
+          items: invoiceData.items,
+          summary: invoiceData.summary,
+          payment: invoiceData.payment,
+          customer: invoiceData.customer,
+          businessInfo: invoiceData.businessInfo,
+          specialNotes: invoiceData.specialNotes,
+          printerInterface
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Print failed');
+      }
+
+      toast.success('Invoice printed successfully via thermal printer!');
+    } catch (error: any) {
+      console.error("Thermal Invoice print error:", error);
+      setError(error.message);
+      toast.error(`Thermal print failed: ${error.message}`);
+    } finally {
+      setPrinting(false);
+    }
+  };
   console.log({ handlePrint })
 
   if (!orderId) return null;
@@ -1266,6 +1355,15 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                 <span className="hidden sm:inline">{printing ? "Printing..." : "Print KOT"}</span>
                 <span className="sm:hidden">KOT</span>
               </button>
+              <button
+                onClick={handleThermalKOTPrint}
+                disabled={!invoiceData || invoiceData.items.length === 0 || printing}
+                className="px-3 py-1.5 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FaUtensils className="w-3 h-3" />
+                <span className="hidden sm:inline">{printing ? "Printing..." : "Thermal KOT"}</span>
+                <span className="sm:hidden">T-KOT</span>
+              </button>
             </>
           )}
 
@@ -1286,6 +1384,15 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             <FaPrint className="w-3 h-3" />
             <span className="hidden sm:inline">{printing ? "Printing..." : "Print Invoice"}</span>
             <span className="sm:hidden">Invoice</span>
+          </button>
+          <button
+            onClick={handleThermalInvoicePrint}
+            disabled={!invoiceData || invoiceData.items.length === 0 || printing}
+            className="px-3 py-1.5 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FaPrint className="w-3 h-3" />
+            <span className="hidden sm:inline">{printing ? "Printing..." : "Thermal Invoice"}</span>
+            <span className="sm:hidden">T-Inv</span>
           </button>
 
           {error && <p className="text-xs text-red-500 w-full text-right mt-1">{error}</p>}
