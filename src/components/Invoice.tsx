@@ -370,36 +370,61 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
       let receipt = encoder
         .initialize()
+
+        // ===== HEADER =====
         .align("center")
+        .text(invoiceData.businessInfo.name + "\n")  // NOT bold
         .bold(true)
-        .text(invoiceData.businessInfo.name)
+        .text("KITCHEN ORDER TICKET\n")
         .bold(false)
-        .newline()
-        .bold(true)
-        .text("KITCHEN ORDER TICKET")
-        .bold(false)
-        .newline()
         .newline()
 
+        // ===== META INFO =====
         .align("left")
-        .line(`Table: ${invoiceData.tableNumber || "N/A"} | Guests: ${invoiceData.guestNumber || "N/A"}`)
-        .line(`Date: ${new Date(invoiceData.date).toLocaleString()}`)
-        .text("────────────────────────────────\n");
+        .bold(true).text("Table: ").bold(false).text((invoiceData.tableNumber || "N/A") + "\n")
+        .bold(true).text("Guests: ").bold(false).text(String(invoiceData.guestNumber || "N/A") + "\n")
+        .text(new Date(invoiceData.date).toLocaleString() + "\n")
+        .text("────────────────────────────────\n")
+        .newline();
 
-      // Add items
+      // ===== ITEMS HEADER =====
+      receipt = receipt
+        .bold(true)
+        .text("No.   Item Name                    Qty\n")
+        .bold(false)
+        .text("────────────────────────────────\n")
+        .newline();
+
+      // ===== ITEMS =====
       invoiceData.items.forEach((item, index) => {
-        receipt = receipt.text(`${index + 1}. ${item.quantity}x ${item.productName}\n`);
+        const noStr = String(index + 1);
+        const itemName = item.productName;
+        const qtyStr = String(item.quantity);
+
+        // Calculate spacing for proper alignment
+        const spacing = WIDTH - noStr.length - itemName.length - qtyStr.length - 6;
+        receipt = receipt.text(`${noStr}      ${itemName}${" ".repeat(Math.max(spacing, 1))}${qtyStr}\n`);
+
+        // Item details/attributes (if any)
         if (item.details) {
-          receipt = receipt.text(`   ${item.details}\n`);
+          receipt = receipt.text(`       ${item.details}\n`);
         }
+
+        // Dashed separator line after each item
+        receipt = receipt.text("- - - - - - - - - - - - - - - -\n");
       });
 
-      receipt = receipt
-        .text("────────────────────────────────\n")
-        .align("center")
-        .text(`Total Items: ${invoiceData.items.reduce((sum, item) => sum + item.quantity, 0)}\n`);
+      receipt = receipt.newline();
 
-      // Special notes
+      // ===== TOTAL =====
+      const totalItems = invoiceData.items.reduce((sum, item) => sum + item.quantity, 0);
+      receipt = receipt
+        .align("right")
+        .bold(true)
+        .text(`Total Items: ${totalItems}\n`)
+        .bold(false);
+
+      // ===== SPECIAL NOTES =====
       if (invoiceData.specialNotes && String(invoiceData.specialNotes).trim() !== "") {
         receipt = receipt
           .newline()
