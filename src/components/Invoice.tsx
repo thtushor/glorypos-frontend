@@ -1,5 +1,6 @@
-import React, { useRef, useMemo } from "react";
-import { FaPrint, FaMoneyBill, FaCreditCard, FaWallet, FaUtensils } from "react-icons/fa";
+import React, { useRef, useMemo, useState } from "react";
+import { FaPrint, FaMoneyBill, FaCreditCard, FaWallet, FaUtensils, FaDownload } from "react-icons/fa";
+import html2canvas from "html2canvas";
 // import LogoSvg from "./icons/LogoSvg";
 import { getExpiryDate } from "@/utils/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +13,15 @@ import LogoSvg from "./icons/LogoSvg";
 import money from "@/utils/money";
 import { useReceiptPrint, type Order, type PrintOptions } from "react-pos-engine";
 import { useAuth } from "@/context/AuthContext";
+import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
 // import { useAuth } from "@/context/AuthContext";
+
+const WIDTH = 32;
+
+function twoColumn(left: string, right: string) {
+  const space = Math.max(WIDTH - left.length - right.length, 1);
+  return left + " ".repeat(space) + right + "\n";
+}
 
 interface InvoiceItem {
   productName: string;
@@ -88,6 +97,8 @@ interface InvoiceProps {
 }
 
 const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
+  const [printing, setPrinting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const kotRef = useRef<HTMLDivElement>(null);
   const invoiceRef = useRef<HTMLDivElement>(null);
@@ -125,75 +136,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     enabled: !!orderId,
   });
 
-  // KOT print function with dynamic document title - 58mm POS thermal printer
-  const kotPrintFn = useReactToPrint({
-    contentRef: kotRef,
-    documentTitle: invoiceData?.businessInfo?.name ? `KOT - ${invoiceData.businessInfo.name}` : "KOT",
-    pageStyle: `
-      @page {
-        size: 58mm auto !important;
-        margin: 0 !important;
-      }
-      @media print {
-        html, body {
-          width: 58mm !important;
-          height: auto !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        #kot-print-content {
-          width: 58mm !important;
-          max-width: 58mm !important;
-          margin: 0 !important;
-          padding: 2mm !important;
-          box-sizing: border-box !important;
-        }
-      }
-    `,
-    print: async (printIframe: HTMLIFrameElement) => {
-      const contentWindow = printIframe.contentWindow;
-      if (contentWindow) {
-        contentWindow.print();
-      }
-    }
-  });
 
-  // Invoice print function - 80mm POS thermal printer with 4mm margin
-  const invoicePrintFn = useReactToPrint({
-    contentRef: invoiceRef,
-    documentTitle: invoiceData?.businessInfo?.name ? `Invoice - ${invoiceData.businessInfo.name}` : "Invoice",
-    pageStyle: `
-      @page {
-        size: 80mm auto !important;
-        margin: 0 !important;
-      }
-      @media print {
-        html, body {
-          width: 80mm !important;
-          height: auto !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        #invoice-print-content {
-          width: 80mm !important;
-          max-width: 80mm !important;
-          margin: 0 !important;
-          padding: 4mm !important;
-          box-sizing: border-box !important;
-        }
-      }
-    `,
-    print: async (printIframe: HTMLIFrameElement) => {
-      const contentWindow = printIframe.contentWindow;
-      if (contentWindow) {
-        contentWindow.print();
-      }
-    }
-  });
 
   // Transform invoice data to Order format for react-pos-engine
   const receiptOrder: Order | null = useMemo(() => {
@@ -391,14 +334,367 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     }
   };
 
-  // Handle KOT print
-  const handleKOTPrint = () => {
-    kotPrintFn();
+  // USB Printer utility
+  const getPrinter = async () => {
+    try {
+      // Try previously authorized devices
+      const devices = await (navigator as any).usb.getDevices();
+      if (devices.length > 0) return devices[0];
+
+      // First-time setup
+      return await (navigator as any).usb.requestDevice({
+        filters: [{ classCode: 7 }], // Printer class
+      });
+    } catch (err) {
+      throw new Error("Printer not connected or permission denied");
+    }
   };
 
-  // Handle Invoice print (80mm POS thermal)
-  const handleInvoicePrint = () => {
-    invoicePrintFn();
+  // Handle KOT print with encoding
+  const handleKOTPrint = async () => {
+    setPrinting(true);
+    setError(null);
+
+    try {
+      if (!invoiceData) return;
+
+      const device = await getPrinter();
+
+      await device.open();
+      if (!device.configuration) {
+        await device.selectConfiguration(1);
+      }
+      await device.claimInterface(0);
+
+      const encoder = new ReceiptPrinterEncoder();
+
+      let receipt = encoder
+        .initialize()
+        .align("center")
+        .bold(true)
+        .text(invoiceData.businessInfo.name)
+        .bold(false)
+        .newline()
+        .bold(true)
+        .text("KITCHEN ORDER TICKET")
+        .bold(false)
+        .newline()
+        .newline()
+
+        .align("left")
+        .line(`Table: ${invoiceData.tableNumber || "N/A"} | Guests: ${invoiceData.guestNumber || "N/A"}`)
+        .line(`Date: ${new Date(invoiceData.date).toLocaleString()}`)
+        .text("────────────────────────────────\n");
+
+      // Add items
+      invoiceData.items.forEach((item, index) => {
+        receipt = receipt.text(`${index + 1}. ${item.quantity}x ${item.productName}\n`);
+        if (item.details) {
+          receipt = receipt.text(`   ${item.details}\n`);
+        }
+      });
+
+      receipt = receipt
+        .text("────────────────────────────────\n")
+        .align("center")
+        .text(`Total Items: ${invoiceData.items.reduce((sum, item) => sum + item.quantity, 0)}\n`);
+
+      // Special notes
+      if (invoiceData.specialNotes && String(invoiceData.specialNotes).trim() !== "") {
+        receipt = receipt
+          .newline()
+          .align("left")
+          .bold(true)
+          .text("SPECIAL INSTRUCTIONS:\n")
+          .bold(false)
+          .text(String(invoiceData.specialNotes) + "\n");
+      }
+
+      const encoded = receipt.newline().newline().cut().encode();
+
+      // Endpoint 1 is common for ESC/POS printers
+      await device.transferOut(1, encoded);
+
+      await device.releaseInterface(0);
+      await device.close();
+
+      toast.success("KOT printed successfully");
+    } catch (err: any) {
+      console.error("❌ KOT print failed:", err);
+      setError(err?.message || "Printer not connected or permission denied");
+      toast.error(err?.message || "Failed to print KOT");
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  // Handle Invoice print (80mm POS thermal) with encoding
+  const handleInvoicePrint = async () => {
+    setPrinting(true);
+    setError(null);
+
+    try {
+      if (!invoiceData) return;
+
+      const device = await getPrinter();
+
+      await device.open();
+      if (!device.configuration) {
+        await device.selectConfiguration(1);
+      }
+      await device.claimInterface(0);
+
+      const encoder = new ReceiptPrinterEncoder();
+
+      let receipt = encoder
+        .initialize()
+
+        // ===== HEADER =====
+        .align("center")
+        .bold(true)
+        .text(invoiceData.businessInfo.name)
+        .bold(false)
+        .newline()
+        .text(invoiceData.businessInfo.address)
+        .newline()
+        .text(`Tel: ${invoiceData.businessInfo.phone}`)
+        .newline()
+        .text(new Date(invoiceData.date).toLocaleString())
+        .newline()
+        .newline()
+
+        .bold(true)
+        .text("INVOICE")
+        .bold(false)
+        .newline()
+
+        // ===== META =====
+        .align("left")
+        .line(`Invoice #: ${invoiceData.invoiceNumber}`);
+
+      if (invoiceData.tableNumber) {
+        receipt = receipt.line(`Table: ${invoiceData.tableNumber}`);
+      }
+      if (invoiceData.guestNumber) {
+        receipt = receipt.line(`Guests: ${invoiceData.guestNumber}`);
+      }
+
+      receipt = receipt
+        .line(`Customer: ${invoiceData.customer.name}`)
+        .line(`Phone: ${invoiceData.customer.phone}`)
+        .text("────────────────────────────────\n");
+
+      // ===== ITEMS =====
+      invoiceData.items.forEach((item) => {
+        receipt = receipt.text(
+          twoColumn(
+            `${item.quantity} x ${item.productName}`,
+            money.format(item.subtotal)
+          )
+        );
+        if (item.details) {
+          receipt = receipt.text(`  ${item.details}\n`);
+        }
+      });
+
+      receipt = receipt.text("────────────────────────────────\n");
+
+      // ===== TOTAL =====
+      receipt = receipt
+        .text(twoColumn("Subtotal", money.format(Number(invoiceData.summary.subtotal))))
+        .text(twoColumn(`Tax (${invoiceData.summary.taxRate})`, money.format(Number(invoiceData.summary.tax))));
+
+      if (Number(invoiceData.summary.discount) > 0) {
+        receipt = receipt.text(
+          twoColumn(
+            `Discount (${invoiceData.summary.discountRate})`,
+            `-${money.format(Number(invoiceData.summary.discount))}`
+          )
+        );
+      }
+
+      receipt = receipt
+        .text("────────────────────────────────\n")
+        .bold(true)
+        .text(twoColumn("TOTAL", money.format(Number(invoiceData.summary.total))))
+        .bold(false)
+        .newline();
+
+      // Payment info
+      const paymentMethod =
+        invoiceData.payment.method === "mobile_banking"
+          ? "Mobile Banking"
+          : invoiceData.payment.method.toUpperCase();
+
+      receipt = receipt
+        .text(twoColumn("Payment Method", paymentMethod))
+        .text(twoColumn("Payment Status", invoiceData.payment.status))
+        .text(twoColumn("Paid Amount", money.format(Number(invoiceData.payment.paidAmount))));
+
+      if (invoiceData.payment.remainingAmount > 0) {
+        receipt = receipt.text(
+          twoColumn("Remaining", money.format(Number(invoiceData.payment.remainingAmount)))
+        );
+      }
+
+      // ===== FOOTER =====
+      receipt = receipt
+        .newline()
+        .align("center")
+        .text("Thank you for your business!")
+        .newline()
+        .text(invoiceData.businessInfo.email)
+        .newline()
+        .text(`Tax ID: ${invoiceData.businessInfo.taxId}`)
+        .newline()
+        .newline();
+
+      const encoded = receipt.cut().encode();
+
+      // Endpoint 1 is common for ESC/POS printers
+      await device.transferOut(1, encoded);
+
+      await device.releaseInterface(0);
+      await device.close();
+
+      toast.success("Invoice printed successfully");
+    } catch (err: any) {
+      console.error("❌ Invoice print failed:", err);
+      setError(err?.message || "Printer not connected or permission denied");
+      toast.error(err?.message || "Failed to print invoice");
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  // Handle KOT download as image
+  const handleKOTDownload = async () => {
+    if (!kotRef.current || !invoiceData) {
+      console.log('KOT download aborted: ref or invoiceData missing');
+      return;
+    }
+
+    try {
+      console.log('Starting KOT download...');
+      const element = kotRef.current;
+      const originalDisplay = element.style.display;
+      const originalVisibility = element.style.visibility;
+      const originalPosition = element.style.position;
+
+      // Make visible but keep it off-screen for proper rendering
+      element.style.display = 'block';
+      element.style.visibility = 'visible';
+      element.style.position = 'absolute';
+      element.style.left = '-9999px';
+      element.style.top = '0';
+
+      // Wait for the element to render
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      console.log('Capturing KOT with html2canvas...');
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        logging: true,
+      });
+
+      console.log('Canvas created:', canvas.width, 'x', canvas.height);
+
+      // Restore original state
+      element.style.display = originalDisplay;
+      element.style.visibility = originalVisibility;
+      element.style.position = originalPosition;
+      element.style.left = '';
+      element.style.top = '';
+
+      // Convert canvas to data URL and download
+      const dataUrl = canvas.toDataURL('image/png');
+      console.log('Data URL created, length:', dataUrl.length);
+
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `KOT-${invoiceData.invoiceNumber}-${Date.now()}.png`;
+
+      // Append to body, click, then remove
+      document.body.appendChild(link);
+      console.log('Triggering download...');
+      link.click();
+      document.body.removeChild(link);
+
+      console.log('KOT download triggered successfully');
+      toast.success("KOT downloaded successfully");
+
+
+    } catch (error) {
+      console.error('KOT download failed:', error);
+      toast.error('Failed to download KOT');
+    }
+  };
+
+  // Handle Invoice download as image
+  const handleInvoiceDownload = async () => {
+    if (!invoiceRef.current || !invoiceData) {
+      console.log('Invoice download aborted: ref or invoiceData missing');
+      return;
+    }
+
+    try {
+      console.log('Starting Invoice download...');
+      const element = invoiceRef.current;
+      const originalDisplay = element.style.display;
+      const originalVisibility = element.style.visibility;
+      const originalPosition = element.style.position;
+
+      // Make visible but keep it off-screen for proper rendering
+      element.style.display = 'block';
+      element.style.visibility = 'visible';
+      element.style.position = 'absolute';
+      element.style.left = '-9999px';
+      element.style.top = '0';
+
+      // Wait for the element to render
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      console.log('Capturing Invoice with html2canvas...');
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        logging: true,
+      });
+
+      console.log('Canvas created:', canvas.width, 'x', canvas.height);
+
+      // Restore original state
+      element.style.display = originalDisplay;
+      element.style.visibility = originalVisibility;
+      element.style.position = originalPosition;
+      element.style.left = '';
+      element.style.top = '';
+
+      // Convert canvas to data URL and download
+      const dataUrl = canvas.toDataURL('image/png');
+      console.log('Data URL created, length:', dataUrl.length);
+
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `Invoice-${invoiceData.invoiceNumber}-${Date.now()}.png`;
+
+      // Append to body, click, then remove
+      document.body.appendChild(link);
+      console.log('Triggering download...');
+      link.click();
+      document.body.removeChild(link);
+
+      console.log('Invoice download triggered successfully');
+      toast.success("Invoice downloaded successfully");
+
+
+    } catch (error) {
+      console.error('Invoice download failed:', error);
+      toast.error('Failed to download invoice');
+    }
   };
   console.log({ handlePrint })
 
@@ -961,29 +1257,57 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         </div>
 
         {/* Actions */}
-        <div className="border-t px-6 py-4 flex justify-end gap-4">
+        <div className="border-t px-4 py-3 flex flex-wrap justify-end gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium border text-gray-700 hover:bg-gray-100 rounded-md"
+            className="px-3 py-1.5 text-xs font-medium border text-gray-700 hover:bg-gray-100 rounded-md"
           >
             Close
           </button>
-          {user?.shopType === "restaurant" && <button
-            onClick={handleKOTPrint}
+
+          {user?.shopType === "restaurant" && (
+            <>
+              <button
+                onClick={handleKOTDownload}
+                disabled={!invoiceData || invoiceData.items.length === 0}
+                className="px-3 py-1.5 text-xs font-medium text-orange-600 border border-orange-600 hover:bg-orange-50 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FaDownload className="w-3 h-3" />
+                <span className="hidden sm:inline">Download KOT</span>
+                <span className="sm:hidden">DL KOT</span>
+              </button>
+              <button
+                onClick={handleKOTPrint}
+                disabled={!invoiceData || invoiceData.items.length === 0 || printing}
+                className="px-3 py-1.5 text-xs font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FaUtensils className="w-3 h-3" />
+                <span className="hidden sm:inline">{printing ? "Printing..." : "Print KOT"}</span>
+                <span className="sm:hidden">KOT</span>
+              </button>
+            </>
+          )}
+
+          <button
+            onClick={handleInvoiceDownload}
             disabled={!invoiceData || invoiceData.items.length === 0}
-            className="px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-xs font-medium text-brand-primary border border-brand-primary hover:bg-brand-primary/10 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <FaUtensils className="w-4 h-4" />
-            Print KOT
-          </button>}
+            <FaDownload className="w-3 h-3" />
+            <span className="hidden sm:inline">Download Invoice</span>
+            <span className="sm:hidden">DL Invoice</span>
+          </button>
           <button
             onClick={handleInvoicePrint}
-            disabled={!invoiceData || invoiceData.items.length === 0}
-            className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!invoiceData || invoiceData.items.length === 0 || printing}
+            className="px-3 py-1.5 text-xs font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <FaPrint className="w-4 h-4" />
-            Print Invoice
+            <FaPrint className="w-3 h-3" />
+            <span className="hidden sm:inline">{printing ? "Printing..." : "Print Invoice"}</span>
+            <span className="sm:hidden">Invoice</span>
           </button>
+
+          {error && <p className="text-xs text-red-500 w-full text-right mt-1">{error}</p>}
         </div>
       </div>
     </div>
