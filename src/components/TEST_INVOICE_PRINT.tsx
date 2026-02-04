@@ -1,6 +1,6 @@
 "use client";
 
-import EscPosEncoder from "esc-pos-encoder";
+import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
 import { IoMdPrint } from "react-icons/io";
 import { useState } from "react";
 
@@ -43,7 +43,7 @@ export default function TEST_INVOICE_PRINT() {
       }
       await device.claimInterface(0);
 
-      const encoder = new EscPosEncoder();
+      const encoder = new ReceiptPrinterEncoder();
 
       const receipt = encoder
         .initialize()
