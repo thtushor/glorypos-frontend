@@ -120,6 +120,41 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
     }
   });
 
+  const handleThermalPrint = async () => {
+    try {
+      // Get printer interface from localStorage or use default
+      const printerInterface = localStorage.getItem('printerInterface') || 'tcp://192.168.1.100';
+
+      const response = await fetch('http://localhost:3000/api/thermal-print/barcode', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sku,
+          brandName,
+          categoryName,
+          modelNo,
+          shopName,
+          printerInterface
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Print failed');
+      }
+
+      alert('Label printed successfully!');
+      onClose();
+    } catch (error: any) {
+      console.error("Thermal print error:", error);
+      alert(`Thermal print failed: ${error.message}\nUsing standard print instead.`);
+      handlePrint();
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-screen overflow-y-auto">
@@ -257,7 +292,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
               Cancel
             </button>
             <button
-              onClick={handlePrint}
+              onClick={handleThermalPrint}
               className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-[14px] rounded-lg shadow-2xl hover:shadow-purple-500/50 transition transform hover:scale-105"
             >
               Print Label ({size.widthMm}×{size.heightMm}mm)
