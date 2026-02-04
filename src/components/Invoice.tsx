@@ -373,16 +373,18 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
         // ===== HEADER =====
         .align("center")
-        .text(invoiceData.businessInfo.name + "\n")  // NOT bold
         .bold(true)
+        .text(invoiceData.businessInfo.name + "\n")
         .text("KITCHEN ORDER TICKET\n")
         .bold(false)
         .newline()
 
         // ===== META INFO =====
         .align("left")
-        .bold(true).text("Table: ").bold(false).text((invoiceData.tableNumber || "N/A") + "\n")
-        .bold(true).text("Guests: ").bold(false).text(String(invoiceData.guestNumber || "N/A") + "\n")
+        .bold(true)
+        .text(`Table: ${invoiceData.tableNumber || "N/A"}\n`)
+        .text(`Guests: ${invoiceData.guestNumber || "N/A"}\n`)
+        .bold(false)
         .text(new Date(invoiceData.date).toLocaleString() + "\n")
         .text("────────────────────────────────\n")
         .newline();
@@ -403,7 +405,13 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
         // Calculate spacing for proper alignment
         const spacing = WIDTH - noStr.length - itemName.length - qtyStr.length - 6;
-        receipt = receipt.text(`${noStr}      ${itemName}${" ".repeat(Math.max(spacing, 1))}${qtyStr}\n`);
+
+        // No. is normal, Name and Qty are bold
+        receipt = receipt
+          .text(`${noStr}      `)
+          .bold(true)
+          .text(`${itemName}${" ".repeat(Math.max(spacing, 1))}${qtyStr}\n`)
+          .bold(false);
 
         // Item details/attributes (if any)
         if (item.details) {
