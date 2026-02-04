@@ -2,6 +2,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import JsBarcode from "jsbarcode";
 import { useReactToPrint } from "react-to-print";
+import { BASE_URL } from "@/api/api";
 
 interface LabelSize {
   id: string;
@@ -125,7 +126,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
       // Get printer interface from localStorage or use default
       const printerInterface = localStorage.getItem('printerInterface') || 'tcp://192.168.1.100';
 
-      const response = await fetch('http://localhost:3000/api/thermal-print/barcode', {
+      const response = await fetch(`${BASE_URL}/thermal-print/barcode`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

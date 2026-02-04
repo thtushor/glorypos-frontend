@@ -5,7 +5,7 @@ import html2canvas from "html2canvas";
 import { getExpiryDate } from "@/utils/utils";
 import { useQuery } from "@tanstack/react-query";
 import AXIOS from "@/api/network/Axios";
-import { ORDERS_URL } from "@/api/api";
+import { BASE_URL, ORDERS_URL } from "@/api/api";
 import Spinner from "./Spinner";
 import { toast } from "react-toastify";
 import { useReactToPrint } from "react-to-print";
@@ -661,7 +661,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     try {
       const printerInterface = localStorage.getItem('printerInterface') || 'tcp://192.168.1.100';
 
-      const response = await fetch('http://localhost:3000/api/thermal-print/kot', {
+      const response = await fetch(`${BASE_URL}/thermal-print/kot`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -704,7 +704,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     try {
       const printerInterface = localStorage.getItem('printerInterface') || 'tcp://192.168.1.100';
 
-      const response = await fetch('http://localhost:3000/api/thermal-print/invoice', {
+      const response = await fetch(`${BASE_URL}/thermal-print/invoice`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
