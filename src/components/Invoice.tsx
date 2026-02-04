@@ -452,72 +452,78 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         // ===== HEADER =====
         .align("center")
         .bold(true)
-        .text(invoiceData.businessInfo.name)
+        .text(invoiceData.businessInfo.name + "\n")
         .bold(false)
-        .newline()
-        .text(invoiceData.businessInfo.address)
-        .newline()
-        .text(`Tel: ${invoiceData.businessInfo.phone}`)
-        .newline()
-        .text(new Date(invoiceData.date).toLocaleString())
-        .newline()
+        .text(invoiceData.businessInfo.address + "\n")
+        .text(`Tel: ${invoiceData.businessInfo.phone}\n`)
+        .text("────────────────────────────────\n")
         .newline()
 
         .bold(true)
-        .text("INVOICE")
+        .text("INVOICE\n")
         .bold(false)
         .newline()
 
         // ===== META =====
         .align("left")
-        .line(`Invoice #: ${invoiceData.invoiceNumber}`);
+        .text(`Invoice #: ${invoiceData.invoiceNumber}\n`)
+        .align("center")
+        .text(`Date: ${new Date(invoiceData.date).toLocaleString()}\n`)
+        .newline()
+        .align("left");
 
       if (invoiceData.tableNumber) {
-        receipt = receipt.line(`Table: ${invoiceData.tableNumber}`);
+        receipt = receipt.bold(true).text("Table: ").bold(false).text(invoiceData.tableNumber + "\n");
       }
       if (invoiceData.guestNumber) {
-        receipt = receipt.line(`Guests: ${invoiceData.guestNumber}`);
+        receipt = receipt.bold(true).text("Guests: ").bold(false).text(String(invoiceData.guestNumber) + "\n");
       }
 
       receipt = receipt
-        .line(`Customer: ${invoiceData.customer.name}`)
-        .line(`Phone: ${invoiceData.customer.phone}`)
-        .text("────────────────────────────────\n");
+        .bold(true).text("Customer: ").bold(false).text(invoiceData.customer.name + "\n")
+        .bold(true).text("Phone: ").bold(false).text(invoiceData.customer.phone + "\n")
+        .text("────────────────────────────────\n")
+        .newline();
+
+      // ===== ITEMS HEADER =====
+      receipt = receipt
+        .bold(true)
+        .text("QTY   ITEM                    TOTAL\n")
+        .bold(false)
+        .newline();
 
       // ===== ITEMS =====
       invoiceData.items.forEach((item) => {
-        receipt = receipt.text(
-          twoColumn(
-            `${item.quantity} x ${item.productName}`,
-            money.format(item.subtotal)
-          )
-        );
+        // Line 1: Quantity and Item Name with Total
+        const qtyStr = String(item.quantity);
+        const itemName = item.productName;
+        const priceStr = money.format(item.subtotal);
+
+        // Calculate spacing for proper alignment
+        const spacing = WIDTH - qtyStr.length - itemName.length - priceStr.length - 6;
+        receipt = receipt.text(`${qtyStr}      ${itemName}${" ".repeat(Math.max(spacing, 1))}${priceStr}\n`);
+
+        // Line 2: Item details/attributes (if any)
         if (item.details) {
-          receipt = receipt.text(`  ${item.details}\n`);
+          receipt = receipt.text(`       ${item.details}\n`);
         }
+        receipt = receipt.newline();
       });
 
-      receipt = receipt.text("────────────────────────────────\n");
+      receipt = receipt.text("────────────────────────────────\n").newline();
 
       // ===== TOTAL =====
       receipt = receipt
-        .text(twoColumn("Subtotal", money.format(Number(invoiceData.summary.subtotal))))
-        .text(twoColumn(`Tax (${invoiceData.summary.taxRate})`, money.format(Number(invoiceData.summary.tax))));
-
-      if (Number(invoiceData.summary.discount) > 0) {
-        receipt = receipt.text(
-          twoColumn(
-            `Discount (${invoiceData.summary.discountRate})`,
-            `-${money.format(Number(invoiceData.summary.discount))}`
-          )
-        );
-      }
+        .text(twoColumn("Subtotal:", money.format(Number(invoiceData.summary.subtotal))))
+        .text(twoColumn(`Tax (${invoiceData.summary.taxRate}):`, money.format(Number(invoiceData.summary.tax))))
+        .text("────────────────────────────────\n")
+        .newline();
 
       receipt = receipt
-        .text("────────────────────────────────\n")
         .bold(true)
-        .text(twoColumn("TOTAL", money.format(Number(invoiceData.summary.total))))
+        .text(twoColumn("GRAND TOTAL:", money.format(Number(invoiceData.summary.total))))
         .bold(false)
+        .text("────────────────────────────────\n")
         .newline();
 
       // Payment info
@@ -527,26 +533,26 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           : invoiceData.payment.method.toUpperCase();
 
       receipt = receipt
-        .text(twoColumn("Payment Method", paymentMethod))
-        .text(twoColumn("Payment Status", invoiceData.payment.status))
-        .text(twoColumn("Paid Amount", money.format(Number(invoiceData.payment.paidAmount))));
+        .text(twoColumn("Payment Method:", paymentMethod))
+        .text(twoColumn("Payment Status:", invoiceData.payment.status))
+        .text(twoColumn("Paid Amount:", money.format(Number(invoiceData.payment.paidAmount))));
 
       if (invoiceData.payment.remainingAmount > 0) {
         receipt = receipt.text(
-          twoColumn("Remaining", money.format(Number(invoiceData.payment.remainingAmount)))
+          twoColumn("Remaining:", money.format(Number(invoiceData.payment.remainingAmount)))
         );
       }
 
+      receipt = receipt.text("────────────────────────────────\n").newline();
+
       // ===== FOOTER =====
       receipt = receipt
-        .newline()
         .align("center")
-        .text("Thank you for your business!")
-        .newline()
-        .text(invoiceData.businessInfo.email)
-        .newline()
-        .text(`Tax ID: ${invoiceData.businessInfo.taxId}`)
-        .newline()
+        .bold(true)
+        .text("Thank you for your business!\n")
+        .bold(false)
+        .text(invoiceData.businessInfo.email + "\n")
+        .text(`Tax ID: ${invoiceData.businessInfo.taxId}\n`)
         .newline();
 
       const encoded = receipt.cut().encode();
