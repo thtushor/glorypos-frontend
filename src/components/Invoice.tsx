@@ -570,64 +570,38 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   // Handle KOT download as image
   const handleKOTDownload = async () => {
     if (!kotRef.current || !invoiceData) {
-      console.log('KOT download aborted: ref or invoiceData missing');
       toast.error('Invoice data not available');
       return;
     }
 
     try {
-      console.log('Starting KOT download...');
       const element = kotRef.current;
-      const originalDisplay = element.style.display;
-      const originalVisibility = element.style.visibility;
-      const originalPosition = element.style.position;
 
-      // Make visible but keep it off-screen for proper rendering
-      element.style.display = 'block';
-      element.style.visibility = 'visible';
-      element.style.position = 'absolute';
-      element.style.left = '-9999px';
-      element.style.top = '0';
+      // Wait a bit to ensure everything is rendered
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Wait for the element to render properly
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      console.log('Capturing KOT with html2canvas...');
       const canvas = await html2canvas(element, {
         backgroundColor: '#ffffff',
         scale: 3,
         useCORS: true,
         allowTaint: true,
         logging: false,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
       });
 
-      console.log('Canvas created:', canvas.width, 'x', canvas.height);
-
-      // Restore original state
-      element.style.display = originalDisplay;
-      element.style.visibility = originalVisibility;
-      element.style.position = originalPosition;
-      element.style.left = '';
-      element.style.top = '';
-
-      // Convert canvas to data URL and download
-      const dataUrl = canvas.toDataURL('image/png');
-      console.log('Data URL created, length:', dataUrl.length);
-
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `KOT-${invoiceData.invoiceNumber}-${Date.now()}.png`;
-
-      // Append to body, click, then remove
-      document.body.appendChild(link);
-      console.log('Triggering download...');
-      link.click();
-      document.body.removeChild(link);
-
-      console.log('KOT download triggered successfully');
-      toast.success("KOT downloaded successfully");
+      // Convert canvas to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `KOT-${invoiceData.invoiceNumber}-${Date.now()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          toast.success("KOT downloaded successfully");
+        }
+      }, 'image/png');
 
     } catch (error) {
       console.error('KOT download failed:', error);
@@ -638,64 +612,38 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   // Handle Invoice download as image
   const handleInvoiceDownload = async () => {
     if (!invoiceRef.current || !invoiceData) {
-      console.log('Invoice download aborted: ref or invoiceData missing');
       toast.error('Invoice data not available');
       return;
     }
 
     try {
-      console.log('Starting Invoice download...');
       const element = invoiceRef.current;
-      const originalDisplay = element.style.display;
-      const originalVisibility = element.style.visibility;
-      const originalPosition = element.style.position;
 
-      // Make visible but keep it off-screen for proper rendering
-      element.style.display = 'block';
-      element.style.visibility = 'visible';
-      element.style.position = 'absolute';
-      element.style.left = '-9999px';
-      element.style.top = '0';
+      // Wait a bit to ensure everything is rendered
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Wait for the element to render properly
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      console.log('Capturing Invoice with html2canvas...');
       const canvas = await html2canvas(element, {
         backgroundColor: '#ffffff',
         scale: 3,
         useCORS: true,
         allowTaint: true,
         logging: false,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
       });
 
-      console.log('Canvas created:', canvas.width, 'x', canvas.height);
-
-      // Restore original state
-      element.style.display = originalDisplay;
-      element.style.visibility = originalVisibility;
-      element.style.position = originalPosition;
-      element.style.left = '';
-      element.style.top = '';
-
-      // Convert canvas to data URL and download
-      const dataUrl = canvas.toDataURL('image/png');
-      console.log('Data URL created, length:', dataUrl.length);
-
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `Invoice-${invoiceData.invoiceNumber}-${Date.now()}.png`;
-
-      // Append to body, click, then remove
-      document.body.appendChild(link);
-      console.log('Triggering download...');
-      link.click();
-      document.body.removeChild(link);
-
-      console.log('Invoice download triggered successfully');
-      toast.success("Invoice downloaded successfully");
+      // Convert canvas to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `Invoice-${invoiceData.invoiceNumber}-${Date.now()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          toast.success("Invoice downloaded successfully");
+        }
+      }, 'image/png');
 
     } catch (error) {
       console.error('Invoice download failed:', error);
@@ -999,8 +947,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           </div>
         </div>
 
-        {/* KOT Receipt (Hidden, only for printing) */}
-        <div style={{ display: 'none' }}>
+        {/* KOT Receipt (Hidden, only for downloading) */}
+        <div style={{ position: 'fixed', left: '-9999px', top: '0', zIndex: -1 }}>
           <div ref={kotRef} id="kot-print-content" style={{
             width: '220px',
             maxWidth: '220px',
@@ -1123,8 +1071,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           </div>
         </div>
 
-        {/* Invoice Receipt (Hidden, only for printing) - 80mm POS thermal */}
-        <div style={{ display: 'none' }}>
+        {/* Invoice Receipt (Hidden, only for downloading) - 80mm POS thermal */}
+        <div style={{ position: 'fixed', left: '-9999px', top: '0', zIndex: -1 }}>
           <div ref={invoiceRef} id="invoice-print-content" style={{
             width: '300px',
             maxWidth: '300px',
