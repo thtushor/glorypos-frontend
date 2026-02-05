@@ -9,6 +9,7 @@ import LoginContainer from "../components/LoginContainer";
 import Spinner from "@/components/Spinner";
 import AlertMsg from "@/components/shared/AlertMsg";
 import Logo from "@/components/Logo";
+import PhygridTestButton from "@/components/PhygridTestButton";
 
 interface Credentials {
   email: string;
@@ -122,7 +123,9 @@ const Login: React.FC = () => {
               Register now for new account
             </Link>
           </div>
+
         </form>
+        <PhygridTestButton />
       </div>
     </LoginContainer>
   );

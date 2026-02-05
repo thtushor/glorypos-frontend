@@ -12,6 +12,8 @@
   "dependencies": {
     "@headlessui/react": "^2.2.9",
     "@hookform/resolvers": "^5.2.2",
+    "@phygrid/hub-client": "^4.4.26",
+    "@phygrid/thermal-printer": "^4.4.26",
     "@point-of-sale/receipt-printer-encoder": "^3.0.3",
     "@tanstack/react-query": "^5.64.1",
     "axios": "^1.7.9",
