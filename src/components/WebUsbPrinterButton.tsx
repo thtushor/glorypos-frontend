@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
 
-const WebUsbPrinterButton = () => {
+const WebUsbPrinterButton = ({ className = "" }: { className?: string }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -156,15 +156,15 @@ const WebUsbPrinterButton = () => {
     };
 
     return (
-        <div className="w-full">
+        <div className="flex flex-col">
             <button
                 onClick={handlePrint}
                 disabled={loading}
-                className="w-full py-4 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
+                className={`py-2 px-3 border border-gray-300 text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary ${className}`}
             >
-                {loading ? 'Printing...' : 'Test WebUSB (Exact Match)'}
+                {loading ? 'Printing...' : 'WebUSB Print'}
             </button>
-            {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+            {error && <span className="text-red-500 text-[10px] mt-1 text-center bg-white px-1">{error}</span>}
         </div>
     );
 };

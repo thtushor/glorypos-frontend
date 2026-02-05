@@ -128,11 +128,16 @@ const Login: React.FC = () => {
           </div>
 
         </form>
-        <div className="grid grid-cols-2 gap-4 mt-8">
-          <PhygridTestButton />
-          <WebUsbPrinterButton />
-          <LegacyEncoderButton />
-          <BrowserPrintButton />
+      </div>
+
+      {/* Developer Printer Tools Widget */}
+      <div className="fixed top-0 left-0 right-0 z-50 p-2 flex justify-center pointer-events-none">
+        <div className="bg-white/90 backdrop-blur shadow-md rounded-full px-4 py-2 flex gap-2 pointer-events-auto border border-gray-200">
+          <span className="text-xs font-semibold text-gray-400 flex items-center mr-2 uppercase tracking-wider">Printer Dev Tools:</span>
+          <WebUsbPrinterButton className="!py-1.5 !px-3 !text-[11px]" />
+          <LegacyEncoderButton className="!py-1.5 !px-3 !text-[11px]" />
+          <BrowserPrintButton className="!py-1.5 !px-3 !text-[11px]" />
+          <PhygridTestButton className="!py-1.5 !px-3 !text-[11px]" />
         </div>
       </div>
     </LoginContainer>

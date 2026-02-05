@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 
-const BrowserPrintButton = () => {
+const BrowserPrintButton = ({ className = "" }: { className?: string }) => {
     const componentRef = useRef<HTMLDivElement>(null);
 
     const handlePrint = useReactToPrint({
@@ -10,7 +10,7 @@ const BrowserPrintButton = () => {
     });
 
     return (
-        <div className="w-full flex flex-col items-center">
+        <>
             {/* Hidden printable content */}
             <div style={{ display: 'none' }}>
                 <div ref={componentRef} style={{
@@ -118,11 +118,11 @@ const BrowserPrintButton = () => {
 
             <button
                 onClick={() => handlePrint()}
-                className="w-full h-full py-4 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
+                className={`py-2 px-3 border border-gray-300 text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary ${className}`}
             >
-                Test Browser Print (HTML)
+                Browser Print
             </button>
-        </div>
+        </>
     );
 };
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ThermalPrinter } from '@phygrid/thermal-printer';
 
-const PhygridTestButton = () => {
+const PhygridTestButton = ({ className = "" }: { className?: string }) => {
     const [loading, setLoading] = useState(false);
 
     const handlePrint = async () => {
@@ -100,6 +100,7 @@ const PhygridTestButton = () => {
             printer
                 // Mix of sizes in one line is tricky in some libs, but Phygrid usually supports chaining
                 // If not, we might need separate calls. assuming new line for safety or constructing line manually.
+                // For safety in this test, I will keep on same line but note potential hardware quirk.
                 .addText('GRAND TOTAL:               ', {
                     align: 'left',
                     bold: true,
@@ -145,22 +146,20 @@ const PhygridTestButton = () => {
 
         } catch (error: any) {
             console.error('Phygrid print error:', error);
-            alert(`Print failed: ${error.message}`);
+            alert(`Print failed: ${error.message} `);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="w-full">
-            <button
-                onClick={handlePrint}
-                disabled={loading}
-                className="w-full py-4 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
-            >
-                {loading ? 'Printing...' : 'Test Phygrid (Exact Match)'}
-            </button>
-        </div>
+        <button
+            onClick={handlePrint}
+            disabled={loading}
+            className={`py - 2 px - 3 border border - gray - 300 text - xs font - medium rounded shadow - sm text - gray - 700 bg - white hover: bg - gray - 50 focus: outline - none focus: ring - 2 focus: ring - offset - 2 focus: ring - brand - primary ${className} `}
+        >
+            {loading ? 'Printing...' : 'Phygrid Print'}
+        </button>
     );
 };
 
