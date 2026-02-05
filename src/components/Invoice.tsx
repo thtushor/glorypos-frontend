@@ -1,11 +1,12 @@
 import React, { useRef, useMemo, useState } from "react";
-import { FaPrint, FaMoneyBill, FaCreditCard, FaWallet, FaUtensils, FaDownload } from "react-icons/fa";
+import { FaPrint, FaMoneyBill, FaCreditCard, FaWallet, FaUtensils, FaDownload, FaEye } from "react-icons/fa";
+import Modal from "./Modal";
 import html2canvas from "html2canvas";
 // import LogoSvg from "./icons/LogoSvg";
 import { getExpiryDate } from "@/utils/utils";
 import { useQuery } from "@tanstack/react-query";
 import AXIOS from "@/api/network/Axios";
-import { BASE_URL, ORDERS_URL } from "@/api/api";
+import { ORDERS_URL } from "@/api/api";
 import Spinner from "./Spinner";
 import { toast } from "react-toastify";
 import { useReactToPrint } from "react-to-print";
@@ -98,6 +99,8 @@ interface InvoiceProps {
 
 const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const [printing, setPrinting] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const kotRef = useRef<HTMLDivElement>(null);
@@ -657,94 +660,40 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     }
   };
 
-  // Thermal KOT Print (Server-side)
-  const handleThermalKOTPrint = async () => {
-    if (!invoiceData) return;
 
-    setPrinting(true);
-    setError(null);
+
+
+  // Handle View in full screen modal
+  const handleView = async () => {
+    if (!invoiceRef.current || !invoiceData) {
+      toast.error('Invoice data not available');
+      return;
+    }
 
     try {
-      const printerInterface = localStorage.getItem('printerInterface') || 'tcp://192.168.1.100';
+      const element = invoiceRef.current;
 
-      const response = await fetch(`${BASE_URL}/thermal-print/kot`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          invoiceNumber: invoiceData.invoiceNumber,
-          tableNumber: invoiceData.tableNumber,
-          guestNumber: invoiceData.guestNumber,
-          date: invoiceData.date,
-          items: invoiceData.items,
-          specialNotes: invoiceData.specialNotes,
-          businessName: invoiceData.businessInfo.name,
-          printerInterface
-        })
+      // Wait a bit to ensure everything is rendered
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#ffffff',
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
       });
 
-      const result = await response.json();
+      const imageUrl = canvas.toDataURL("image/png");
+      setPreviewImage(imageUrl);
+      setShowPreviewModal(true);
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Print failed');
-      }
-
-      toast.success('KOT printed successfully via thermal printer!');
-    } catch (error: any) {
-      console.error("Thermal KOT print error:", error);
-      setError(error.message);
-      toast.error(`Thermal print failed: ${error.message}`);
-    } finally {
-      setPrinting(false);
+    } catch (error) {
+      console.error('View failed:', error);
+      toast.error('Failed to generate preview');
     }
   };
 
-  // Thermal Invoice Print (Server-side)
-  const handleThermalInvoicePrint = async () => {
-    if (!invoiceData) return;
-
-    setPrinting(true);
-    setError(null);
-
-    try {
-      const printerInterface = localStorage.getItem('printerInterface') || 'tcp://192.168.1.100';
-
-      const response = await fetch(`${BASE_URL}/thermal-print/invoice`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          invoiceNumber: invoiceData.invoiceNumber,
-          tableNumber: invoiceData.tableNumber,
-          guestNumber: invoiceData.guestNumber,
-          date: invoiceData.date,
-          items: invoiceData.items,
-          summary: invoiceData.summary,
-          payment: invoiceData.payment,
-          customer: invoiceData.customer,
-          businessInfo: invoiceData.businessInfo,
-          specialNotes: invoiceData.specialNotes,
-          printerInterface
-        })
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Print failed');
-      }
-
-      toast.success('Invoice printed successfully via thermal printer!');
-    } catch (error: any) {
-      console.error("Thermal Invoice print error:", error);
-      setError(error.message);
-      toast.error(`Thermal print failed: ${error.message}`);
-    } finally {
-      setPrinting(false);
-    }
-  };
   console.log({ handlePrint })
 
   if (!orderId) return null;
@@ -1361,18 +1310,19 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                 <span className="hidden sm:inline">{printing ? "Printing..." : "Print KOT"}</span>
                 <span className="sm:hidden">KOT</span>
               </button>
-              <button
-                onClick={handleThermalKOTPrint}
-                disabled={!invoiceData || invoiceData.items.length === 0 || printing}
-                className="px-3 py-1.5 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <FaUtensils className="w-3 h-3" />
-                <span className="hidden sm:inline">{printing ? "Printing..." : "Thermal KOT"}</span>
-                <span className="sm:hidden">T-KOT</span>
-              </button>
+
             </>
           )}
 
+          <button
+            onClick={handleView}
+            disabled={!invoiceData || invoiceData.items.length === 0}
+            className="px-3 py-1.5 text-xs font-medium text-teal-600 border border-teal-600 hover:bg-teal-50 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FaEye className="w-3 h-3" />
+            <span className="hidden sm:inline">View Invoice</span>
+            <span className="sm:hidden">View</span>
+          </button>
           <button
             onClick={handleInvoiceDownload}
             disabled={!invoiceData || invoiceData.items.length === 0}
@@ -1391,19 +1341,48 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             <span className="hidden sm:inline">{printing ? "Printing..." : "Print Invoice"}</span>
             <span className="sm:hidden">Invoice</span>
           </button>
-          <button
-            onClick={handleThermalInvoicePrint}
-            disabled={!invoiceData || invoiceData.items.length === 0 || printing}
-            className="px-3 py-1.5 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <FaPrint className="w-3 h-3" />
-            <span className="hidden sm:inline">{printing ? "Printing..." : "Thermal Invoice"}</span>
-            <span className="sm:hidden">T-Inv</span>
-          </button>
+
 
           {error && <p className="text-xs text-red-500 w-full text-right mt-1">{error}</p>}
         </div>
       </div>
+
+      <Modal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        title="Invoice Preview"
+        maxWidth="4xl"
+      >
+        <div className="flex justify-center bg-gray-100 p-4 rounded min-h-[50vh]">
+          {previewImage ? (
+            <img
+              src={previewImage}
+              alt="Invoice Preview"
+              className="max-w-full h-auto shadow-lg border"
+              style={{ maxHeight: '80vh' }}
+            />
+          ) : (
+            <div className="flex items-center justify-center p-12">
+              <Spinner color="#32cd32" size="40px" />
+            </div>
+          )}
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={() => {
+              if (previewImage) {
+                const link = document.createElement('a');
+                link.href = previewImage;
+                link.download = `Invoice-${invoiceData?.invoiceNumber || 'preview'}.png`;
+                link.click();
+              }
+            }}
+            className="px-4 py-2 text-white bg-brand-primary hover:bg-brand-hover rounded transition-colors text-sm font-medium flex items-center gap-2"
+          >
+            <FaDownload /> Download Image
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };
