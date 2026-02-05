@@ -10,6 +10,7 @@ import Spinner from "@/components/Spinner";
 import AlertMsg from "@/components/shared/AlertMsg";
 import Logo from "@/components/Logo";
 import PhygridTestButton from "@/components/PhygridTestButton";
+import EscPosTestButton from "@/components/EscPosTestButton";
 import WebUsbPrinterButton from "@/components/WebUsbPrinterButton";
 import LegacyEncoderButton from "@/components/LegacyEncoderButton";
 import BrowserPrintButton from "@/components/BrowserPrintButton";
@@ -138,6 +139,7 @@ const Login: React.FC = () => {
           <LegacyEncoderButton className="!py-1.5 !px-3 !text-[11px]" />
           <BrowserPrintButton className="!py-1.5 !px-3 !text-[11px]" />
           <PhygridTestButton className="!py-1.5 !px-3 !text-[11px]" />
+          <EscPosTestButton className="!py-1.5 !px-3 !text-[11px]" />
         </div>
       </div>
     </LoginContainer>
