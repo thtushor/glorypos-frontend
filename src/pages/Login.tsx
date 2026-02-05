@@ -10,6 +10,9 @@ import Spinner from "@/components/Spinner";
 import AlertMsg from "@/components/shared/AlertMsg";
 import Logo from "@/components/Logo";
 import PhygridTestButton from "@/components/PhygridTestButton";
+import WebUsbPrinterButton from "@/components/WebUsbPrinterButton";
+import LegacyEncoderButton from "@/components/LegacyEncoderButton";
+import BrowserPrintButton from "@/components/BrowserPrintButton";
 
 interface Credentials {
   email: string;
@@ -125,7 +128,12 @@ const Login: React.FC = () => {
           </div>
 
         </form>
-        <PhygridTestButton />
+        <div className="grid grid-cols-2 gap-4 mt-8">
+          <PhygridTestButton />
+          <WebUsbPrinterButton />
+          <LegacyEncoderButton />
+          <BrowserPrintButton />
+        </div>
       </div>
     </LoginContainer>
   );

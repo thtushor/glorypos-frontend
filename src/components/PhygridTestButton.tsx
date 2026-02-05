@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { ThermalPrinter } from '@phygrid/thermal-printer';
-// import { PeripheralInstance } from '@phygrid/hub-client';
 
 const PhygridTestButton = () => {
     const [loading, setLoading] = useState(false);
@@ -8,8 +7,6 @@ const PhygridTestButton = () => {
     const handlePrint = async () => {
         setLoading(true);
         try {
-            // NOTE: For actual printing, you need to connect to the Phygrid Hub and get a real PeripheralInstance.
-            // This mock allows the code to run and generate the commands for testing purposes.
             const peripheralInstance = {
                 emit: async (event: string, data: any) => {
                     console.log('🖨️ Mock Printer Emit:', event, data);
@@ -20,6 +17,9 @@ const PhygridTestButton = () => {
             } as any;
 
             const printer = new ThermalPrinter(peripheralInstance);
+
+            const solidLine = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'; // 48 chars
+            const dashedLine = '------------------------------------------------'; // 48 chars
 
             // Header
             printer
@@ -33,7 +33,7 @@ const PhygridTestButton = () => {
                 .addText('\n')
                 .addText('Tel: +66637475569', { align: 'center' })
                 .addText('\n')
-                .addText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', { align: 'center', bold: true }) // Separator
+                .addText(solidLine, { align: 'center', bold: true })
                 .addText('\n');
 
             // Invoice Title
@@ -51,64 +51,81 @@ const PhygridTestButton = () => {
 
             // Customer Info
             printer
-                .addText('Guests: 1', { align: 'left' })
+                .addText('Guests: ', { align: 'left', bold: true })
+                .addText('1', { align: 'left' })
                 .addText('\n')
-                .addText('Customer: Walk-in Customer', { align: 'left' })
+                .addText('Customer: ', { align: 'left', bold: true })
+                .addText('Walk-in Customer', { align: 'left' })
                 .addText('\n')
-                .addText('Phone: N/A', { align: 'left' })
+                .addText('Phone: ', { align: 'left', bold: true })
+                .addText('N/A', { align: 'left' })
                 .addText('\n')
-                .addText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', { align: 'center', bold: true })
+                .addText(solidLine, { align: 'center', bold: true })
                 .addText('\n');
 
             // Items Header
             printer
-                .addText('QTY   ITEM                  TOTAL', { bold: true })
+                .addText('QTY   ITEM                            TOTAL', { bold: true })
                 .addText('\n')
-                .addText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', { align: 'center' })
+                .addText(solidLine, { align: 'center' })
                 .addText('\n');
 
             // Item 1
             printer
-                .addText('1     AUDEMARS PIGUET (AP)  ฿3,000.00', { align: 'left' })
+                .addText('1     AUDEMARS PIGUET (AP)        ฿3,000.00', { align: 'left' })
                 .addText('\n')
-                .addText('      ROYAL OAK, CHRONOGRAPH', { align: 'left' })
+                // Indention: 6 spaces to align with ITEM
+                .addText('      ROYAL OAK,', { align: 'left' })
                 .addText('\n')
-                .addText('      FULL YELLOW GOLD, BLUE', { align: 'left' })
+                .addText('      CHRONOGRAPH, FULL', { align: 'left' })
                 .addText('\n')
-                .addText('      FACE GOLD - NORMAL', { align: 'left' })
+                .addText('      YELLOW GOLD, BLUE FACE', { align: 'left' })
                 .addText('\n')
-                .addText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', { align: 'center' })
+                .addText('      GOLD - NORMAL', { align: 'left' })
+                .addText('\n')
+                .addText(solidLine, { align: 'center', bold: true })
                 .addText('\n');
 
             // Totals
+            // Manual spacing for 48 chars
             printer
-                .addText('Subtotal:                 ฿3,000.00', { align: 'left' })
+                .addText('Subtotal:                      ฿3,000.00', { align: 'left' })
                 .addText('\n')
-                .addText('Tax (0.00%):                  ฿0.00', { align: 'left' })
+                .addText('Tax (0.00%):                       ฿0.00', { align: 'left' })
                 .addText('\n')
-                .addText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', { align: 'center' })
+                .addText(solidLine, { align: 'center', bold: true })
                 .addText('\n');
 
             // Grand Total
             printer
-                .addText('GRAND TOTAL:          ฿3,000.00', {
+                // Mix of sizes in one line is tricky in some libs, but Phygrid usually supports chaining
+                // If not, we might need separate calls. assuming new line for safety or constructing line manually.
+                .addText('GRAND TOTAL:               ', {
                     align: 'left',
-                    size: { width: 1, height: 2 }, // Slightly larger
+                    bold: true,
+                    size: { width: 1, height: 1 }
+                })
+                // Note: Switching size mid-line might force newline on some hardware. 
+                // If it breaks, move to separate lines or keep same size.
+                // For safety in this test, I will keep on same line but note potential hardware quirk.
+                .addText('฿3,000.00', {
+                    align: 'right', // align right doesn't work mid-line usually, it applies to whole line
+                    size: { width: 2, height: 1 },
                     bold: true
                 })
                 .addText('\n')
-                .addText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', { align: 'center' })
+                .addText(solidLine, { align: 'center', bold: true })
                 .addText('\n');
 
             // Payment Info
             printer
-                .addText('Payment Method:                CASH', { align: 'left' })
+                .addText('Payment Method:                     CASH', { align: 'left' })
                 .addText('\n')
-                .addText('Payment Status:           completed', { align: 'left' })
+                .addText('Payment Status:                completed', { align: 'left' })
                 .addText('\n')
-                .addText('Paid Amount:              ฿3,000.00', { align: 'left', bold: true })
+                .addText('Paid Amount:                   ฿3,000.00', { align: 'left', bold: true })
                 .addText('\n')
-                .addText('--------------------------------', { align: 'center' }) // Dashed
+                .addText(dashedLine, { align: 'center' }) // Dashed
                 .addText('\n');
 
             // Footer
@@ -124,7 +141,7 @@ const PhygridTestButton = () => {
 
             // Print
             await printer.print();
-            alert('Test print sent!');
+            alert('Test print sent! (Check console for emit)');
 
         } catch (error: any) {
             console.error('Phygrid print error:', error);
@@ -135,13 +152,13 @@ const PhygridTestButton = () => {
     };
 
     return (
-        <div className="mt-4 w-full">
+        <div className="w-full">
             <button
                 onClick={handlePrint}
                 disabled={loading}
-                className="w-full py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
+                className="w-full py-4 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
             >
-                {loading ? 'Printing...' : 'Test Phygrid Invoice'}
+                {loading ? 'Printing...' : 'Test Phygrid (Exact Match)'}
             </button>
         </div>
     );
