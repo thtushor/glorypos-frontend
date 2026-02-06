@@ -1,7 +1,7 @@
 // BarcodeModal.tsx - FINAL VERSION (Perfect Fit Guaranteed)
 import React, { useRef, useState, useEffect } from "react";
 import JsBarcode from "jsbarcode";
-import { useReactToPrint } from "react-to-print";
+// import { useReactToPrint } from "react-to-print";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
 import { toast } from "react-toastify";
 
@@ -90,38 +90,38 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
     generateBarcode("print-barcode");
   }, [sku, selectedSize]);
 
-  const handlePrint = useReactToPrint({
-    contentRef: printRef,
-    pageStyle: `
-      @page { 
-        size: ${size.widthMm}mm ${size.heightMm}mm !important; 
-        margin: 0 !important; 
-      }
-      @media print {
-        html, body { 
-          margin: 0 !important; 
-          padding: 0 !important; 
-          width: ${size.widthMm}mm !important; 
-          height: ${size.heightMm}mm !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        #barcode-print-content {
-          width: ${size.widthMm}mm !important;
-          height: ${size.heightMm}mm !important;
-          margin: 0 !important;
-          padding: 2mm !important;
-          box-sizing: border-box !important;
-        }
-      }
-    `,
-    print: async (printIframe: HTMLIFrameElement) => {
-      const contentWindow = printIframe.contentWindow;
-      if (contentWindow) {
-        contentWindow.print();
-      }
-    }
-  });
+  // const handlePrint = useReactToPrint({
+  //   contentRef: printRef,
+  //   pageStyle: `
+  //     @page { 
+  //       size: ${size.widthMm}mm ${size.heightMm}mm !important; 
+  //       margin: 0 !important; 
+  //     }
+  //     @media print {
+  //       html, body { 
+  //         margin: 0 !important; 
+  //         padding: 0 !important; 
+  //         width: ${size.widthMm}mm !important; 
+  //         height: ${size.heightMm}mm !important;
+  //         -webkit-print-color-adjust: exact !important;
+  //         print-color-adjust: exact !important;
+  //       }
+  //       #barcode-print-content {
+  //         width: ${size.widthMm}mm !important;
+  //         height: ${size.heightMm}mm !important;
+  //         margin: 0 !important;
+  //         padding: 2mm !important;
+  //         box-sizing: border-box !important;
+  //       }
+  //     }
+  //   `,
+  //   print: async (printIframe: HTMLIFrameElement) => {
+  //     const contentWindow = printIframe.contentWindow;
+  //     if (contentWindow) {
+  //       contentWindow.print();
+  //     }
+  //   }
+  // });
 
   // USB Printer utility
   const getPrinter = async () => {

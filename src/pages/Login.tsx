@@ -9,11 +9,11 @@ import LoginContainer from "../components/LoginContainer";
 import Spinner from "@/components/Spinner";
 import AlertMsg from "@/components/shared/AlertMsg";
 import Logo from "@/components/Logo";
-import PhygridTestButton from "@/components/PhygridTestButton";
-import EscPosTestButton from "@/components/EscPosTestButton";
-import WebUsbPrinterButton from "@/components/WebUsbPrinterButton";
-import LegacyEncoderButton from "@/components/LegacyEncoderButton";
-import BrowserPrintButton from "@/components/BrowserPrintButton";
+// import PhygridTestButton from "@/components/PhygridTestButton";
+// import EscPosTestButton from "@/components/EscPosTestButton";
+// import WebUsbPrinterButton from "@/components/WebUsbPrinterButton";
+// import LegacyEncoderButton from "@/components/LegacyEncoderButton";
+// import BrowserPrintButton from "@/components/BrowserPrintButton";
 
 interface Credentials {
   email: string;
