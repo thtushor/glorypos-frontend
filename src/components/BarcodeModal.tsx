@@ -2,7 +2,8 @@
 import React, { useRef, useState, useEffect } from "react";
 import JsBarcode from "jsbarcode";
 import { useReactToPrint } from "react-to-print";
-import { BASE_URL } from "@/api/api";
+import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
+import { toast } from "react-toastify";
 
 interface LabelSize {
   id: string;
@@ -63,6 +64,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
   const [selectedSize, setSelectedSize] = useState<LabelSize>(LABEL_SIZES[0]); // default Craft
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const size = selectedSize;
 
@@ -121,38 +123,70 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
     }
   });
 
-  const handleThermalPrint = async () => {
+  // USB Printer utility
+  const getPrinter = async () => {
     try {
-      // Get printer interface from localStorage or use default
-      const printerInterface = localStorage.getItem('printerInterface') || 'tcp://192.168.1.100';
+      const navigatorAny = navigator as any;
+      // Try previously authorized devices
+      const devices = await navigatorAny.usb.getDevices();
+      if (devices.length > 0) return devices[0];
 
-      const response = await fetch(`${BASE_URL}/thermal-print/barcode`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sku,
-          brandName,
-          categoryName,
-          modelNo,
-          shopName,
-          printerInterface
-        })
+      // First-time setup
+      return await navigatorAny.usb.requestDevice({
+        filters: [{ classCode: 7 }], // Printer class
       });
+    } catch (err) {
+      throw new Error("Printer not connected or permission denied");
+    }
+  };
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Print failed');
+  const handleThermalPrint = async () => {
+    setIsPrinting(true);
+    try {
+      const device = await getPrinter();
+      await device.open();
+      if (!device.configuration) {
+        await device.selectConfiguration(1);
       }
+      await device.claimInterface(0);
 
-      alert('Label printed successfully!');
+      const encoder = new ReceiptPrinterEncoder();
+
+      // Top text line
+      const topText = [brandName, categoryName, modelNo].filter(Boolean).join(" / ");
+
+      const result = encoder
+        .initialize()
+        // 35mm paper ~ 280 dots. Standard font (12x24) -> ~23 chars. 
+        // Setting width helps centering.
+        .width(23)
+        .align('center')
+        .size(0, 0)
+        // Simulate top padding
+        // .text(" ") 
+        .line(topText.substring(0, 25))
+        // Gap
+        .text(" ")
+        .bold(true)
+        .line(`SHOP: ${shopName || ''}`)
+        .bold(false)
+        .barcode(sku || '0000', 'code128', 40) // Reduced height to 40 (~5mm) to fit in 18mm
+        .encode();
+
+      // Transfer data to printer
+      await device.transferOut(1, result);
+
+      await device.releaseInterface(0);
+      await device.close();
+
+      toast.success('Label printed successfully!');
       onClose();
     } catch (error: any) {
       console.error("Thermal print error:", error);
-      alert(`Thermal print failed: ${error.message}\nUsing standard print instead.`);
-      handlePrint();
+      toast.error(`Print failed: ${error.message}. Switching to browser print.`);
+      // handlePrint();
+    } finally {
+      setIsPrinting(false);
     }
   };
 
@@ -288,15 +322,17 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
           <div className="flex justify-center gap-4 mt-5">
             <button
               onClick={onClose}
+              disabled={isPrinting}
               className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-[14px] font-medium  transition"
             >
               Cancel
             </button>
             <button
               onClick={handleThermalPrint}
-              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-[14px] rounded-lg shadow-2xl hover:shadow-purple-500/50 transition transform hover:scale-105"
+              disabled={isPrinting}
+              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-[14px] rounded-lg shadow-2xl hover:shadow-purple-500/50 transition transform hover:scale-105 disabled:opacity-50"
             >
-              Print Label ({size.widthMm}×{size.heightMm}mm)
+              {isPrinting ? "Printing..." : `Print Label (${size.widthMm}×${size.heightMm}mm)`}
             </button>
           </div>
         </div>
