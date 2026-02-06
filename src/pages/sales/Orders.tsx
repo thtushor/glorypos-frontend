@@ -100,21 +100,22 @@ const Orders: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const getTodayDate = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  // const getTodayDate = () => {
+  //   const today = new Date();
+  //   const year = today.getFullYear();
+  //   const month = String(today.getMonth() + 1).padStart(2, '0');
+  //   const day = String(today.getDate()).padStart(2, '0');
+  //   return `${year}-${month}-${day}`;
+  // };
 
   const [filters, setFilters] = useState<FilterParams>({
     page: 1,
     pageSize: 20,
     shopId: user?.id?.toString(),
-    orderStatus: user?.shopType === "restaurant" ? "processing" : "",
-    startDate: getTodayDate(),
-    endDate: getTodayDate()
+    orderStatus: "",
+    // orderStatus: user?.shopType === "restaurant" ? "processing" : "",
+    // startDate: getTodayDate(),
+    // endDate: getTodayDate()
   });
 
   const [isOpen, setIsOpen] = useState(false);
