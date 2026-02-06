@@ -1,5 +1,13 @@
 import React, { useRef, useMemo, useState } from "react";
-import { FaPrint, FaMoneyBill, FaCreditCard, FaWallet, FaUtensils, FaDownload, FaEye } from "react-icons/fa";
+import {
+  FaPrint,
+  FaMoneyBill,
+  FaCreditCard,
+  FaWallet,
+  FaUtensils,
+  FaDownload,
+  FaEye,
+} from "react-icons/fa";
 import Modal from "./Modal";
 import html2canvas from "html2canvas";
 // import LogoSvg from "./icons/LogoSvg";
@@ -12,7 +20,11 @@ import { toast } from "react-toastify";
 import { useReactToPrint } from "react-to-print";
 import LogoSvg from "./icons/LogoSvg";
 import money from "@/utils/money";
-import { useReceiptPrint, type Order, type PrintOptions } from "react-pos-engine";
+import {
+  useReceiptPrint,
+  type Order,
+  type PrintOptions,
+} from "react-pos-engine";
 import { useAuth } from "@/context/AuthContext";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
 // import { useAuth } from "@/context/AuthContext";
@@ -21,7 +33,7 @@ const WIDTH = 32;
 
 function twoColumn(left: string, right: string) {
   const space = Math.max(WIDTH - left.length - right.length, 1);
-  return left + " ".repeat(space) + right + "\n";
+  return left + " ".repeat(space) + right;
 }
 
 interface InvoiceItem {
@@ -98,6 +110,7 @@ interface InvoiceProps {
 }
 
 const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
+  const standardLine = "--------------------------------";
   const [printing, setPrinting] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -118,7 +131,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           padding: 0;
         }
       }
-    `
+    `,
   });
 
   const { user } = useAuth();
@@ -128,7 +141,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     queryFn: async () => {
       try {
         const response = await AXIOS.get(
-          `${ORDERS_URL}/${Number(orderId || 0)}/invoice`
+          `${ORDERS_URL}/${Number(orderId || 0)}/invoice`,
         );
         return response.data;
       } catch (error: any) {
@@ -138,8 +151,6 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     },
     enabled: !!orderId,
   });
-
-
 
   // Transform invoice data to Order format for react-pos-engine
   const receiptOrder: Order | null = useMemo(() => {
@@ -157,7 +168,10 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
     // Invoice Number
     if (invoiceData.invoiceNumber) {
-      individualFields.push({ key: "Invoice #", value: invoiceData.invoiceNumber });
+      individualFields.push({
+        key: "Invoice #",
+        value: invoiceData.invoiceNumber,
+      });
     }
 
     // Table Number
@@ -167,30 +181,46 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
     // Guest Number
     if (invoiceData.guestNumber) {
-      individualFields.push({ key: "Guests", value: String(invoiceData.guestNumber) });
+      individualFields.push({
+        key: "Guests",
+        value: String(invoiceData.guestNumber),
+      });
     }
 
     // Payment Method
     if (invoiceData.payment.method) {
-      const paymentMethodLabel = invoiceData.payment.method === "mobile_banking"
-        ? "Mobile Banking"
-        : invoiceData.payment.method.toUpperCase();
-      individualFields.push({ key: "Payment Method", value: paymentMethodLabel });
+      const paymentMethodLabel =
+        invoiceData.payment.method === "mobile_banking"
+          ? "Mobile Banking"
+          : invoiceData.payment.method.toUpperCase();
+      individualFields.push({
+        key: "Payment Method",
+        value: paymentMethodLabel,
+      });
     }
 
     // Payment Status
     if (invoiceData.payment.status) {
-      individualFields.push({ key: "Payment Status", value: invoiceData.payment.status });
+      individualFields.push({
+        key: "Payment Status",
+        value: invoiceData.payment.status,
+      });
     }
 
     // Order Status
     if (invoiceData.orderStatus) {
-      individualFields.push({ key: "Order Status", value: invoiceData.orderStatus });
+      individualFields.push({
+        key: "Order Status",
+        value: invoiceData.orderStatus,
+      });
     }
 
     // Tax ID
     if (invoiceData.businessInfo.taxId) {
-      individualFields.push({ key: "Tax ID", value: invoiceData.businessInfo.taxId });
+      individualFields.push({
+        key: "Tax ID",
+        value: invoiceData.businessInfo.taxId,
+      });
     }
 
     // Spec
@@ -202,15 +232,20 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     if (invoiceData.payment.remainingAmount > 0) {
       individualFields.push({
         key: "Remaining Amount",
-        value: money.format(Number(invoiceData.payment.remainingAmount))
+        value: money.format(Number(invoiceData.payment.remainingAmount)),
       });
     }
 
     // Special Notes as custom field
-    if (invoiceData.specialNotes !== undefined &&
+    if (
+      invoiceData.specialNotes !== undefined &&
       invoiceData.specialNotes !== null &&
-      String(invoiceData.specialNotes).trim() !== "") {
-      individualFields.push({ key: "Special Notes", value: String(invoiceData.specialNotes) });
+      String(invoiceData.specialNotes).trim() !== ""
+    ) {
+      individualFields.push({
+        key: "Special Notes",
+        value: String(invoiceData.specialNotes),
+      });
     }
 
     // Format custom fields into pairs with pipe separator (max 2 lines)
@@ -227,13 +262,13 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         // Two fields on one line: "Field1: Value1 | Field2: Value2"
         customFields.push({
           key: `${field1.key}: ${field1.value} | ${field2.key}: ${field2.value}`,
-          value: ""
+          value: "",
         });
       } else {
         // Single field on one line: "Field1: Value1"
         customFields.push({
           key: `${field1.key}: ${field1.value}`,
-          value: ""
+          value: "",
         });
       }
     }
@@ -248,12 +283,12 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         if (field2) {
           customFields.push({
             key: `${field1.key}: ${field1.value} | ${field2.key}: ${field2.value}`,
-            value: ""
+            value: "",
           });
         } else {
           customFields.push({
             key: `${field1.key}: ${field1.value}`,
-            value: ""
+            value: "",
           });
         }
       }
@@ -284,7 +319,10 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         name: invoiceData.customer.name,
         address: invoiceData.businessInfo.address,
         phone: invoiceData.customer.phone,
-        email: invoiceData.customer.email !== "N/A" ? invoiceData.customer.email : "",
+        email:
+          invoiceData.customer.email !== "N/A"
+            ? invoiceData.customer.email
+            : "",
       },
       customFields,
       notes,
@@ -292,24 +330,27 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   }, [invoiceData]);
 
   // Print options for react-pos-engine
-  const printOptions: PrintOptions = useMemo(() => ({
-    layout: 2, // Layout 2: Detailed POS w/ Custom Fields
-    alignment: 'center',
-    primaryColor: '#000000',
-    textColor: '#000000',
-    borderColor: '#000000',
-    headerBgColor: '#000000',
-    baseFontSize: 10,
-    paperSize: '80mm', // Standard 80mm receipt paper
-    fontFamily: 'Arial',
-    logoUrl: '',
-    headerText: invoiceData?.businessInfo?.name || '',
-    footerText: 'Thank you for your business!',
-    sellerName: invoiceData?.businessInfo?.name || '',
-    showSignature: false,
-    showTaxBreakdown: true,
-    customCss: '',
-  }), [invoiceData]);
+  const printOptions: PrintOptions = useMemo(
+    () => ({
+      layout: 2, // Layout 2: Detailed POS w/ Custom Fields
+      alignment: "center",
+      primaryColor: "#000000",
+      textColor: "#000000",
+      borderColor: "#000000",
+      headerBgColor: "#000000",
+      baseFontSize: 10,
+      paperSize: "80mm", // Standard 80mm receipt paper
+      fontFamily: "Arial",
+      logoUrl: "",
+      headerText: invoiceData?.businessInfo?.name || "",
+      footerText: "Thank you for your business!",
+      sellerName: invoiceData?.businessInfo?.name || "",
+      showSignature: false,
+      showTaxBreakdown: true,
+      customCss: "",
+    }),
+    [invoiceData],
+  );
 
   // Initialize react-pos-engine print hook
   const { printReceipt } = useReceiptPrint(
@@ -324,7 +365,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       customFields: [],
       notes: "",
     },
-    printOptions
+    printOptions,
   );
 
   // Handle print button click
@@ -353,6 +394,38 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     }
   };
 
+  const WIDTH = 32; // total characters per line
+  const QTY_WIDTH = 5; // "QTY "
+  const ITEM_WIDTH_KOT = WIDTH - QTY_WIDTH - 2;
+
+  const TOTAL_WIDTH = 10; // "  TOTAL"
+  const ITEM_WIDTH = WIDTH - QTY_WIDTH - TOTAL_WIDTH;
+
+  function centerText(text: string, width: number) {
+    const clean = text.trim();
+    const totalSpace = Math.max(width - clean.length - 2, 0); // 2 for spaces
+    const leftDots = Math.floor(totalSpace / 2);
+
+    return "-" + " ".repeat(leftDots) + " " + clean;
+  }
+
+  function wrapText(text: string, maxChars: number) {
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let currentLine = "";
+
+    for (const word of words) {
+      if ((currentLine + (currentLine ? " " : "") + word).length <= maxChars) {
+        currentLine += (currentLine ? " " : "") + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+
+    if (currentLine) lines.push(currentLine);
+    return lines;
+  }
   // Handle KOT print with encoding
   const handleKOTPrint = async () => {
     setPrinting(true);
@@ -373,44 +446,88 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
       let receipt = encoder
         .initialize()
-        .align("center")
-        .bold(true)
-        .text(invoiceData.businessInfo.name)
-        .bold(false)
-        .newline()
-        .bold(true)
-        .text("KITCHEN ORDER TICKET")
-        .bold(false)
-        .newline()
-        .newline()
 
         .align("left")
-        .line(`Table: ${invoiceData.tableNumber || "N/A"} | Guests: ${invoiceData.guestNumber || "N/A"}`)
-        .line(`Date: ${new Date(invoiceData.date).toLocaleString()}`)
-        .text("────────────────────────────────\n");
+        .bold(true)
+        .line(centerText(invoiceData.businessInfo.name, WIDTH))
+        .bold(true)
+        .line(centerText("KITCHEN ORDER TICKET", WIDTH))
+        .align("left")
+        .line(
+          `${centerText(String(new Date(invoiceData.date).toLocaleString()), WIDTH)}`,
+        )
+        .text(standardLine)
+        .align("left");
+      if (invoiceData.tableNumber) {
+        receipt = receipt
+          .bold(false)
+          .line(`Table : ${String(invoiceData.tableNumber || "demo")}`)
+          .bold(false);
+      }
+      if (invoiceData.guestNumber) {
+        receipt = receipt
+          .bold(false)
+          .line(`Guests: ${String(invoiceData.guestNumber)}`)
+          .bold(false);
+      }
 
       // Add items
-      invoiceData.items.forEach((item, index) => {
-        receipt = receipt.text(`${index + 1}. ${item.quantity}x ${item.productName}\n`);
+      receipt = receipt
+        .line(standardLine)
+        .bold(true)
+        .text("QTY ".padEnd(QTY_WIDTH) + "ITEM".padEnd(ITEM_WIDTH_KOT) + "\n")
+        .bold(false);
+
+      // ===== ITEMS =====
+
+      invoiceData.items.forEach((item) => {
+        const qty = String(item.quantity + "x").padEnd(QTY_WIDTH);
+
+        const wrappedNames = wrapText(item.productName, ITEM_WIDTH_KOT);
+
+        // First line → qty + first part of name
+        receipt = receipt.line(qty + wrappedNames[0].padEnd(ITEM_WIDTH_KOT));
+
+        // Remaining lines → name only (aligned under item name)
+        for (let i = 1; i < wrappedNames.length; i++) {
+          receipt = receipt.line(
+            "-" +
+              " ".repeat(QTY_WIDTH - 1) +
+              wrappedNames[i].padEnd(ITEM_WIDTH_KOT),
+          );
+        }
+
         if (item.details) {
-          receipt = receipt.text(`   ${item.details}\n`);
+          const detailsLine = item.details.slice(0, WIDTH - 4);
+
+          receipt = receipt.line("-    " + detailsLine);
         }
       });
 
+      receipt = receipt.line(standardLine);
+
       receipt = receipt
-        .text("────────────────────────────────\n")
-        .align("center")
-        .text(`Total Items: ${invoiceData.items.reduce((sum, item) => sum + item.quantity, 0)}\n`);
+        .bold(true)
+        .align("left")
+        .text(
+          `Total Items:    ${invoiceData.items.reduce((sum, item) => sum + item.quantity, 0)}`,
+        );
 
       // Special notes
-      if (invoiceData.specialNotes && String(invoiceData.specialNotes).trim() !== "") {
+      if (
+        invoiceData.specialNotes &&
+        String(invoiceData.specialNotes).trim() !== ""
+      ) {
         receipt = receipt
-          .newline()
+          .line("")
           .align("left")
           .bold(true)
-          .text("SPECIAL INSTRUCTIONS:\n")
-          .bold(false)
-          .text(String(invoiceData.specialNotes) + "\n");
+          .line("SPECIAL INSTRUCTIONS:")
+          .bold(false);
+
+        wrapText(String(invoiceData.specialNotes), 30).forEach((line) => {
+          receipt = receipt.line(line);
+        });
       }
 
       const encoded = receipt.newline().newline().cut().encode();
@@ -453,110 +570,131 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         .initialize()
 
         // ===== HEADER =====
-        .align("center")
+        .align("left")
         .bold(true)
-        .text(invoiceData.businessInfo.name + "\n")
+        .line(centerText(invoiceData.businessInfo.name, WIDTH))
         .bold(false)
-        .text(invoiceData.businessInfo.address + "\n")
-        .text(`Tel: ${invoiceData.businessInfo.phone}\n`)
-        .text("────────────────────────────────\n")
-        .newline()
+        .line(centerText(invoiceData.businessInfo.address, WIDTH))
+        .line(centerText(`Tel: ${invoiceData.businessInfo.phone}`, WIDTH))
+        .text(standardLine)
 
         .bold(true)
-        .text("INVOICE\n")
+        .line("INVOICE")
         .bold(false)
-        .newline()
 
         // ===== META =====
         .align("left")
-        .text(`Invoice #: ${invoiceData.invoiceNumber}\n`)
-        .align("center")
-        .text(`Date: ${new Date(invoiceData.date).toLocaleString()}\n`)
-        .newline()
+        .line(`Invoice : #${invoiceData.invoiceNumber}`)
+        .align("left")
+        .line(`Date    : ${new Date(invoiceData.date).toLocaleString()}`)
         .align("left");
 
       if (invoiceData.tableNumber) {
-        receipt = receipt.bold(true).text("Table: ").bold(false).text(invoiceData.tableNumber + "\n");
+        receipt = receipt
+          .bold(false)
+          .line(`Table   : ${String(invoiceData.tableNumber || "demo")}`)
+          .bold(false);
       }
       if (invoiceData.guestNumber) {
-        receipt = receipt.bold(true).text("Guests: ").bold(false).text(String(invoiceData.guestNumber) + "\n");
+        receipt = receipt
+          .bold(false)
+          .line(`Guests  : ${String(invoiceData.guestNumber)}`)
+          .bold(false);
       }
 
       receipt = receipt
-        .bold(true).text("Customer: ").bold(false).text(invoiceData.customer.name + "\n")
-        .bold(true).text("Phone: ").bold(false).text(invoiceData.customer.phone + "\n")
-        .text("────────────────────────────────\n")
-        .newline();
+        .bold(false)
+        .line(`Customer: ${invoiceData.customer.name}`)
+        .bold(false)
+        .line(`Phone   : ${invoiceData.customer.phone}`)
+        .line(standardLine);
 
       // ===== ITEMS HEADER =====
       receipt = receipt
         .bold(true)
-        .text("QTY   ITEM                    TOTAL\n")
-        .bold(false)
-        .newline();
+        .text(
+          "QTY ".padEnd(QTY_WIDTH) +
+            "ITEM".padEnd(ITEM_WIDTH) +
+            "TOTAL".padStart(TOTAL_WIDTH) +
+            "\n",
+        )
+        .bold(false);
 
       // ===== ITEMS =====
       invoiceData.items.forEach((item) => {
-        // Line 1: Quantity and Item Name with Total
-        const qtyStr = String(item.quantity);
-        const itemName = item.productName;
-        const priceStr = money.format(item.subtotal);
+        const qty = String(item.quantity + "x").padEnd(QTY_WIDTH);
+        const formatMoney = (amount: number) =>
+          `${Math.round(amount).toString()}`;
+        const total = formatMoney(item.subtotal).padStart(TOTAL_WIDTH - 2);
 
-        // Calculate spacing for proper alignment
-        const spacing = WIDTH - qtyStr.length - itemName.length - priceStr.length - 6;
-        receipt = receipt.text(`${qtyStr}      ${itemName}${" ".repeat(Math.max(spacing, 1))}${priceStr}\n`);
+        // Item name: single line only
+        const itemName = item.productName.slice(0, ITEM_WIDTH);
 
-        // Line 2: Item details/attributes (if any)
+        // Main item line
+        receipt = receipt.line(
+          qty + itemName.padEnd(ITEM_WIDTH - 1) + ".." + total,
+        );
+
+        // Details: start from LEFT with "-   "
         if (item.details) {
-          receipt = receipt.text(`       ${item.details}\n`);
+          const detailsLine = item.details.slice(0, WIDTH - 4);
+
+          receipt = receipt.line("-    " + detailsLine);
         }
-        receipt = receipt.newline();
+
+        receipt = receipt;
       });
 
-      receipt = receipt.text("────────────────────────────────\n").newline();
+      receipt = receipt.text(standardLine);
 
       // ===== TOTAL =====
-      receipt = receipt
-        .text(twoColumn("Subtotal:", money.format(Number(invoiceData.summary.subtotal))))
-        .text(twoColumn(`Tax (${invoiceData.summary.taxRate}):`, money.format(Number(invoiceData.summary.tax))))
-        .text("────────────────────────────────\n")
-        .newline();
+      // receipt = receipt
+      //   .text(
+      //     twoColumn(
+      //       "Subtotal:",
+      //       money.format(Number(invoiceData.summary.subtotal)),
+      //     ),
+      //   )
+      //   .text(standardLine);
 
       receipt = receipt
+        .text("")
         .bold(true)
-        .text(twoColumn("GRAND TOTAL:", money.format(Number(invoiceData.summary.total))))
-        .bold(false)
-        .text("────────────────────────────────\n")
-        .newline();
+        .text(twoColumn("TOTAL:", `${Number(invoiceData.summary.total)}`))
+        .bold(false);
 
       // Payment info
       const paymentMethod =
         invoiceData.payment.method === "mobile_banking"
           ? "Mobile Banking"
-          : invoiceData.payment.method.toUpperCase();
+          : invoiceData.payment.method;
 
       receipt = receipt
-        .text(twoColumn("Payment Method:", paymentMethod))
-        .text(twoColumn("Payment Status:", invoiceData.payment.status))
-        .text(twoColumn("Paid Amount:", money.format(Number(invoiceData.payment.paidAmount))));
+        .text("")
+        .line(twoColumn("Payment Method:", paymentMethod))
+        .line(twoColumn("Payment Status:", invoiceData.payment.status))
+        .bold(true)
+        .text(
+          twoColumn(
+            "Paid Amount:",
+            `${Number(invoiceData.payment.paidAmount)}`,
+          ),
+        );
 
       if (invoiceData.payment.remainingAmount > 0) {
         receipt = receipt.text(
-          twoColumn("Remaining:", money.format(Number(invoiceData.payment.remainingAmount)))
+          twoColumn(
+            "Remaining:",
+            `${Number(invoiceData.payment.remainingAmount || 0)}`,
+          ),
         );
       }
-
-      receipt = receipt.text("────────────────────────────────\n").newline();
-
       // ===== FOOTER =====
       receipt = receipt
-        .align("center")
+        .line(standardLine)
+        .align("left")
         .bold(true)
-        .text("Thank you for your business!\n")
-        .bold(false)
-        .text(invoiceData.businessInfo.email + "\n")
-        .text(`Tax ID: ${invoiceData.businessInfo.taxId}\n`)
-        .newline();
+        .text("...........THANK YOU!...........");
 
       const encoded = receipt.cut().encode();
 
@@ -579,7 +717,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   // Handle KOT download as image
   const handleKOTDownload = async () => {
     if (!kotRef.current || !invoiceData) {
-      toast.error('Invoice data not available');
+      toast.error("Invoice data not available");
       return;
     }
 
@@ -587,10 +725,10 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       const element = kotRef.current;
 
       // Wait a bit to ensure everything is rendered
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const canvas = await html2canvas(element, {
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         scale: 3,
         useCORS: true,
         allowTaint: true,
@@ -601,7 +739,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       canvas.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
+          const link = document.createElement("a");
           link.href = url;
           link.download = `KOT-${invoiceData.invoiceNumber}-${Date.now()}.png`;
           document.body.appendChild(link);
@@ -610,18 +748,17 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           URL.revokeObjectURL(url);
           toast.success("KOT downloaded successfully");
         }
-      }, 'image/png');
-
+      }, "image/png");
     } catch (error) {
-      console.error('KOT download failed:', error);
-      toast.error('Failed to download KOT');
+      console.error("KOT download failed:", error);
+      toast.error("Failed to download KOT");
     }
   };
 
   // Handle Invoice download as image
   const handleInvoiceDownload = async () => {
     if (!invoiceRef.current || !invoiceData) {
-      toast.error('Invoice data not available');
+      toast.error("Invoice data not available");
       return;
     }
 
@@ -629,10 +766,10 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       const element = invoiceRef.current;
 
       // Wait a bit to ensure everything is rendered
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const canvas = await html2canvas(element, {
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         scale: 3,
         useCORS: true,
         allowTaint: true,
@@ -643,7 +780,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       canvas.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
+          const link = document.createElement("a");
           link.href = url;
           link.download = `Invoice-${invoiceData.invoiceNumber}-${Date.now()}.png`;
           document.body.appendChild(link);
@@ -652,21 +789,17 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           URL.revokeObjectURL(url);
           toast.success("Invoice downloaded successfully");
         }
-      }, 'image/png');
-
+      }, "image/png");
     } catch (error) {
-      console.error('Invoice download failed:', error);
-      toast.error('Failed to download invoice');
+      console.error("Invoice download failed:", error);
+      toast.error("Failed to download invoice");
     }
   };
-
-
-
 
   // Handle View in full screen modal
   const handleView = async () => {
     if (!invoiceRef.current || !invoiceData) {
-      toast.error('Invoice data not available');
+      toast.error("Invoice data not available");
       return;
     }
 
@@ -674,10 +807,10 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       const element = invoiceRef.current;
 
       // Wait a bit to ensure everything is rendered
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const canvas = await html2canvas(element, {
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         scale: 3,
         useCORS: true,
         allowTaint: true,
@@ -687,14 +820,13 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       const imageUrl = canvas.toDataURL("image/png");
       setPreviewImage(imageUrl);
       setShowPreviewModal(true);
-
     } catch (error) {
-      console.error('View failed:', error);
-      toast.error('Failed to generate preview');
+      console.error("View failed:", error);
+      toast.error("Failed to generate preview");
     }
   };
 
-  console.log({ handlePrint })
+  console.log({ handlePrint });
 
   if (!orderId) return null;
 
@@ -756,10 +888,14 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             {(invoiceData.guestNumber || invoiceData.tableNumber) && (
               <div className="mt-3 pt-3 border-t">
                 {invoiceData.tableNumber && (
-                  <p className="font-medium">Table: {invoiceData.tableNumber}</p>
+                  <p className="font-medium">
+                    Table: {invoiceData.tableNumber}
+                  </p>
                 )}
                 {invoiceData.guestNumber && (
-                  <p className="font-medium">Guests: {invoiceData.guestNumber}</p>
+                  <p className="font-medium">
+                    Guests: {invoiceData.guestNumber}
+                  </p>
                 )}
               </div>
             )}
@@ -813,8 +949,9 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                             </span>
                           )}
                           <span
-                            className={`font-medium ${showOriginalPrice ? "text-red-600" : ""
-                              }`}
+                            className={`font-medium ${
+                              showOriginalPrice ? "text-red-600" : ""
+                            }`}
                           >
                             {money.format(item.unitPrice)}
                           </span>
@@ -828,8 +965,9 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                             </span>
                           )}
                           <span
-                            className={`font-medium ${showOriginalPrice ? "text-red-600" : ""
-                              }`}
+                            className={`font-medium ${
+                              showOriginalPrice ? "text-red-600" : ""
+                            }`}
                           >
                             {money.format(item.subtotal)}
                           </span>
@@ -847,8 +985,12 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             invoiceData.specialNotes !== null &&
             String(invoiceData.specialNotes).trim() !== "" && (
               <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                <h3 className="font-medium text-sm mb-1 text-yellow-800">Special Notes</h3>
-                <p className="text-sm text-yellow-700 whitespace-pre-wrap">{String(invoiceData.specialNotes)}</p>
+                <h3 className="font-medium text-sm mb-1 text-yellow-800">
+                  Special Notes
+                </h3>
+                <p className="text-sm text-yellow-700 whitespace-pre-wrap">
+                  {String(invoiceData.specialNotes)}
+                </p>
               </div>
             )}
 
@@ -992,76 +1134,156 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         </div>
 
         {/* KOT Receipt (Hidden, only for downloading) */}
-        <div style={{ position: 'fixed', left: '-9999px', top: '0', zIndex: -1 }}>
-          <div ref={kotRef} id="kot-print-content" style={{
-            width: '220px',
-            maxWidth: '220px',
-            fontSize: '11px',
-            fontFamily: 'Arial, sans-serif',
-            lineHeight: '1.4',
-            padding: '8px',
-            boxSizing: 'border-box',
-            backgroundColor: '#ffffff',
-            color: '#000000'
-          }}>
+        <div
+          style={{ position: "fixed", left: "-9999px", top: "0", zIndex: -1 }}
+        >
+          <div
+            ref={kotRef}
+            id="kot-print-content"
+            style={{
+              width: "220px",
+              maxWidth: "220px",
+              fontSize: "11px",
+              fontFamily: "Arial, sans-serif",
+              lineHeight: "1.4",
+              padding: "8px",
+              boxSizing: "border-box",
+              backgroundColor: "#ffffff",
+              color: "#000000",
+            }}
+          >
             {/* KOT Header */}
-            <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-              <p style={{ fontSize: '13px', margin: '0 0 4px 0', fontWeight: 'bold' }}>
+            <div style={{ textAlign: "center", marginBottom: "8px" }}>
+              <p
+                style={{
+                  fontSize: "13px",
+                  margin: "0 0 4px 0",
+                  fontWeight: "bold",
+                }}
+              >
                 {invoiceData.businessInfo.name}
               </p>
-              <h1 style={{ fontSize: '16px', fontWeight: 'bold', margin: 0, letterSpacing: '0.5px' }}>
+              <h1
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  margin: 0,
+                  letterSpacing: "0.5px",
+                }}
+              >
                 KITCHEN ORDER TICKET
               </h1>
             </div>
 
             {/* Table, Guest and Date Info */}
-            <div style={{ marginBottom: '8px', fontSize: '11px' }}>
-              <div style={{ marginBottom: '4px' }}>
+            <div style={{ marginBottom: "8px", fontSize: "11px" }}>
+              <div style={{ marginBottom: "4px" }}>
                 {invoiceData.tableNumber && (
-                  <div style={{ fontWeight: 'bold' }}>Table: {invoiceData.tableNumber}</div>
+                  <div style={{ fontWeight: "bold" }}>
+                    Table: {invoiceData.tableNumber}
+                  </div>
                 )}
                 {invoiceData.guestNumber && (
-                  <div style={{ fontWeight: 'bold' }}>Guests: {invoiceData.guestNumber}</div>
+                  <div style={{ fontWeight: "bold" }}>
+                    Guests: {invoiceData.guestNumber}
+                  </div>
                 )}
-                <div style={{ fontSize: '10px', marginTop: '4px' }}>
-                  {new Date(invoiceData.date).toLocaleString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
+                <div style={{ fontSize: "10px", marginTop: "4px" }}>
+                  {new Date(invoiceData.date).toLocaleString("en-GB", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
                   })}
                 </div>
               </div>
             </div>
 
             {/* Separator Line */}
-            <div style={{ borderTop: '2px solid #000', margin: '8px 0' }}></div>
+            <div style={{ borderTop: "2px solid #000", margin: "8px 0" }}></div>
 
             {/* Items Table */}
-            <div style={{ marginBottom: '8px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+            <div style={{ marginBottom: "8px" }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: "11px",
+                }}
+              >
                 <thead>
-                  <tr style={{ borderBottom: '2px solid #000' }}>
-                    <th style={{ textAlign: 'left', padding: '6px 4px', width: '30px', fontWeight: 'bold' }}>No.</th>
-                    <th style={{ textAlign: 'left', padding: '6px 4px', fontWeight: 'bold' }}>Item Name</th>
-                    <th style={{ textAlign: 'right', padding: '6px 4px', width: '40px', fontWeight: 'bold' }}>Qty</th>
+                  <tr style={{ borderBottom: "2px solid #000" }}>
+                    <th
+                      style={{
+                        textAlign: "left",
+                        padding: "6px 4px",
+                        width: "30px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      No.
+                    </th>
+                    <th
+                      style={{
+                        textAlign: "left",
+                        padding: "6px 4px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Item Name
+                    </th>
+                    <th
+                      style={{
+                        textAlign: "right",
+                        padding: "6px 4px",
+                        width: "40px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Qty
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {invoiceData.items.map((item, index, arr) => (
-                    <tr key={index} style={{ borderBottom: index === arr.length - 1 ? 'none' : '1px dashed #000' }}>
-                      <td style={{ padding: '6px 4px', verticalAlign: 'top' }}>{index + 1}</td>
-                      <td style={{ padding: '6px 4px', verticalAlign: 'top' }}>
+                    <tr
+                      key={index}
+                      style={{
+                        borderBottom:
+                          index === arr.length - 1 ? "none" : "1px dashed #000",
+                      }}
+                    >
+                      <td style={{ padding: "6px 4px", verticalAlign: "top" }}>
+                        {index + 1}
+                      </td>
+                      <td style={{ padding: "6px 4px", verticalAlign: "top" }}>
                         <div>
-                          <p style={{ margin: 0, fontWeight: '600' }}>{item.productName}</p>
+                          <p style={{ margin: 0, fontWeight: "600" }}>
+                            {item.productName}
+                          </p>
                           {item.details && (
-                            <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: '#666' }}>{item.details}</p>
+                            <p
+                              style={{
+                                margin: "2px 0 0 0",
+                                fontSize: "10px",
+                                color: "#666",
+                              }}
+                            >
+                              {item.details}
+                            </p>
                           )}
                         </div>
                       </td>
-                      <td style={{ padding: '6px 4px', verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold' }}>
+                      <td
+                        style={{
+                          padding: "6px 4px",
+                          verticalAlign: "top",
+                          textAlign: "right",
+                          fontWeight: "bold",
+                        }}
+                      >
                         {item.quantity}
                       </td>
                     </tr>
@@ -1071,136 +1293,214 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             </div>
 
             {/* Dashed Separator */}
-            <div style={{
-              borderTop: '2px dashed #000',
-              width: '100%',
-              margin: '8px 0'
-            }}></div>
+            <div
+              style={{
+                borderTop: "2px dashed #000",
+                width: "100%",
+                margin: "8px 0",
+              }}
+            ></div>
 
             {/* Total Items */}
-            <div style={{
-              fontSize: '12px',
-              textAlign: 'right',
-              fontWeight: 'bold',
-              padding: '4px 0'
-            }}>
-              <span>Total Items: {invoiceData.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
+            <div
+              style={{
+                fontSize: "12px",
+                textAlign: "right",
+                fontWeight: "bold",
+                padding: "4px 0",
+              }}
+            >
+              <span>
+                Total Items:{" "}
+                {invoiceData.items.reduce(
+                  (sum, item) => sum + item.quantity,
+                  0,
+                )}
+              </span>
             </div>
 
             {/* Special Instructions */}
             {invoiceData.specialNotes !== undefined &&
               invoiceData.specialNotes !== null &&
               String(invoiceData.specialNotes).trim() !== "" && (
-                <div style={{
-                  marginTop: '8px',
-                  padding: '8px',
-                  border: '2px solid #000',
-                  borderRadius: '4px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <h3 style={{
-                    fontWeight: 'bold',
-                    fontSize: '11px',
-                    marginBottom: '4px',
-                    textTransform: 'uppercase'
-                  }}>Special Instructions:</h3>
-                  <p style={{
-                    fontSize: '11px',
-                    whiteSpace: 'pre-wrap',
-                    margin: 0,
-                    lineHeight: '1.4'
-                  }}>{String(invoiceData.specialNotes)}</p>
+                <div
+                  style={{
+                    marginTop: "8px",
+                    padding: "8px",
+                    border: "2px solid #000",
+                    borderRadius: "4px",
+                    backgroundColor: "#f9f9f9",
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: "11px",
+                      marginBottom: "4px",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Special Instructions:
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: "11px",
+                      whiteSpace: "pre-wrap",
+                      margin: 0,
+                      lineHeight: "1.4",
+                    }}
+                  >
+                    {String(invoiceData.specialNotes)}
+                  </p>
                 </div>
               )}
           </div>
         </div>
 
         {/* Invoice Receipt (Hidden, only for downloading) - 80mm POS thermal */}
-        <div style={{ position: 'fixed', left: '-9999px', top: '0', zIndex: -1 }}>
-          <div ref={invoiceRef} id="invoice-print-content" style={{
-            width: '300px',
-            maxWidth: '300px',
-            fontSize: '12px',
-            fontFamily: 'Arial, sans-serif',
-            lineHeight: '1.4',
-            padding: '16px',
-            boxSizing: 'border-box',
-            backgroundColor: '#ffffff',
-            color: '#000000'
-          }}>
+        <div
+          style={{ position: "fixed", left: "-9999px", top: "0", zIndex: -1 }}
+        >
+          <div
+            ref={invoiceRef}
+            id="invoice-print-content"
+            style={{
+              width: "300px",
+              maxWidth: "300px",
+              fontSize: "12px",
+              fontFamily: "Arial, sans-serif",
+              lineHeight: "1.4",
+              padding: "16px",
+              boxSizing: "border-box",
+              backgroundColor: "#ffffff",
+              color: "#000000",
+            }}
+          >
             {/* Header - Business Name */}
-            <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-              <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 8px 0', textTransform: 'uppercase' }}>
+            <div style={{ textAlign: "center", marginBottom: "12px" }}>
+              <h1
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  margin: "0 0 8px 0",
+                  textTransform: "uppercase",
+                }}
+              >
                 {invoiceData.businessInfo.name}
               </h1>
-              <p style={{ fontSize: '11px', margin: '4px 0', color: '#333' }}>
+              <p style={{ fontSize: "11px", margin: "4px 0", color: "#333" }}>
                 {invoiceData.businessInfo.address}
               </p>
-              <p style={{ fontSize: '11px', margin: '4px 0', color: '#333' }}>
+              <p style={{ fontSize: "11px", margin: "4px 0", color: "#333" }}>
                 Tel: {invoiceData.businessInfo.phone}
               </p>
             </div>
 
             {/* Separator */}
-            <div style={{ borderTop: '2px solid #000', margin: '12px 0' }}></div>
+            <div
+              style={{ borderTop: "2px solid #000", margin: "12px 0" }}
+            ></div>
 
             {/* Invoice Title */}
-            <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-              <h2 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 8px 0' }}>INVOICE</h2>
-              <p style={{ fontSize: '11px', margin: '2px 0' }}>
+            <div style={{ textAlign: "center", marginBottom: "12px" }}>
+              <h2
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  margin: "0 0 8px 0",
+                }}
+              >
+                INVOICE
+              </h2>
+              <p style={{ fontSize: "11px", margin: "2px 0" }}>
                 Invoice #: {invoiceData.invoiceNumber}
               </p>
-              <p style={{ fontSize: '11px', margin: '2px 0' }}>
+              <p style={{ fontSize: "11px", margin: "2px 0" }}>
                 Date: {new Date(invoiceData.date).toLocaleString()}
               </p>
             </div>
 
             {/* Invoice Info */}
-            <div style={{ fontSize: '11px', marginBottom: '12px' }}>
+            <div style={{ fontSize: "11px", marginBottom: "12px" }}>
               {invoiceData.tableNumber && (
-                <p style={{ margin: '2px 0' }}>
+                <p style={{ margin: "2px 0" }}>
                   <strong>Table:</strong> {invoiceData.tableNumber}
                 </p>
               )}
               {invoiceData.guestNumber && (
-                <p style={{ margin: '2px 0' }}>
+                <p style={{ margin: "2px 0" }}>
                   <strong>Guests:</strong> {invoiceData.guestNumber}
                 </p>
               )}
-              <p style={{ margin: '2px 0' }}>
+              <p style={{ margin: "2px 0" }}>
                 <strong>Customer:</strong> {invoiceData.customer.name}
               </p>
-              <p style={{ margin: '2px 0' }}>
+              <p style={{ margin: "2px 0" }}>
                 <strong>Phone:</strong> {invoiceData.customer.phone}
               </p>
             </div>
 
             {/* Separator */}
-            <div style={{ borderTop: '2px solid #000', margin: '12px 0' }}></div>
+            <div
+              style={{ borderTop: "2px solid #000", margin: "12px 0" }}
+            ></div>
 
             {/* Items Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '12px', padding: '6px 0', borderBottom: '2px solid #000' }}>
-              <span style={{ width: '40px' }}>QTY</span>
-              <span style={{ flex: 1, paddingLeft: '8px' }}>ITEM</span>
-              <span style={{ width: '70px', textAlign: 'right' }}>TOTAL</span>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontWeight: "bold",
+                fontSize: "12px",
+                padding: "6px 0",
+                borderBottom: "2px solid #000",
+              }}
+            >
+              <span style={{ width: "40px" }}>QTY</span>
+              <span style={{ flex: 1, paddingLeft: "8px" }}>ITEM</span>
+              <span style={{ width: "70px", textAlign: "right" }}>TOTAL</span>
             </div>
 
             {/* Items */}
-            <div style={{ marginBottom: '12px' }}>
+            <div style={{ marginBottom: "12px" }}>
               {invoiceData.items.map((item, index) => (
-                <div key={index} style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '11px',
-                  padding: '6px 0',
-                  borderBottom: index < invoiceData.items.length - 1 ? '1px dashed #ccc' : 'none'
-                }}>
-                  <span style={{ width: '40px', color: '#000' }}>{item.quantity}</span>
-                  <span style={{ flex: 1, paddingLeft: '8px' }}>
-                    {item.productName}
-                    {item.details && <span style={{ color: '#666', fontSize: '10px', display: 'block' }}>{item.details}</span>}
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "11px",
+                    padding: "6px 0",
+                    borderBottom:
+                      index < invoiceData.items.length - 1
+                        ? "1px dashed #ccc"
+                        : "none",
+                  }}
+                >
+                  <span style={{ width: "40px", color: "#000" }}>
+                    {item.quantity}
                   </span>
-                  <span style={{ width: '70px', textAlign: 'right', fontWeight: '500' }}>
+                  <span style={{ flex: 1, paddingLeft: "8px" }}>
+                    {item.productName}
+                    {item.details && (
+                      <span
+                        style={{
+                          color: "#666",
+                          fontSize: "10px",
+                          display: "block",
+                        }}
+                      >
+                        {item.details}
+                      </span>
+                    )}
+                  </span>
+                  <span
+                    style={{
+                      width: "70px",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
                     {money.format(item.subtotal)}
                   </span>
                 </div>
@@ -1208,73 +1508,144 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             </div>
 
             {/* Separator */}
-            <div style={{ borderTop: '2px solid #000', margin: '12px 0' }}></div>
+            <div
+              style={{ borderTop: "2px solid #000", margin: "12px 0" }}
+            ></div>
 
             {/* Summary */}
-            <div style={{ fontSize: '12px', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+            <div style={{ fontSize: "12px", marginBottom: "12px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "4px 0",
+                }}
+              >
                 <span>Subtotal:</span>
-                <span>{money.format(Number(invoiceData.summary.subtotal))}</span>
+                <span>
+                  {money.format(Number(invoiceData.summary.subtotal))}
+                </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "4px 0",
+                }}
+              >
                 <span>Tax ({invoiceData.summary.taxRate}):</span>
                 <span>{money.format(Number(invoiceData.summary.tax))}</span>
               </div>
               {Number(invoiceData.summary.discount) > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#c00' }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "4px 0",
+                    color: "#c00",
+                  }}
+                >
                   <span>Discount ({invoiceData.summary.discountRate}):</span>
-                  <span>-{money.format(Number(invoiceData.summary.discount))}</span>
+                  <span>
+                    -{money.format(Number(invoiceData.summary.discount))}
+                  </span>
                 </div>
               )}
             </div>
 
             {/* Grand Total */}
-            <div style={{
-              borderTop: '2px solid #000',
-              borderBottom: '2px solid #000',
-              padding: '10px 0',
-              margin: '12px 0'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '16px' }}>
+            <div
+              style={{
+                borderTop: "2px solid #000",
+                borderBottom: "2px solid #000",
+                padding: "10px 0",
+                margin: "12px 0",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontWeight: "bold",
+                  fontSize: "16px",
+                }}
+              >
                 <span>GRAND TOTAL:</span>
                 <span>{money.format(Number(invoiceData.summary.total))}</span>
               </div>
             </div>
 
             {/* Payment Info */}
-            <div style={{ fontSize: '11px', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+            <div style={{ fontSize: "11px", marginBottom: "12px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "2px 0",
+                }}
+              >
                 <span>Payment Method:</span>
-                <span>{invoiceData.payment.method === 'mobile_banking' ? 'Mobile Banking' : invoiceData.payment.method.toUpperCase()}</span>
+                <span>
+                  {invoiceData.payment.method === "mobile_banking"
+                    ? "Mobile Banking"
+                    : invoiceData.payment.method.toUpperCase()}
+                </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "2px 0",
+                }}
+              >
                 <span>Payment Status:</span>
                 <span>{invoiceData.payment.status}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "2px 0",
+                }}
+              >
                 <span>Paid Amount:</span>
-                <span style={{ color: '#0a0', fontWeight: 'bold' }}>{money.format(Number(invoiceData.payment.paidAmount))}</span>
+                <span style={{ color: "#0a0", fontWeight: "bold" }}>
+                  {money.format(Number(invoiceData.payment.paidAmount))}
+                </span>
               </div>
               {invoiceData.payment.remainingAmount > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', color: '#c00' }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "2px 0",
+                    color: "#c00",
+                  }}
+                >
                   <span>Remaining:</span>
-                  <span style={{ fontWeight: 'bold' }}>{money.format(Number(invoiceData.payment.remainingAmount))}</span>
+                  <span style={{ fontWeight: "bold" }}>
+                    {money.format(Number(invoiceData.payment.remainingAmount))}
+                  </span>
                 </div>
               )}
             </div>
 
             {/* Separator */}
-            <div style={{ borderTop: '1px dashed #000', margin: '12px 0' }}></div>
+            <div
+              style={{ borderTop: "1px dashed #000", margin: "12px 0" }}
+            ></div>
 
             {/* Footer */}
-            <div style={{ textAlign: 'center', marginTop: '12px' }}>
-              <p style={{ fontSize: '12px', fontWeight: '600', margin: '6px 0' }}>
+            <div style={{ textAlign: "center", marginTop: "12px" }}>
+              <p
+                style={{ fontSize: "12px", fontWeight: "600", margin: "6px 0" }}
+              >
                 Thank you for your business!
               </p>
-              <p style={{ fontSize: '10px', margin: '4px 0', color: '#666' }}>
+              <p style={{ fontSize: "10px", margin: "4px 0", color: "#666" }}>
                 {invoiceData.businessInfo.email}
               </p>
-              <p style={{ fontSize: '10px', margin: '4px 0', color: '#666' }}>
+              <p style={{ fontSize: "10px", margin: "4px 0", color: "#666" }}>
                 Tax ID: {invoiceData.businessInfo.taxId}
               </p>
             </div>
@@ -1303,14 +1674,17 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
               </button>
               <button
                 onClick={handleKOTPrint}
-                disabled={!invoiceData || invoiceData.items.length === 0 || printing}
+                disabled={
+                  !invoiceData || invoiceData.items.length === 0 || printing
+                }
                 className="px-3 py-1.5 text-xs font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FaUtensils className="w-3 h-3" />
-                <span className="hidden sm:inline">{printing ? "Printing..." : "Print KOT"}</span>
+                <span className="hidden sm:inline">
+                  {printing ? "Printing..." : "Print KOT"}
+                </span>
                 <span className="sm:hidden">KOT</span>
               </button>
-
             </>
           )}
 
@@ -1334,16 +1708,23 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           </button>
           <button
             onClick={handleInvoicePrint}
-            disabled={!invoiceData || invoiceData.items.length === 0 || printing}
+            disabled={
+              !invoiceData || invoiceData.items.length === 0 || printing
+            }
             className="px-3 py-1.5 text-xs font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaPrint className="w-3 h-3" />
-            <span className="hidden sm:inline">{printing ? "Printing..." : "Print Invoice"}</span>
+            <span className="hidden sm:inline">
+              {printing ? "Printing..." : "Print Invoice"}
+            </span>
             <span className="sm:hidden">Invoice</span>
           </button>
 
-
-          {error && <p className="text-xs text-red-500 w-full text-right mt-1">{error}</p>}
+          {error && (
+            <p className="text-xs text-red-500 w-full text-right mt-1">
+              {error}
+            </p>
+          )}
         </div>
       </div>
 
@@ -1359,7 +1740,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
               src={previewImage}
               alt="Invoice Preview"
               className="max-w-full h-auto shadow-lg border"
-              style={{ maxHeight: '80vh' }}
+              style={{ maxHeight: "80vh" }}
             />
           ) : (
             <div className="flex items-center justify-center p-12">
@@ -1371,9 +1752,9 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           <button
             onClick={() => {
               if (previewImage) {
-                const link = document.createElement('a');
+                const link = document.createElement("a");
                 link.href = previewImage;
-                link.download = `Invoice-${invoiceData?.invoiceNumber || 'preview'}.png`;
+                link.download = `Invoice-${invoiceData?.invoiceNumber || "preview"}.png`;
                 link.click();
               }
             }}
