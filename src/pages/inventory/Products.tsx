@@ -770,7 +770,7 @@ const Products: React.FC = () => {
 
 export default Products;
 
-export const ViewProductModal: React.FC<ViewModalProps> = ({ product, user }) => { 
+export const ViewProductModal: React.FC<ViewModalProps> = ({ product, user }) => {
   console.log(user);
   const [selectedSku, setSelectedSku] = useState<{
     sku: string;
@@ -780,7 +780,7 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product, user }) =>
     modelNo?: string;
     shopName?: string;
   } | null>(null);
- 
+
 
   // Add this function to handle barcode printing
   const handlePrintBarcode = (
@@ -871,7 +871,7 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product, user }) =>
 
             {/* Product Details Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
-              <div className="p-3 bg-gray-50 rounded-lg">
+              {user.shopType !== "restaurant" && <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-500">SKU</p>
                 <div className="flex items-center gap-2">
                   <p className="font-medium truncate">{product.sku}</p>
@@ -892,7 +892,7 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product, user }) =>
                     <FaBarcode className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
+              </div>}
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-500">Category</p>
                 <p className="font-medium truncate">{product.Category?.name}</p>
@@ -987,7 +987,7 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product, user }) =>
                 </div>
                 <div className="flex-1 space-y-2">
                   <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2">
+                    {user.shopType !== "restaurant" && <div className="flex items-center gap-2">
                       <h4 className="font-medium text-gray-800">
                         SKU: {variant.sku}
                       </h4>
@@ -1007,7 +1007,7 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product, user }) =>
                       >
                         <FaBarcode className="w-4 h-4" />
                       </button>
-                    </div>
+                    </div>}
                     <span
                       className={`px-2 py-0.5 rounded-full text-xs font-medium ${variant.status === "active"
                         ? "bg-green-100 text-green-800"
