@@ -141,6 +141,10 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
   };
 
   const handleThermalPrint = async () => {
+    if (!sku) {
+      toast.error("SKU is required for printing");
+      return;
+    }
     setIsPrinting(true);
     try {
       const device = await getPrinter();
@@ -157,20 +161,16 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
 
       const result = encoder
         .initialize()
-        // 35mm paper ~ 280 dots. Standard font (12x24) -> ~23 chars. 
-        // Setting width helps centering.
         .width(23)
         .align('center')
         .size(0, 0)
-        // Simulate top padding
-        // .text(" ") 
         .line(topText.substring(0, 25))
-        // Gap
         .text(" ")
         .bold(true)
         .line(`SHOP: ${shopName || ''}`)
         .bold(false)
-        .barcode(sku || '0000', 'code128', 40) // Reduced height to 40 (~5mm) to fit in 18mm
+        .text(" ")
+        .barcode(sku || '0000', 'code128', 40, 2)
         .encode();
 
       // Transfer data to printer
