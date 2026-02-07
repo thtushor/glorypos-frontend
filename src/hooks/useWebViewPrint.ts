@@ -9,7 +9,7 @@ declare global {
     }
 }
 
-type PrintType = "KOT" | "INVOICE";
+type PrintType = "KOT" | "INVOICE" | "BARCODE" | "BARCODE_LABEL";
 
 export const useWebViewPrint = () => {
     const [isWebView, setIsWebView] = useState(false);

@@ -4,6 +4,7 @@ import JsBarcode from "jsbarcode";
 // import { useReactToPrint } from "react-to-print";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
 import { toast } from "react-toastify";
+import { useWebViewPrint } from "../hooks/useWebViewPrint";
 
 interface LabelSize {
   id: string;
@@ -65,6 +66,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
   const printRef = useRef<HTMLDivElement>(null);
   const [selectedSize, setSelectedSize] = useState<LabelSize>(LABEL_SIZES[0]);
   const [isPrinting, setIsPrinting] = useState(false);
+  const { isWebView, sendPrintSignal } = useWebViewPrint();
 
   const size = selectedSize;
 
@@ -361,6 +363,42 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
             >
               Standard Print
             </button> */}
+            {isWebView && (
+              <button
+                onClick={() => {
+                  if (!sku) {
+                    toast.error("SKU is required");
+                    return;
+                  }
+                  setIsPrinting(true);
+                  const sent = sendPrintSignal("BARCODE_LABEL", {
+                    sku,
+                    productName: name || "",
+                    price: 0,
+                    quantity: 1,
+                    brandName,
+                    categoryName,
+                    modelNo,
+                    shopName,
+                    labelSize: {
+                      widthMm: size.widthMm,
+                      heightMm: size.heightMm,
+                    },
+                  });
+                  if (sent) {
+                    toast.success("Print job sent to mobile app");
+                    onClose();
+                  } else {
+                    toast.error("Failed to send print job");
+                  }
+                  setIsPrinting(false);
+                }}
+                disabled={isPrinting}
+                className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold rounded-xl shadow-xl hover:shadow-green-500/50 transition transform hover:scale-105 disabled:opacity-50 flex-1 md:flex-none"
+              >
+                {isPrinting ? "Printing..." : "📱 Mobile Print"}
+              </button>
+            )}
             <button
               onClick={handleThermalPrint}
               disabled={isPrinting}
