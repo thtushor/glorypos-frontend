@@ -1,7 +1,7 @@
 // BarcodeModal.tsx - FINAL VERSION (Perfect Fit Guaranteed)
 import React, { useRef, useState, useEffect } from "react";
 import JsBarcode from "jsbarcode";
-import { useReactToPrint } from "react-to-print";
+// import { useReactToPrint } from "react-to-print";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
 import { toast } from "react-toastify";
 
