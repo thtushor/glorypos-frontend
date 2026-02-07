@@ -90,33 +90,33 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
     generateBarcode("print-barcode");
   }, [sku, selectedSize]);
 
-  const handlePrint = useReactToPrint({
-    contentRef: printRef,
-    documentTitle: `Label_${sku}`,
-    pageStyle: `
-      @page { 
-        size: ${size.widthMm}mm ${size.heightMm}mm !important; 
-        margin: 0 !important; 
-      }
-      @media print {
-        html, body { 
-          margin: 0 !important; 
-          padding: 0 !important; 
-          width: ${size.widthMm}mm !important; 
-          height: ${size.heightMm}mm !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        #barcode-print-content {
-          width: ${size.widthMm}mm !important;
-          height: ${size.heightMm}mm !important;
-          margin: 0 !important;
-          padding: 2mm !important;
-          box-sizing: border-box !important;
-        }
-      }
-    `,
-  });
+  // const handlePrint = useReactToPrint({
+  //   contentRef: printRef,
+  //   documentTitle: `Label_${sku}`,
+  //   pageStyle: `
+  //     @page { 
+  //       size: ${size.widthMm}mm ${size.heightMm}mm !important; 
+  //       margin: 0 !important; 
+  //     }
+  //     @media print {
+  //       html, body { 
+  //         margin: 0 !important; 
+  //         padding: 0 !important; 
+  //         width: ${size.widthMm}mm !important; 
+  //         height: ${size.heightMm}mm !important;
+  //         -webkit-print-color-adjust: exact !important;
+  //         print-color-adjust: exact !important;
+  //       }
+  //       #barcode-print-content {
+  //         width: ${size.widthMm}mm !important;
+  //         height: ${size.heightMm}mm !important;
+  //         margin: 0 !important;
+  //         padding: 2mm !important;
+  //         box-sizing: border-box !important;
+  //       }
+  //     }
+  //   `,
+  // });
 
   // Helper for USB Printer
   const getPrinter = async () => {
@@ -193,7 +193,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
 
       const result = encoder
         .initialize()
-        .width(23)
+        .width(8)
         .align('center')
         .line(topText.substring(0, 25))
         .text(" ")
