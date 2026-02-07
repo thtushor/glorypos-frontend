@@ -1,7 +1,7 @@
 // BarcodeModal.tsx - FINAL VERSION (Perfect Fit Guaranteed)
 import React, { useRef, useState, useEffect } from "react";
 import JsBarcode from "jsbarcode";
-// import { useReactToPrint } from "react-to-print";
+import { useReactToPrint } from "react-to-print";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
 import { toast } from "react-toastify";
 
@@ -19,6 +19,17 @@ interface LabelSize {
 
 const LABEL_SIZES: LabelSize[] = [
   {
+    id: "white",
+    name: "White Label",
+    widthMm: 35,
+    heightMm: 18,
+    barcodeWidthMm: 31,
+    barcodeHeight: 38,
+    topFontSize: "5.8pt",
+    shopFontSize: "6.8pt",
+    background: "#fff",
+  },
+  {
     id: "craft",
     name: "Craft (Brown)",
     widthMm: 35,
@@ -28,17 +39,6 @@ const LABEL_SIZES: LabelSize[] = [
     topFontSize: "5.8pt",
     shopFontSize: "6.8pt",
     background: "#d4a574",
-  },
-  {
-    id: "White",
-    name: "White (Brown)",
-    widthMm: 35,
-    heightMm: 18,
-    barcodeWidthMm: 31,
-    barcodeHeight: 38,
-    topFontSize: "5.8pt",
-    shopFontSize: "6.8pt",
-    background: "#fff",
   },
 ];
 
@@ -63,7 +63,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
   onClose,
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
-  const [selectedSize, setSelectedSize] = useState<LabelSize>(LABEL_SIZES[0]); // default Craft
+  const [selectedSize, setSelectedSize] = useState<LabelSize>(LABEL_SIZES[0]);
   const [isPrinting, setIsPrinting] = useState(false);
 
   const size = selectedSize;
@@ -90,101 +90,128 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
     generateBarcode("print-barcode");
   }, [sku, selectedSize]);
 
-  // const handlePrint = useReactToPrint({
-  //   contentRef: printRef,
-  //   pageStyle: `
-  //     @page { 
-  //       size: ${size.widthMm}mm ${size.heightMm}mm !important; 
-  //       margin: 0 !important; 
-  //     }
-  //     @media print {
-  //       html, body { 
-  //         margin: 0 !important; 
-  //         padding: 0 !important; 
-  //         width: ${size.widthMm}mm !important; 
-  //         height: ${size.heightMm}mm !important;
-  //         -webkit-print-color-adjust: exact !important;
-  //         print-color-adjust: exact !important;
-  //       }
-  //       #barcode-print-content {
-  //         width: ${size.widthMm}mm !important;
-  //         height: ${size.heightMm}mm !important;
-  //         margin: 0 !important;
-  //         padding: 2mm !important;
-  //         box-sizing: border-box !important;
-  //       }
-  //     }
-  //   `,
-  //   print: async (printIframe: HTMLIFrameElement) => {
-  //     const contentWindow = printIframe.contentWindow;
-  //     if (contentWindow) {
-  //       contentWindow.print();
-  //     }
-  //   }
-  // });
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Label_${sku}`,
+    pageStyle: `
+      @page { 
+        size: ${size.widthMm}mm ${size.heightMm}mm !important; 
+        margin: 0 !important; 
+      }
+      @media print {
+        html, body { 
+          margin: 0 !important; 
+          padding: 0 !important; 
+          width: ${size.widthMm}mm !important; 
+          height: ${size.heightMm}mm !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        #barcode-print-content {
+          width: ${size.widthMm}mm !important;
+          height: ${size.heightMm}mm !important;
+          margin: 0 !important;
+          padding: 2mm !important;
+          box-sizing: border-box !important;
+        }
+      }
+    `,
+  });
 
-  // USB Printer utility
+  // Helper for USB Printer
   const getPrinter = async () => {
     try {
       const navigatorAny = navigator as any;
-      // Try previously authorized devices
       const devices = await navigatorAny.usb.getDevices();
       if (devices.length > 0) return devices[0];
 
-      // First-time setup
       return await navigatorAny.usb.requestDevice({
-        filters: [{ classCode: 7 }], // Printer class
+        filters: [{ classCode: 7 }],
       });
     } catch (err) {
       throw new Error("Printer not connected or permission denied");
     }
   };
 
-  const handleThermalPrint = async () => {
+  // Solution 1: TSPL for dedicated Barcode Label Printers (Xprinter, TSC, etc.)
+  const handleLabelPrinterPrint = async () => {
     if (!sku) {
-      toast.error("SKU is required for printing");
+      toast.error("SKU is required");
       return;
     }
     setIsPrinting(true);
     try {
       const device = await getPrinter();
       await device.open();
-      if (!device.configuration) {
-        await device.selectConfiguration(1);
-      }
+      if (!device.configuration) await device.selectConfiguration(1);
+      await device.claimInterface(0);
+
+      const topText = [brandName, categoryName, modelNo].filter(Boolean).join(" / ");
+      const encoder = new TextEncoder();
+
+      // TSPL Commands for 35x18mm Label
+      let commands = `SIZE ${size.widthMm} mm, ${size.heightMm} mm\r\n`;
+      commands += `GAP 2 mm, 0\r\n`;
+      commands += `DIRECTION 1\r\n`;
+      commands += `CLS\r\n`;
+      commands += `TEXT 140,15,"0",0,1,1,3,"${topText.substring(0, 25)}"\r\n`; // Centered roughly (140 dots = 17.5mm)
+      commands += `TEXT 140,40,"0",0,1,1,3,"SHOP: ${shopName || ''}"\r\n`;
+      commands += `BARCODE 40,70,"128",50,1,0,2,2,"${sku}"\r\n`; // X:40, Y:70, Type:128, Height:50, Readable:1
+      commands += `PRINT 1\r\n`;
+
+      const result = encoder.encode(commands);
+      await device.transferOut(1, result);
+
+      await device.releaseInterface(0);
+      await device.close();
+
+      toast.success('Label printed to Label Printer!');
+      onClose();
+    } catch (error: any) {
+      console.error("Label print error:", error);
+      toast.error(`Label printer failed: ${error.message}`);
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
+  // Solution 2: ESC/POS (Original, for Thermal Receipt Printers in Barcode Mode)
+  const handleThermalPrint = async () => {
+    if (!sku) {
+      toast.error("SKU is required");
+      return;
+    }
+    setIsPrinting(true);
+    try {
+      const device = await getPrinter();
+      await device.open();
+      if (!device.configuration) await device.selectConfiguration(1);
       await device.claimInterface(0);
 
       const encoder = new ReceiptPrinterEncoder();
-
-      // Top text line
       const topText = [brandName, categoryName, modelNo].filter(Boolean).join(" / ");
 
       const result = encoder
         .initialize()
         .width(23)
         .align('center')
-        .size(0, 0)
         .line(topText.substring(0, 25))
         .text(" ")
         .bold(true)
         .line(`SHOP: ${shopName || ''}`)
         .bold(false)
-        .text(" ")
-        .barcode(sku || '0000', 'code128', 40, 2)
+        .barcode(sku, 'code128', 40, 2)
         .encode();
 
-      // Transfer data to printer
       await device.transferOut(1, result);
-
       await device.releaseInterface(0);
       await device.close();
 
-      toast.success('Label printed successfully!');
+      toast.success('Label printed (ESC/POS)!');
       onClose();
     } catch (error: any) {
       console.error("Thermal print error:", error);
-      toast.error(`Print failed: ${error.message}. Switching to browser print.`);
-      // handlePrint();
+      toast.error(`Thermal print failed: ${error.message}`);
     } finally {
       setIsPrinting(false);
     }
@@ -319,20 +346,34 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-center gap-4 mt-5">
+          <div className="flex flex-col md:flex-row justify-center gap-3 mt-8">
             <button
               onClick={onClose}
               disabled={isPrinting}
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-[14px] font-medium  transition"
+              className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition flex-1 md:flex-none"
             >
               Cancel
             </button>
+            {/* <button
+              onClick={() => handlePrint()}
+              disabled={isPrinting}
+              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg transition flex-1 md:flex-none"
+            >
+              Standard Print
+            </button> */}
             <button
               onClick={handleThermalPrint}
               disabled={isPrinting}
-              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-[14px] rounded-lg shadow-2xl hover:shadow-purple-500/50 transition transform hover:scale-105 disabled:opacity-50"
+              className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold shadow-lg transition flex-1 md:flex-none"
             >
-              {isPrinting ? "Printing..." : `Print Label (${size.widthMm}×${size.heightMm}mm)`}
+              Print (Thermal)
+            </button>
+            <button
+              onClick={handleLabelPrinterPrint}
+              disabled={isPrinting}
+              className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl shadow-xl hover:shadow-purple-500/50 transition transform hover:scale-105 disabled:opacity-50 flex-1 md:flex-none"
+            >
+              {isPrinting ? "Printing..." : `Label Printer (Direct)`}
             </button>
           </div>
         </div>
