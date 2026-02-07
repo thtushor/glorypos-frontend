@@ -27,7 +27,7 @@ import {
 } from "react-pos-engine";
 import { useAuth } from "@/context/AuthContext";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
-// import { useAuth } from "@/context/AuthContext";
+import { useWebViewPrint } from "@/hooks/useWebViewPrint";
 
 const WIDTH = 32;
 
@@ -135,6 +135,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   });
 
   const { user } = useAuth();
+  const { isWebView, sendPrintSignal } = useWebViewPrint();
 
   const { data: invoiceData, isLoading } = useQuery<InvoiceData>({
     queryKey: ["invoice", orderId],
@@ -434,6 +435,13 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     try {
       if (!invoiceData) return;
 
+      if (isWebView) {
+        sendPrintSignal("KOT", invoiceData);
+        toast.success("KOT print signal sent to app");
+        setPrinting(false);
+        return;
+      }
+
       const device = await getPrinter();
 
       await device.open();
@@ -492,8 +500,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         for (let i = 1; i < wrappedNames.length; i++) {
           receipt = receipt.line(
             "-" +
-              " ".repeat(QTY_WIDTH - 1) +
-              wrappedNames[i].padEnd(ITEM_WIDTH_KOT),
+            " ".repeat(QTY_WIDTH - 1) +
+            wrappedNames[i].padEnd(ITEM_WIDTH_KOT),
           );
         }
 
@@ -556,6 +564,13 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
     try {
       if (!invoiceData) return;
 
+      if (isWebView) {
+        sendPrintSignal("INVOICE", invoiceData);
+        toast.success("Invoice print signal sent to app");
+        setPrinting(false);
+        return;
+      }
+
       const device = await getPrinter();
 
       await device.open();
@@ -614,9 +629,9 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         .bold(true)
         .text(
           "QTY ".padEnd(QTY_WIDTH) +
-            "ITEM".padEnd(ITEM_WIDTH) +
-            "TOTAL".padStart(TOTAL_WIDTH) +
-            "\n",
+          "ITEM".padEnd(ITEM_WIDTH) +
+          "TOTAL".padStart(TOTAL_WIDTH) +
+          "\n",
         )
         .bold(false);
 
@@ -949,9 +964,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                             </span>
                           )}
                           <span
-                            className={`font-medium ${
-                              showOriginalPrice ? "text-red-600" : ""
-                            }`}
+                            className={`font-medium ${showOriginalPrice ? "text-red-600" : ""
+                              }`}
                           >
                             {money.format(item.unitPrice)}
                           </span>
@@ -965,9 +979,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                             </span>
                           )}
                           <span
-                            className={`font-medium ${
-                              showOriginalPrice ? "text-red-600" : ""
-                            }`}
+                            className={`font-medium ${showOriginalPrice ? "text-red-600" : ""
+                              }`}
                           >
                             {money.format(item.subtotal)}
                           </span>
