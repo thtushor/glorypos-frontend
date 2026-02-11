@@ -35,8 +35,37 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   const barcodeBufferRef = useRef<string>("");
   const barcodeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Initialize cameras
+  // Handle native scanning
   useEffect(() => {
+    const isReactNative = !!(window as any).ReactNativeWebView;
+
+    if (isOpen && isReactNative) {
+      // Define callback for native app
+      (window as any).onBarcodeScanned = (barcode: string) => {
+        if (barcode) {
+          onScan(barcode);
+          // Optional: if you want it to close after one scan, call onClose()
+        }
+      };
+
+      // Trigger native scan
+      (window as any).ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'SCAN_BARCODE'
+      }));
+    }
+
+    return () => {
+      if (isReactNative) {
+        delete (window as any).onBarcodeScanned;
+      }
+    };
+  }, [isOpen, onScan]);
+
+  // Initialize cameras (Original web scanner logic)
+  useEffect(() => {
+    const isReactNative = !!(window as any).ReactNativeWebView;
+    if (isReactNative) return; // Skip if in native app
+
     if (isOpen) {
       isUnmountingRef.current = false;
       isSwitchingCameraRef.current = false;
@@ -522,6 +551,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
   // Auto-start scanning when camera is selected and modal is open
   useEffect(() => {
+    const isReactNative = !!(window as any).ReactNativeWebView;
+    if (isReactNative) return;
+
     if (
       isOpen &&
       (cameraMode === "deviceId" ? cameraId : facingMode) &&
@@ -585,7 +617,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   return (
     <div className="space-y-4">
       {/* Camera Selection */}
-      {availableCameras.length > 0 && (
+      {availableCameras.length > 0 && !((window as any).ReactNativeWebView) && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -661,7 +693,23 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             : "min-h-[200px] flex items-center justify-center"
             }`}
         >
-          {!isScanning && !error && !isSwitchingCameraRef.current && (
+          {!!((window as any).ReactNativeWebView) && (
+            <div className="text-center text-white p-8">
+              <FaCamera className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p className="text-sm opacity-75">Native scanner active</p>
+              <button
+                onClick={() => {
+                  (window as any).ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'SCAN_BARCODE'
+                  }));
+                }}
+                className="mt-4 px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-100 transition-colors"
+              >
+                Scan with Camera
+              </button>
+            </div>
+          )}
+          {!isScanning && !error && !isSwitchingCameraRef.current && !((window as any).ReactNativeWebView) && (
             <div className="text-center text-white p-8">
               <FaCamera className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p className="text-sm opacity-75">Camera scanner ready</p>
