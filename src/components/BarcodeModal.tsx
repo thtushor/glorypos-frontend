@@ -57,6 +57,7 @@ interface BarcodeModalProps {
 const BarcodeModal: React.FC<BarcodeModalProps> = ({
   sku,
   name,
+  price,
   categoryName,
   brandName,
   modelNo,
@@ -142,6 +143,27 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
       return;
     }
     setIsPrinting(true);
+
+    if (isWebView) {
+      sendPrintSignal("BARCODE_LABEL", {
+        sku,
+        productName: name || "",
+        price,
+        brandName,
+        categoryName,
+        modelNo,
+        shopName,
+        labelSize: {
+          widthMm: size.widthMm,
+          heightMm: size.heightMm,
+        },
+      });
+      toast.success("Label print signal sent to app");
+      setIsPrinting(false);
+      onClose();
+      return;
+    }
+
     try {
       const device = await getPrinter();
       await device.open();
@@ -183,7 +205,25 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
       toast.error("SKU is required");
       return;
     }
+
     setIsPrinting(true);
+
+    if (isWebView) {
+      sendPrintSignal("BARCODE", {
+        sku,
+        productName: name || "",
+        price: price || 0,
+        brandName,
+        categoryName,
+        modelNo,
+        shopName,
+      });
+      toast.success("Barcode print signal sent to app");
+      setIsPrinting(false);
+      onClose();
+      return;
+    }
+
     try {
       const device = await getPrinter();
       await device.open();
@@ -356,49 +396,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
             >
               Cancel
             </button>
-            {/* <button
-              onClick={() => handlePrint()}
-              disabled={isPrinting}
-              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg transition flex-1 md:flex-none"
-            >
-              Standard Print
-            </button> */}
-            {isWebView && (
-              <button
-                onClick={() => {
-                  if (!sku) {
-                    toast.error("SKU is required");
-                    return;
-                  }
-                  setIsPrinting(true);
-                  const sent = sendPrintSignal("BARCODE_LABEL", {
-                    sku,
-                    productName: name || "",
-                    price: 0,
-                    quantity: 1,
-                    brandName,
-                    categoryName,
-                    modelNo,
-                    shopName,
-                    labelSize: {
-                      widthMm: size.widthMm,
-                      heightMm: size.heightMm,
-                    },
-                  });
-                  if (sent) {
-                    toast.success("Print job sent to mobile app");
-                    onClose();
-                  } else {
-                    toast.error("Failed to send print job");
-                  }
-                  setIsPrinting(false);
-                }}
-                disabled={isPrinting}
-                className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold rounded-xl shadow-xl hover:shadow-green-500/50 transition transform hover:scale-105 disabled:opacity-50 flex-1 md:flex-none"
-              >
-                {isPrinting ? "Printing..." : "📱 Mobile Print"}
-              </button>
-            )}
+
             <button
               onClick={handleThermalPrint}
               disabled={isPrinting}
