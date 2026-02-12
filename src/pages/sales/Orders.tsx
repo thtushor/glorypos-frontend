@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FaSearch, FaEye, FaFilter, FaRegEdit } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import { ORDERS_URL } from "@/api/api";
@@ -92,9 +92,13 @@ const Orders: React.FC = () => {
   const { user } = useAuth();
   const { hasPermission } = usePermission();
 
+  const [selectedOrderIds, setSelectedOrderIds] = useState<number[]>([]);
+  const [selectAllMatching, setSelectAllMatching] = useState(false);
+
   // Permission checks
   const canViewCostProfit = hasPermission(PERMISSIONS.SALES.VIEW_COST_PROFIT);
   const canEditOrder = hasPermission(PERMISSIONS.SALES.EDIT_ORDER);
+  const canDeleteOrder = hasPermission(PERMISSIONS.SALES.DELETE_ORDER);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -141,6 +145,30 @@ const Orders: React.FC = () => {
     },
   });
 
+  const queryClient = useQueryClient();
+
+  // Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await AXIOS.post(`${ORDERS_URL}/delete-many`, payload);
+      return response;
+    },
+    onSuccess: (data) => {
+      if (data.status) {
+        toast.success((data as unknown as { message: string }).message);
+        setSelectedOrderIds([]);
+        setSelectAllMatching(false);
+        // Refetch orders by invalidating the query
+        queryClient.invalidateQueries({ queryKey: ["orders"] });
+      } else {
+        toast.error((data as unknown as { message: string }).message || "Failed to delete orders");
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to delete orders");
+    },
+  });
+
 
   // Handle print invoice
   const handlePrintInvoice = () => {
@@ -173,6 +201,61 @@ const Orders: React.FC = () => {
 
   const handleFilterChange = (name: string, value: string) => {
     setFilters((prev) => ({ ...prev, page: 1, [name]: value }));
+  };
+
+  const handleSelectOrder = (orderId: number) => {
+    setSelectAllMatching(false);
+    setSelectedOrderIds((prev) =>
+      prev.includes(orderId)
+        ? prev.filter((id) => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
+  const handleSelectPage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      const pageIds = ordersData?.orders.map((o) => o.id) || [];
+      setSelectedOrderIds(pageIds);
+    } else {
+      setSelectedOrderIds([]);
+      setSelectAllMatching(false);
+    }
+  };
+
+  const handleSelectAllMatching = () => {
+    setSelectAllMatching(true);
+    // Visual feedback handled by UI state
+  };
+
+  const handleDelete = () => {
+    if (selectedOrderIds.length === 0 && !selectAllMatching) return;
+
+    if (
+      !confirm(
+        selectAllMatching
+          ? "Are you sure you want to delete ALL orders matching the current filters? This cannot be undone."
+          : `Are you sure you want to delete ${selectedOrderIds.length} selected orders?`
+      )
+    ) {
+      return;
+    }
+
+    const payload: any = {};
+    if (selectAllMatching) {
+      payload.all = true;
+      payload.searchKey = searchQuery;
+      payload.shopId = filters.shopId;
+      payload.orderStatus = filters.orderStatus;
+      payload.paymentStatus = filters.paymentStatus;
+      payload.paymentMethod = filters.paymentMethod;
+      payload.startDate = filters.startDate;
+      payload.endDate = filters.endDate;
+    } else {
+      payload.ids = selectedOrderIds;
+      payload.shopId = filters.shopId;
+    }
+
+    deleteMutation.mutate(payload);
   };
 
   // Helper function to calculate order totals
@@ -213,7 +296,17 @@ const Orders: React.FC = () => {
       {/* Header and Search */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
         <h1 className="text-2xl font-semibold">Orders</h1>
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex gap-2 w-full md:w-auto items-center">
+          {canDeleteOrder && (selectedOrderIds.length > 0 || selectAllMatching) && (
+            <button
+              onClick={handleDelete}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+            >
+              Delete {selectAllMatching ? "All Matching" : `(${selectedOrderIds.length})`}
+              {deleteMutation.isPending && "..."}
+            </button>
+          )}
+
           <form onSubmit={handleSearch} className="flex-1 md:w-80">
             <div className="relative">
               <input
@@ -232,15 +325,6 @@ const Orders: React.FC = () => {
           >
             <FaFilter className="w-5 h-5 text-gray-600" />
           </button>
-          {/* <button
-            onClick={() => {
-              setShowFilters(!showFilters);
-              setIsOpen(true);
-            }}
-            className="p-2 border rounded-lg hover:bg-gray-50"
-          >
-            <BiSpreadsheet className="w-5 h-5 text-gray-600" />
-          </button> */}
         </div>
       </div>
 
@@ -332,12 +416,51 @@ const Orders: React.FC = () => {
         </div>
       )}
 
+      {/* Select All Matching Message */}
+      {selectedOrderIds.length > 0 && selectedOrderIds.length === ordersData?.orders.length && ordersData?.pagination.totalItems > ordersData?.orders.length && !selectAllMatching && (
+        <div className="bg-blue-50 p-2 text-center text-blue-700 text-sm">
+          All {selectedOrderIds.length} orders on this page are selected.
+          <button
+            onClick={handleSelectAllMatching}
+            className="ml-2 font-bold underline hover:text-blue-900"
+          >
+            Select all {ordersData?.pagination.totalItems} orders matching current filters
+          </button>
+        </div>
+      )}
+
+      {selectAllMatching && (
+        <div className="bg-blue-50 p-2 text-center text-blue-700 text-sm">
+          All {ordersData?.pagination.totalItems} orders are selected.
+          <button
+            onClick={() => {
+              setSelectAllMatching(false);
+              setSelectedOrderIds([]);
+            }}
+            className="ml-2 font-bold underline hover:text-blue-900"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
       {/* Orders Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left w-10">
+                  <input
+                    type="checkbox"
+                    checked={
+                      (ordersData?.orders?.length || 0) > 0 &&
+                      selectedOrderIds.length === ordersData?.orders.length
+                    }
+                    onChange={handleSelectPage}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Order Number
                 </th>
@@ -414,6 +537,14 @@ const Orders: React.FC = () => {
                   return (
                     <tr key={order.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectAllMatching || selectedOrderIds.includes(order.id)}
+                          onChange={() => handleSelectOrder(order.id)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className="font-medium text-gray-900">
                           {order.orderNumber || "---"}
                         </span>
@@ -443,7 +574,7 @@ const Orders: React.FC = () => {
                                   <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                                 </svg>
                               </span>
-                              <span className="text-xs text-gray-600 truncate max-w-[200px]" title={order.customerEmail}>
+                              <span className="text-xs text-gray-600 truncate max-w-[200px]" title={order.customerEmail || undefined}>
                                 {order.customerEmail}
                               </span>
                             </div>
