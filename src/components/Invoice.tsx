@@ -112,7 +112,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const standardLine = "--------------------------------";
   const [printing, setPrinting] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const previewImage = null;
   const [error, setError] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const kotRef = useRef<HTMLDivElement>(null);
