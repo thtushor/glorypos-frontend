@@ -6,7 +6,13 @@ import {
   parseCurrencyInput,
   successToast,
 } from "@/utils/utils";
-import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from "react";
 import {
   FaCheckCircle,
   FaChevronDown,
@@ -56,7 +62,6 @@ export interface CartAdjustments {
   }; // Per-item discount adjustments
 }
 
-
 interface OrderData {
   id: number;
   date: string;
@@ -89,7 +94,7 @@ function ShoppingCart({
   initialPaymentInfo,
   initialStaffId = null,
   enableEnterSubmit = true,
-  maxWidth = "xl:max-w-[450px]"
+  maxWidth = "xl:max-w-[450px]",
 }: {
   cart: CartItem[];
   adjustments: CartAdjustments;
@@ -104,10 +109,10 @@ function ShoppingCart({
   initialCustomerInfo?: { name: string; phone: string };
   orderId?: number;
   initialKOTInfo?: {
-    tableNumber: string,
-    specialInstructions: string,
-    guestCount: number | string,
-  }
+    tableNumber: string;
+    specialInstructions: string;
+    guestCount: number | string;
+  };
   initialPaymentInfo?: PartialPayment;
   initialStaffId?: "self-sell" | number | null;
   enableEnterSubmit?: boolean;
@@ -205,7 +210,7 @@ function ShoppingCart({
     if (staffRoleFilter) {
       filtered = filtered.filter(
         (staff: any) =>
-          staff.role?.toLowerCase() === staffRoleFilter.toLowerCase()
+          staff.role?.toLowerCase() === staffRoleFilter.toLowerCase(),
       );
     }
 
@@ -217,7 +222,7 @@ function ShoppingCart({
     (item: CartItem): number => {
       return adjustments.salesPriceAdjustments[item.id];
     },
-    [adjustments.salesPriceAdjustments]
+    [adjustments.salesPriceAdjustments],
   );
 
   // Calculate final price for an item based on sales price and discount
@@ -230,10 +235,10 @@ function ShoppingCart({
         adjustments.discountAdjustments[item.id] ||
         (item.discountType && Number(item.discountAmount || 0) > 0
           ? {
-            type:
-              (item.discountType as "percentage" | "amount") || "percentage",
-            value: Number(item.discountAmount || 0),
-          }
+              type:
+                (item.discountType as "percentage" | "amount") || "percentage",
+              value: Number(item.discountAmount || 0),
+            }
           : null);
 
       if (discount && discount.value > 0) {
@@ -249,7 +254,7 @@ function ShoppingCart({
       // If no discount, return the sales price
       return salesPrice;
     },
-    [getItemSalesPrice, adjustments.discountAdjustments]
+    [getItemSalesPrice, adjustments.discountAdjustments],
   );
 
   const updateQuantity = (cartItemId: string, change: number) => {
@@ -266,7 +271,7 @@ function ShoppingCart({
           }
           return item;
         })
-        .filter((item) => item.quantity > 0)
+        .filter((item) => item.quantity > 0),
     );
   };
 
@@ -281,18 +286,19 @@ function ShoppingCart({
 
   const taxAmount = useMemo(() => {
     if (adjustments.tax.type === "percentage") {
-      const tax = (subtotal * (Number(adjustments?.tax?.value || 0))) / 100;
+      const tax = (subtotal * Number(adjustments?.tax?.value || 0)) / 100;
       return Math.round(tax * 100) / 100; // Round to 2 decimal places
     }
-    return Math.round((Number(adjustments?.tax?.value || 0)) * 100) / 100; // Round to 2 decimal places
+    return Math.round(Number(adjustments?.tax?.value || 0) * 100) / 100; // Round to 2 decimal places
   }, [subtotal, adjustments.tax]);
 
   const discountAmount = useMemo(() => {
     if (adjustments.discount.type === "percentage") {
-      const discount = (subtotal * (Number(adjustments?.discount?.value || 0))) / 100;
+      const discount =
+        (subtotal * Number(adjustments?.discount?.value || 0)) / 100;
       return Math.round(discount * 100) / 100; // Round to 2 decimal places
     }
-    return Math.round((Number(adjustments?.discount?.value || 0)) * 100) / 100; // Round to 2 decimal places
+    return Math.round(Number(adjustments?.discount?.value || 0) * 100) / 100; // Round to 2 decimal places
   }, [subtotal, adjustments.discount]);
 
   const total = useMemo(() => {
@@ -322,15 +328,17 @@ function ShoppingCart({
   }, [paymentTotal, total]);
 
   const updateTax = (newTax?: number | string) => {
-    const formattedTax = newTax
+    const formattedTax = newTax;
     setAdjustments((prev) => ({
       ...prev,
       tax: {
         type: prev.tax.type,
-        value: newTax === "" ? "" :
-          prev.tax.type === "percentage"
-            ? Math.max(0, Math.min(100, Number(formattedTax) ?? 0))
-            : Math.max(0, Number(formattedTax) ?? 0),
+        value:
+          newTax === ""
+            ? ""
+            : prev.tax.type === "percentage"
+              ? Math.max(0, Math.min(100, Number(formattedTax) ?? 0))
+              : Math.max(0, Number(formattedTax) ?? 0),
       },
     }));
   };
@@ -356,7 +364,7 @@ function ShoppingCart({
   // Update item sales price
   const updateItemSalesPrice = (
     itemId: string | number,
-    newSalesPrice: number | string
+    newSalesPrice: number | string,
   ) => {
     const formattedPrice = formatCurrency(newSalesPrice);
     const key = typeof itemId === "string" ? Number(itemId) : itemId;
@@ -375,7 +383,7 @@ function ShoppingCart({
   const updateItemDiscount = (
     itemId: string | number,
     discountType: "percentage" | "amount",
-    discountValue: number | string
+    discountValue: number | string,
   ) => {
     // const formattedValue = formatCurrency(discountValue);
     const key = typeof itemId === "string" ? Number(itemId) : itemId;
@@ -398,7 +406,10 @@ function ShoppingCart({
 
   // Add this mutation
   const createOrderMutation = useMutation({
-    mutationFn: async ({ cartItems, kotPaymentStatus }: CreateOrderVariables) => {
+    mutationFn: async ({
+      cartItems,
+      kotPaymentStatus,
+    }: CreateOrderVariables) => {
       const orderTotal = total;
       const isMixed =
         (partialPayment.cashAmount > 0 &&
@@ -502,7 +513,9 @@ function ShoppingCart({
   // Delete Order Mutation
   const deleteOrderMutation = useMutation({
     mutationFn: async (orderIdToDelete: number) => {
-      const response = await AXIOS.post(`${DELETE_ORDERS_URL}/${orderIdToDelete}`);
+      const response = await AXIOS.post(
+        `${DELETE_ORDERS_URL}/${orderIdToDelete}`,
+      );
       return response.data;
     },
     onSuccess: () => {
@@ -526,15 +539,17 @@ function ShoppingCart({
   });
 
   const updateDiscount = (newDiscount?: number | string) => {
-    const formattedDiscount = newDiscount
+    const formattedDiscount = newDiscount;
     setAdjustments((prev) => ({
       ...prev,
       discount: {
         type: prev.discount.type,
-        value: newDiscount === "" ? "" :
-          prev.discount.type === "percentage"
-            ? Math.max(0, Math.min(100, Number(formattedDiscount) ?? 0))
-            : Math.max(0, Number(formattedDiscount) ?? 0),
+        value:
+          newDiscount === ""
+            ? ""
+            : prev.discount.type === "percentage"
+              ? Math.max(0, Math.min(100, Number(formattedDiscount) ?? 0))
+              : Math.max(0, Number(formattedDiscount) ?? 0),
       },
     }));
   };
@@ -562,15 +577,15 @@ function ShoppingCart({
   const handleProcessPayment = () => {
     if (!isPaymentComplete) {
       toast.error(
-        `Payment incomplete. Remaining: ${money.format(paymentRemaining)}`
+        `Payment incomplete. Remaining: ${money.format(paymentRemaining)}`,
       );
       return;
     }
     if (isPaymentOver) {
       toast.error(
         `Payment exceeds total. Overpayment: $${(paymentTotal - total).toFixed(
-          2
-        )}`
+          2,
+        )}`,
       );
       return;
     }
@@ -602,7 +617,10 @@ function ShoppingCart({
     }
 
     // Create order for KOT with pending KOT payment status
-    createOrderMutation.mutate({ cartItems: cart, kotPaymentStatus: "pending" });
+    createOrderMutation.mutate({
+      cartItems: cart,
+      kotPaymentStatus: "pending",
+    });
   };
 
   const handleStaffSelect = (staffId: number | "self-sell") => {
@@ -627,11 +645,14 @@ function ShoppingCart({
       toast.error("No order ID found");
       return;
     }
-    if (window.confirm("Are you sure you want to delete this order? This action cannot be undone.")) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this order? This action cannot be undone.",
+      )
+    ) {
       deleteOrderMutation.mutate(orderId);
     }
   };
-
 
   useEffect(() => {
     if (!initialCustomerInfo) return;
@@ -642,22 +663,22 @@ function ShoppingCart({
     if (!initialKOTInfo) return;
     setKotData({
       ...initialKOTInfo,
-      guestCount: typeof initialKOTInfo.guestCount === 'string'
-        ? parseInt(initialKOTInfo.guestCount) || 1
-        : initialKOTInfo.guestCount
+      guestCount:
+        typeof initialKOTInfo.guestCount === "string"
+          ? parseInt(initialKOTInfo.guestCount) || 1
+          : initialKOTInfo.guestCount,
     });
-  }, [initialKOTInfo])
+  }, [initialKOTInfo]);
 
   useEffect(() => {
     if (!initialPaymentInfo) return;
     setPartialPayment(initialPaymentInfo);
-  }, [initialPaymentInfo])
-
+  }, [initialPaymentInfo]);
 
   useEffect(() => {
     if (!initialStaffId) return;
     setSelectedStaffId(initialStaffId);
-  }, [initialStaffId])
+  }, [initialStaffId]);
 
   // Ref for cart section highlighting
   const cartSectionRef = useRef<HTMLDivElement>(null);
@@ -671,7 +692,9 @@ function ShoppingCart({
       if (e.key === "Enter" && !e.shiftKey) {
         const target = e.target as HTMLElement;
         const isTextarea = target.tagName === "TEXTAREA";
-        const isInput = target.tagName === "INPUT" && (target as HTMLInputElement).type !== "submit";
+        const isInput =
+          target.tagName === "INPUT" &&
+          (target as HTMLInputElement).type !== "submit";
         const isSelect = target.tagName === "SELECT";
 
         // If focused on textarea, input, or select, allow normal behavior
@@ -691,12 +714,23 @@ function ShoppingCart({
           toast.warn("Please add at least one product to the cart");
           // Highlight the cart section
           if (cartSectionRef.current) {
-            cartSectionRef.current.classList.add("ring-4", "ring-yellow-400", "ring-opacity-75");
+            cartSectionRef.current.classList.add(
+              "ring-4",
+              "ring-yellow-400",
+              "ring-opacity-75",
+            );
             setTimeout(() => {
-              cartSectionRef.current?.classList.remove("ring-4", "ring-yellow-400", "ring-opacity-75");
+              cartSectionRef.current?.classList.remove(
+                "ring-4",
+                "ring-yellow-400",
+                "ring-opacity-75",
+              );
             }, 2000);
             // Scroll to cart section
-            cartSectionRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            cartSectionRef.current.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+            });
           }
           return;
         }
@@ -725,7 +759,14 @@ function ShoppingCart({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [enableEnterSubmit, cart.length, selectedStaffId, showPaymentModal, showStaffModal, total]);
+  }, [
+    enableEnterSubmit,
+    cart.length,
+    selectedStaffId,
+    showPaymentModal,
+    showStaffModal,
+    total,
+  ]);
 
   // Refs for handlers to avoid stale closures
   const handleProcessPaymentRef = useRef(handleProcessPayment);
@@ -741,11 +782,13 @@ function ShoppingCart({
 
   return (
     <>
-
-      <div className={`lg:sticky lg:top-0 lg:h-[calc(100vh-6rem)] ${maxWidth} overflow-y-auto pb-10`}>
+      <div
+        className={`lg:sticky lg:top-0 lg:h-[calc(100vh-6rem)] ${maxWidth} overflow-y-auto pb-10`}
+      >
         <div
-          className={` bg-white  rounded-lg shadow flex flex-col xl:flex ${showMobileCart ? "flex" : "hidden"
-            }`}
+          className={` bg-white  rounded-lg shadow flex flex-col xl:flex ${
+            showMobileCart ? "flex" : "hidden"
+          }`}
         >
           {/* Mobile Cart Header */}
           <div className="xl:hidden flex items-center justify-between p-4 border-b">
@@ -779,7 +822,10 @@ function ShoppingCart({
                 placeholder="Phone Number"
                 value={customerInfo.phone}
                 onChange={(e) =>
-                  setCustomerInfo((prev) => ({ ...prev, phone: e.target.value }))
+                  setCustomerInfo((prev) => ({
+                    ...prev,
+                    phone: e.target.value,
+                  }))
                 }
                 className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary"
               />
@@ -787,7 +833,10 @@ function ShoppingCart({
           </div>
 
           {/* Cart Items */}
-          <div ref={cartSectionRef} className="flex-1 p-4 overflow-y-auto transition-all duration-300">
+          <div
+            ref={cartSectionRef}
+            className="flex-1 p-4 overflow-y-auto transition-all duration-300"
+          >
             {cart.length === 0 ? (
               <div className="h-full flex items-center justify-center text-gray-500">
                 <div className="text-center">
@@ -832,15 +881,15 @@ function ShoppingCart({
                             {item?.selectedVariant?.Category?.name
                               ? item?.selectedVariant?.Category?.name
                               : item?.Category?.name && (
-                                <span className="flex items-center gap-1">
-                                  <span className="font-medium text-gray-600">
-                                    Category:
+                                  <span className="flex items-center gap-1">
+                                    <span className="font-medium text-gray-600">
+                                      Category:
+                                    </span>
+                                    {item?.selectedVariant?.Category?.name
+                                      ? item?.selectedVariant?.Category?.name
+                                      : item?.Category?.name}
                                   </span>
-                                  {item?.selectedVariant?.Category?.name
-                                    ? item?.selectedVariant?.Category?.name
-                                    : item?.Category?.name}
-                                </span>
-                              )}
+                                )}
 
                             {/* Brand */}
                             {item?.Brand?.name && (
@@ -856,24 +905,24 @@ function ShoppingCart({
                             {item?.selectedVariant?.Color?.name
                               ? item?.selectedVariant?.Color?.name
                               : item?.Color?.name && (
-                                <span className="flex items-center gap-1">
-                                  <span className="font-medium text-gray-600">
-                                    Color:
+                                  <span className="flex items-center gap-1">
+                                    <span className="font-medium text-gray-600">
+                                      Color:
+                                    </span>
+                                    <span
+                                      className="w-3 h-3 rounded-full border"
+                                      style={{
+                                        backgroundColor: item?.selectedVariant
+                                          ?.Color?.code
+                                          ? item?.selectedVariant?.Color?.code
+                                          : item?.Color?.code,
+                                      }}
+                                    />
+                                    {item?.selectedVariant?.Color?.name
+                                      ? item?.selectedVariant?.Color?.name
+                                      : item?.Color?.name}
                                   </span>
-                                  <span
-                                    className="w-3 h-3 rounded-full border"
-                                    style={{
-                                      backgroundColor: item?.selectedVariant
-                                        ?.Color?.code
-                                        ? item?.selectedVariant?.Color?.code
-                                        : item?.Color?.code,
-                                    }}
-                                  />
-                                  {item?.selectedVariant?.Color?.name
-                                    ? item?.selectedVariant?.Color?.name
-                                    : item?.Color?.name}
-                                </span>
-                              )}
+                                )}
                           </div>
                         </div>
 
@@ -892,18 +941,19 @@ function ShoppingCart({
                                 value={getNumericValue(salesPrice)}
                                 onChange={(e) => {
                                   const filtered = filterNumericInput(
-                                    e.target.value
+                                    e.target.value,
                                   );
-                                  const parsed = filtered === "" ? "" : filtered;
+                                  const parsed =
+                                    filtered === "" ? "" : filtered;
                                   console.log({ parsed, filtered });
                                   updateItemSalesPrice(
                                     item.id || 0,
-                                    parsed as string
+                                    parsed as string,
                                   );
                                 }}
                                 onBlur={(e) => {
                                   const filtered = filterNumericInput(
-                                    e.target.value
+                                    e.target.value,
                                   );
                                   const parsed =
                                     filtered === ""
@@ -911,7 +961,7 @@ function ShoppingCart({
                                       : parseCurrencyInput(filtered);
                                   updateItemSalesPrice(
                                     item.id || 0,
-                                    formatCurrency(parsed)
+                                    formatCurrency(parsed),
                                   );
                                 }}
                                 className=" w-[100px] min-w-0 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -932,7 +982,7 @@ function ShoppingCart({
                                 value={getNumericValue(discount.value)}
                                 onChange={(e) => {
                                   const filtered = filterNumericInput(
-                                    e.target.value
+                                    e.target.value,
                                   );
                                   const parsed =
                                     filtered === ""
@@ -952,12 +1002,12 @@ function ShoppingCart({
                                   updateItemDiscount(
                                     item.id || 0,
                                     discount.type,
-                                    finalValue
+                                    finalValue,
                                   );
                                 }}
                                 onBlur={(e) => {
                                   const filtered = filterNumericInput(
-                                    e.target.value
+                                    e.target.value,
                                   );
                                   const parsed =
                                     filtered === ""
@@ -975,7 +1025,7 @@ function ShoppingCart({
                                   updateItemDiscount(
                                     item.id || 0,
                                     discount.type,
-                                    formatCurrency(finalValue)
+                                    formatCurrency(finalValue),
                                   );
                                 }}
                                 className="w-[50px] px-2 py-1 text-xs border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -987,7 +1037,7 @@ function ShoppingCart({
                                   updateItemDiscount(
                                     item.id || 0,
                                     e.target.value as "percentage" | "amount",
-                                    discount.value
+                                    discount.value,
                                   );
                                 }}
                                 className="text-xs border-y border-r rounded-r bg-gray-50 px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -1072,14 +1122,17 @@ function ShoppingCart({
                       onChange={(e) => {
                         const filtered = filterNumericInput(e.target.value);
                         const parsed =
-                          filtered === ""
-                            ? ""
-                            : parseCurrencyInput(filtered);
+                          filtered === "" ? "" : parseCurrencyInput(filtered);
                         // Validate max for percentage
                         const maxValue =
-                          adjustments.tax.type === "percentage" ? 100 : undefined;
+                          adjustments.tax.type === "percentage"
+                            ? 100
+                            : undefined;
                         const finalValue =
-                          maxValue && parsed !== undefined && parsed && parsed > maxValue
+                          maxValue &&
+                          parsed !== undefined &&
+                          parsed &&
+                          parsed > maxValue
                             ? maxValue
                             : parsed;
                         updateTax(finalValue);
@@ -1090,9 +1143,13 @@ function ShoppingCart({
                           filtered === "" ? "" : parseCurrencyInput(filtered);
                         // Validate max for percentage
                         const maxValue =
-                          adjustments.tax.type === "percentage" ? 100 : undefined;
+                          adjustments.tax.type === "percentage"
+                            ? 100
+                            : undefined;
                         const finalValue =
-                          maxValue && parsed && parsed > maxValue ? maxValue : parsed;
+                          maxValue && parsed && parsed > maxValue
+                            ? maxValue
+                            : parsed;
                         updateTax(finalValue);
                       }}
                       className="w-full sm:w-20 px-2 py-1.5 sm:py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
@@ -1132,16 +1189,17 @@ function ShoppingCart({
                       onChange={(e) => {
                         const filtered = filterNumericInput(e.target.value);
                         const parsed =
-                          filtered === ""
-                            ? ""
-                            : parseCurrencyInput(filtered);
+                          filtered === "" ? "" : parseCurrencyInput(filtered);
                         // Validate max for percentage
                         const maxValue =
                           adjustments.discount.type === "percentage"
                             ? 100
                             : undefined;
                         const finalValue =
-                          maxValue && parsed !== undefined && parsed && parsed > maxValue
+                          maxValue &&
+                          parsed !== undefined &&
+                          parsed &&
+                          parsed > maxValue
                             ? maxValue
                             : parsed;
                         updateDiscount(finalValue);
@@ -1156,7 +1214,9 @@ function ShoppingCart({
                             ? 100
                             : undefined;
                         const finalValue =
-                          maxValue && parsed && parsed > maxValue ? maxValue : parsed;
+                          maxValue && parsed && parsed > maxValue
+                            ? maxValue
+                            : parsed;
                         updateDiscount(finalValue);
                       }}
                       className="w-full sm:w-20 px-2 py-1.5 sm:py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
@@ -1204,7 +1264,9 @@ function ShoppingCart({
                   {selectedStaffId === "self-sell" ? (
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">Self Sell</span>
+                        <span className="font-medium text-gray-900">
+                          Self Sell
+                        </span>
                         <span className="text-xs text-gray-500">
                           Shop selling (No staff assigned)
                         </span>
@@ -1225,14 +1287,14 @@ function ShoppingCart({
                         <span className="font-medium text-gray-900">
                           {
                             activeStaffs.find(
-                              (staff: any) => staff.id === selectedStaffId
+                              (staff: any) => staff.id === selectedStaffId,
                             )?.fullName
                           }
                         </span>
                         <span className="text-xs text-gray-500">
                           {
                             activeStaffs.find(
-                              (staff: any) => staff.id === selectedStaffId
+                              (staff: any) => staff.id === selectedStaffId,
                             )?.parent?.businessName
                           }{" "}
                           (ID: {selectedStaffId})
@@ -1290,8 +1352,6 @@ function ShoppingCart({
               <span>Scan Barcode</span>
             </button>
 
-
-
             {/* Delete Order Button - Only shown when editing an existing order */}
             {orderId && canDeleteOrder && (
               <div className="mt-4 pt-4 border-t border-gray-200">
@@ -1334,10 +1394,11 @@ function ShoppingCart({
           {/* Self Sell Option - Prominent */}
           <button
             onClick={() => handleStaffSelect("self-sell")}
-            className={`w-full text-left p-4 border-2 rounded-lg transition-all hover:shadow-md ${selectedStaffId === "self-sell"
-              ? "border-brand-primary bg-brand-primary/5 shadow-sm"
-              : "border-gray-200 hover:border-gray-300 bg-white"
-              }`}
+            className={`w-full text-left p-4 border-2 rounded-lg transition-all hover:shadow-md ${
+              selectedStaffId === "self-sell"
+                ? "border-brand-primary bg-brand-primary/5 shadow-sm"
+                : "border-gray-200 hover:border-gray-300 bg-white"
+            }`}
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
@@ -1461,10 +1522,11 @@ function ShoppingCart({
                 <button
                   key={staff.id}
                   onClick={() => handleStaffSelect(staff.id)}
-                  className={`relative text-left p-3 border-2 rounded-lg transition-all hover:shadow-md hover:scale-[1.02] ${selectedStaffId === staff.id
-                    ? "border-brand-primary bg-brand-primary/10 shadow-md ring-2 ring-brand-primary/20"
-                    : "border-gray-200 hover:border-gray-300 bg-white"
-                    }`}
+                  className={`relative text-left p-3 border-2 rounded-lg transition-all hover:shadow-md hover:scale-[1.02] ${
+                    selectedStaffId === staff.id
+                      ? "border-brand-primary bg-brand-primary/10 shadow-md ring-2 ring-brand-primary/20"
+                      : "border-gray-200 hover:border-gray-300 bg-white"
+                  }`}
                 >
                   {selectedStaffId === staff.id && (
                     <div className="absolute top-1.5 right-1.5">
@@ -1554,7 +1616,9 @@ function ShoppingCart({
         hasNewProduct={(() => {
           // Check if there are items without orderItemId (new products added to existing order)
           // This means some items are new (no orderItemId) - mixed order scenario
-          const itemsWithoutOrderItemId = cart.filter(item => !item.orderItemId);
+          const itemsWithoutOrderItemId = cart.filter(
+            (item) => !item.orderItemId,
+          );
           return itemsWithoutOrderItemId.length > 0;
         })()}
       />
@@ -1610,6 +1674,11 @@ function ShoppingCart({
         <Invoice
           orderId={Number(currentOrder?.id || 0)}
           onClose={() => {
+            const el = document.getElementById("mainLayoutForScroll");
+            el?.scrollTo({
+              top: 0,
+              behavior: "smooth",
+            });
             setShowInvoice(false);
             setCart([]);
             setCustomerInfo({ name: "", phone: "" });

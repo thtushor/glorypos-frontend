@@ -161,14 +161,16 @@ const Orders: React.FC = () => {
         // Refetch orders by invalidating the query
         queryClient.invalidateQueries({ queryKey: ["orders"] });
       } else {
-        toast.error((data as unknown as { message: string }).message || "Failed to delete orders");
+        toast.error(
+          (data as unknown as { message: string }).message ||
+            "Failed to delete orders",
+        );
       }
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Failed to delete orders");
     },
   });
-
 
   // Handle print invoice
   const handlePrintInvoice = () => {
@@ -208,7 +210,7 @@ const Orders: React.FC = () => {
     setSelectedOrderIds((prev) =>
       prev.includes(orderId)
         ? prev.filter((id) => id !== orderId)
-        : [...prev, orderId]
+        : [...prev, orderId],
     );
   };
 
@@ -234,7 +236,7 @@ const Orders: React.FC = () => {
       !confirm(
         selectAllMatching
           ? "Are you sure you want to delete ALL orders matching the current filters? This cannot be undone."
-          : `Are you sure you want to delete ${selectedOrderIds.length} selected orders?`
+          : `Are you sure you want to delete ${selectedOrderIds.length} selected orders?`,
       )
     ) {
       return;
@@ -297,15 +299,19 @@ const Orders: React.FC = () => {
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
         <h1 className="text-2xl font-semibold">Orders</h1>
         <div className="flex gap-2 w-full md:w-auto items-center">
-          {canDeleteOrder && (selectedOrderIds.length > 0 || selectAllMatching) && (
-            <button
-              onClick={handleDelete}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
-            >
-              Delete {selectAllMatching ? "All Matching" : `(${selectedOrderIds.length})`}
-              {deleteMutation.isPending && "..."}
-            </button>
-          )}
+          {canDeleteOrder &&
+            (selectedOrderIds.length > 0 || selectAllMatching) && (
+              <button
+                onClick={handleDelete}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+              >
+                Delete{" "}
+                {selectAllMatching
+                  ? "All Matching"
+                  : `(${selectedOrderIds.length})`}
+                {deleteMutation.isPending && "..."}
+              </button>
+            )}
 
           <form onSubmit={handleSearch} className="flex-1 md:w-80">
             <div className="relative">
@@ -334,7 +340,9 @@ const Orders: React.FC = () => {
           {user?.shopType === "restaurant" && (
             <select
               value={filters.orderStatus || ""}
-              onChange={(e) => handleFilterChange("orderStatus", e.target.value)}
+              onChange={(e) =>
+                handleFilterChange("orderStatus", e.target.value)
+              }
               className="border rounded-lg p-2"
             >
               <option value="">All Order Status</option>
@@ -372,13 +380,7 @@ const Orders: React.FC = () => {
           {/* Shop Filter */}
           <select
             value={filters.shopId || ""}
-            onChange={(e) =>
-              handleFilterChange(
-                "shopId",
-                e.target.value
-              )
-
-            }
+            onChange={(e) => handleFilterChange("shopId", e.target.value)}
             disabled={isLoadingShops}
             className="border rounded-lg p-2"
           >
@@ -398,7 +400,6 @@ const Orders: React.FC = () => {
             )}
           </select>
 
-
           <div className="flex gap-2">
             <input
               type="date"
@@ -417,17 +418,21 @@ const Orders: React.FC = () => {
       )}
 
       {/* Select All Matching Message */}
-      {selectedOrderIds.length > 0 && selectedOrderIds.length === ordersData?.orders.length && ordersData?.pagination.totalItems > ordersData?.orders.length && !selectAllMatching && (
-        <div className="bg-blue-50 p-2 text-center text-blue-700 text-sm">
-          All {selectedOrderIds.length} orders on this page are selected.
-          <button
-            onClick={handleSelectAllMatching}
-            className="ml-2 font-bold underline hover:text-blue-900"
-          >
-            Select all {ordersData?.pagination.totalItems} orders matching current filters
-          </button>
-        </div>
-      )}
+      {selectedOrderIds.length > 0 &&
+        selectedOrderIds.length === ordersData?.orders.length &&
+        ordersData?.pagination.totalItems > ordersData?.orders.length &&
+        !selectAllMatching && (
+          <div className="bg-blue-50 p-2 text-center text-blue-700 text-sm">
+            All {selectedOrderIds.length} orders on this page are selected.
+            <button
+              onClick={handleSelectAllMatching}
+              className="ml-2 font-bold underline hover:text-blue-900"
+            >
+              Select all {ordersData?.pagination.totalItems} orders matching
+              current filters
+            </button>
+          </div>
+        )}
 
       {selectAllMatching && (
         <div className="bg-blue-50 p-2 text-center text-blue-700 text-sm">
@@ -467,7 +472,7 @@ const Orders: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Customer
                 </th>
-                {user?.shopType === "restaurant" &&
+                {user?.shopType === "restaurant" && (
                   <>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Table No.
@@ -479,7 +484,7 @@ const Orders: React.FC = () => {
                       Notes
                     </th>
                   </>
-                }
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Date
                 </th>
@@ -539,7 +544,10 @@ const Orders: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <input
                           type="checkbox"
-                          checked={selectAllMatching || selectedOrderIds.includes(order.id)}
+                          checked={
+                            selectAllMatching ||
+                            selectedOrderIds.includes(order.id)
+                          }
                           onChange={() => handleSelectOrder(order.id)}
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
@@ -557,7 +565,11 @@ const Orders: React.FC = () => {
                           {order.customerPhone && (
                             <div className="flex items-center gap-1.5">
                               <span className="text-blue-600">
-                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <svg
+                                  className="w-3.5 h-3.5"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
                                   <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                                 </svg>
                               </span>
@@ -569,19 +581,26 @@ const Orders: React.FC = () => {
                           {order.customerEmail && (
                             <div className="flex items-center gap-1.5">
                               <span className="text-green-600">
-                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <svg
+                                  className="w-3.5 h-3.5"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
                                   <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                                   <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                                 </svg>
                               </span>
-                              <span className="text-xs text-gray-600 truncate max-w-[200px]" title={order.customerEmail || undefined}>
+                              <span
+                                className="text-xs text-gray-600 truncate max-w-[200px]"
+                                title={order.customerEmail || undefined}
+                              >
                                 {order.customerEmail}
                               </span>
                             </div>
                           )}
                         </div>
                       </td>
-                      {user?.shopType === "restaurant" &&
+                      {user?.shopType === "restaurant" && (
                         <>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {order?.tableNumber || ""}
@@ -593,7 +612,7 @@ const Orders: React.FC = () => {
                             {order?.specialNotes || ""}
                           </td>
                         </>
-                      }
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap">
                         {order.orderDate
                           ? new Date(order.orderDate).toLocaleDateString()
@@ -602,8 +621,8 @@ const Orders: React.FC = () => {
                       {/* Seller Info */}
                       <td className="px-4 py-2 whitespace-nowrap">
                         {order.commissions?.[0]?.staff?.fullName ||
-                          order.commissions?.[0]?.staff?.role ||
-                          order?.commissions?.[0]?.staff?.parent?.businessName ? (
+                        order.commissions?.[0]?.staff?.role ||
+                        order?.commissions?.[0]?.staff?.parent?.businessName ? (
                           <div className="flex flex-col gap-0.5">
                             {order.commissions?.[0]?.staff?.fullName && (
                               <span className="text-sm font-medium text-gray-800">
@@ -619,11 +638,11 @@ const Orders: React.FC = () => {
                             )}
                             {order?.commissions?.[0]?.staff?.parent
                               ?.businessName && (
-                                <strong className="text-xs text-gray-500">
-                                  shop:{" "}
-                                  {order.commissions[0].staff.parent.businessName}
-                                </strong>
-                              )}
+                              <strong className="text-xs text-gray-500">
+                                shop:{" "}
+                                {order.commissions[0].staff.parent.businessName}
+                              </strong>
+                            )}
                           </div>
                         ) : (
                           <span className="text-gray-400">---</span>
@@ -633,7 +652,7 @@ const Orders: React.FC = () => {
                         {order.orderStatus ? (
                           <span
                             className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                              order.orderStatus
+                              order.orderStatus,
                             )}`}
                           >
                             {order.orderStatus}
@@ -646,7 +665,7 @@ const Orders: React.FC = () => {
                         {order.paymentMethod ? (
                           <span
                             className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                              order.paymentStatus
+                              order.paymentStatus,
                             )}`}
                           >
                             {order.paymentMethod}
@@ -686,7 +705,7 @@ const Orders: React.FC = () => {
                                 <span className="font-semibold text-green-600">
                                   {money.format(
                                     totals.totalProfit -
-                                    Number(totals.totalCommission || 0)
+                                      Number(totals.totalCommission || 0),
                                   )}
                                 </span>
                               ) : (
@@ -694,7 +713,7 @@ const Orders: React.FC = () => {
                                   -
                                   {money.format(
                                     totals.totalLoss +
-                                    Number(totals.totalCommission || 0)
+                                      Number(totals.totalCommission || 0),
                                   )}
                                 </span>
                               )
@@ -766,6 +785,11 @@ const Orders: React.FC = () => {
           <Invoice
             orderId={selectedOrder?.id}
             onClose={() => {
+              const el = document.getElementById("mainLayoutForScroll");
+              el?.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              });
               setShowInvoice(false);
               setSelectedOrder(null);
             }}
@@ -774,7 +798,6 @@ const Orders: React.FC = () => {
         )}
       </Modal>
 
-
       <Modal
         isOpen={adjustOrderModalOpen}
         onClose={() => {
@@ -782,7 +805,7 @@ const Orders: React.FC = () => {
         }}
         className="!max-w-[95vw]"
         titleContainerClassName="!mb-0"
-      // useInnerModal={true}
+        // useInnerModal={true}
       >
         <DashBoardProduct orderId={selectedOrder?.id} />
       </Modal>

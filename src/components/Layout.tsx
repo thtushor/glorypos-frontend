@@ -71,6 +71,7 @@ const Layout: React.FC = () => {
 
         {/* Main Content Area */}
         <main
+          id="mainLayoutForScroll"
           className={`flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-6 transition-all duration-300 ease-in-out ${
             isSidebarOpen ? "md:ml-0" : "md:ml-0"
           }`}
