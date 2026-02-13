@@ -25,7 +25,6 @@ interface CartAdjustments {
   }; // Per-item discount adjustments
 }
 
-
 // Currency formatting helpers
 
 const POS: React.FC = () => {
@@ -156,7 +155,6 @@ const POS: React.FC = () => {
     };
   }, [handleBarcodeScan]);
 
-
   // Cart items count
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -187,7 +185,6 @@ const POS: React.FC = () => {
         handleBarcodeScan={handleBarcodeScan}
       />
       {/* </div> */}
-
 
       <MobileCartToggleButton
         onClick={() => setShowMobileCart(true)}

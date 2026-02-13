@@ -45,6 +45,7 @@ import { CartItem } from "@/types/cartItemType";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
 import PaymentModal, { PartialPayment } from "./PaymentModal";
+import { useNavigate } from "react-router-dom";
 
 export interface CartAdjustments {
   tax: {
@@ -143,6 +144,8 @@ function ShoppingCart({
     specialInstructions: "",
     guestCount: 1 as number | string,
   });
+
+  const navigate = useNavigate();
 
   const [currentOrder, setCurrentOrder] = useState<OrderData | null>(null);
 
@@ -1674,6 +1677,8 @@ function ShoppingCart({
         <Invoice
           orderId={Number(currentOrder?.id || 0)}
           onClose={() => {
+            onClose();
+            navigate("/sales/pos", { replace: true });
             const el = document.getElementById("mainLayoutForScroll");
             el?.scrollTo({
               top: 0,

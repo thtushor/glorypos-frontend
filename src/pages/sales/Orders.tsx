@@ -16,6 +16,7 @@ import { useAuth } from "@/context/AuthContext";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
 import { useShopFilterOptions } from "@/hooks/useShopFilterOptions";
+import { useNavigate } from "react-router-dom";
 
 interface OrderItem {
   id: number;
@@ -171,6 +172,8 @@ const Orders: React.FC = () => {
       toast.error(error?.response?.data?.message || "Failed to delete orders");
     },
   });
+
+  const navigate = useNavigate();
 
   // Handle print invoice
   const handlePrintInvoice = () => {
@@ -785,6 +788,7 @@ const Orders: React.FC = () => {
           <Invoice
             orderId={selectedOrder?.id}
             onClose={() => {
+              navigate("/sales/pos", { replace: true });
               const el = document.getElementById("mainLayoutForScroll");
               el?.scrollTo({
                 top: 0,
