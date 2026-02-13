@@ -6,7 +6,6 @@ import {
   FaWallet,
   FaUtensils,
   FaDownload,
-  FaEye,
 } from "react-icons/fa";
 import Modal from "./Modal";
 import html2canvas from "html2canvas";
@@ -814,34 +813,34 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   };
 
   // Handle View in full screen modal
-  const handleView = async () => {
-    if (!invoiceRef.current || !invoiceData) {
-      toast.error("Invoice data not available");
-      return;
-    }
+  // const handleView = async () => {
+  //   if (!invoiceRef.current || !invoiceData) {
+  //     toast.error("Invoice data not available");
+  //     return;
+  //   }
 
-    try {
-      const element = invoiceRef.current;
+  //   try {
+  //     const element = invoiceRef.current;
 
-      // Wait a bit to ensure everything is rendered
-      await new Promise((resolve) => setTimeout(resolve, 100));
+  //     // Wait a bit to ensure everything is rendered
+  //     await new Promise((resolve) => setTimeout(resolve, 100));
 
-      const canvas = await html2canvas(element, {
-        backgroundColor: "#ffffff",
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-      });
+  //     const canvas = await html2canvas(element, {
+  //       backgroundColor: "#ffffff",
+  //       scale: 3,
+  //       useCORS: true,
+  //       allowTaint: true,
+  //       logging: false,
+  //     });
 
-      const imageUrl = canvas.toDataURL("image/png");
-      setPreviewImage(imageUrl);
-      setShowPreviewModal(true);
-    } catch (error) {
-      console.error("View failed:", error);
-      toast.error("Failed to generate preview");
-    }
-  };
+  //     const imageUrl = canvas.toDataURL("image/png");
+  //     setPreviewImage(imageUrl);
+  //     setShowPreviewModal(true);
+  //   } catch (error) {
+  //     console.error("View failed:", error);
+  //     toast.error("Failed to generate preview");
+  //   }
+  // };
 
   console.log({ handlePrint });
 
