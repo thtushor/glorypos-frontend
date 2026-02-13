@@ -18,7 +18,7 @@ import { ORDERS_URL } from "@/api/api";
 import Spinner from "./Spinner";
 import { toast } from "react-toastify";
 import { useReactToPrint } from "react-to-print";
-import LogoSvg from "./icons/LogoSvg";
+import LogoSvg from "@/assets/invoice-logo.png";
 import money from "@/utils/money";
 import {
   useReceiptPrint,
@@ -437,7 +437,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
       if (isWebView) {
         sendPrintSignal("KOT", invoiceData);
-        toast.success("KOT print signal sent to app");
+        // toast.success("KOT print signal sent to app");
+        onClose();
         setPrinting(false);
         return;
       }
@@ -500,8 +501,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         for (let i = 1; i < wrappedNames.length; i++) {
           receipt = receipt.line(
             "-" +
-            " ".repeat(QTY_WIDTH - 1) +
-            wrappedNames[i].padEnd(ITEM_WIDTH_KOT),
+              " ".repeat(QTY_WIDTH - 1) +
+              wrappedNames[i].padEnd(ITEM_WIDTH_KOT),
           );
         }
 
@@ -546,11 +547,11 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       await device.releaseInterface(0);
       await device.close();
 
-      toast.success("KOT printed successfully");
+      // toast.success("KOT printed successfully");
     } catch (err: any) {
       console.error("❌ KOT print failed:", err);
       setError(err?.message || "Printer not connected or permission denied");
-      toast.error(err?.message || "Failed to print KOT");
+      // toast.error(err?.message || "Failed to print KOT");
     } finally {
       setPrinting(false);
     }
@@ -566,7 +567,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
 
       if (isWebView) {
         sendPrintSignal("INVOICE", invoiceData);
-        toast.success("Invoice print signal sent to app");
+        // toast.success("Invoice print signal sent to app");
+        onClose();
         setPrinting(false);
         return;
       }
@@ -629,9 +631,9 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         .bold(true)
         .text(
           "QTY ".padEnd(QTY_WIDTH) +
-          "ITEM".padEnd(ITEM_WIDTH) +
-          "TOTAL".padStart(TOTAL_WIDTH) +
-          "\n",
+            "ITEM".padEnd(ITEM_WIDTH) +
+            "TOTAL".padStart(TOTAL_WIDTH) +
+            "\n",
         )
         .bold(false);
 
@@ -719,11 +721,11 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
       await device.releaseInterface(0);
       await device.close();
 
-      toast.success("Invoice printed successfully");
+      // toast.success("Invoice printed successfully");
     } catch (err: any) {
       console.error("❌ Invoice print failed:", err);
       setError(err?.message || "Printer not connected or permission denied");
-      toast.error(err?.message || "Failed to print invoice");
+      // toast.error(err?.message || "Failed to print invoice");
     } finally {
       setPrinting(false);
     }
@@ -870,38 +872,39 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   return (
     <div className="flex items-center justify-center z-50">
       <div className="w-full">
-        <div className="p-6" id="invoice-print" ref={contentRef}>
+        <div className="" id="invoice-print" ref={contentRef}>
           {/* Business Info */}
-          <div className="text-center mb-6">
-            <div className="flex justify-center mb-4">
-              <LogoSvg className="h-[90px]" />
+          <div className="text-center mb-4 bg-brand-primary/20 rounded-lg p-4 mt-[-10px]">
+            <div className="flex justify-center mb-3">
+              {/* <LogoSvg className="h-[90px]" /> */}
+              <img src={LogoSvg} className="h-[50px]" />
             </div>
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-lg md:text-xl font-bold">
               {invoiceData.businessInfo.name}
             </h2>
             <p className="text-gray-500 text-sm">
               {invoiceData.businessInfo.address}
             </p>
             <p className="text-gray-500 text-sm">
-              Tel: {invoiceData.businessInfo.phone} | Email:{" "}
+              {invoiceData.businessInfo.phone} <div className="block " />{" "}
               {invoiceData.businessInfo.email}
             </p>
-            <p className="text-gray-500 text-sm mt-2">
-              Invoice #{invoiceData.invoiceNumber} •{" "}
+            <p className="text-gray-500 text-sm mt-1">
+              #{invoiceData.invoiceNumber} •{" "}
               {new Date(invoiceData.date).toLocaleString()}
             </p>
           </div>
 
           {/* Customer Info */}
-          <div className="mb-6 text-sm">
-            <h3 className="font-medium mb-2">Customer Information</h3>
+          <div className="mb-2 text-sm">
+            <h3 className="font-bold text-base">Customer Information</h3>
             <p>Name: {invoiceData.customer.name}</p>
             <p>Phone: {invoiceData.customer.phone}</p>
             {invoiceData.customer.email !== "N/A" && (
               <p>Email: {invoiceData.customer.email}</p>
             )}
             {(invoiceData.guestNumber || invoiceData.tableNumber) && (
-              <div className="mt-3 pt-3 border-t">
+              <div className="mt-1 pt-1 border-t">
                 {invoiceData.tableNumber && (
                   <p className="font-medium">
                     Table: {invoiceData.tableNumber}
@@ -917,7 +920,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           </div>
 
           {/* Items */}
-          <div className="mb-6  overflow-x-auto border px-4 py-1 rounded-md">
+          <div className="mb-2  overflow-x-auto border px-2">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
@@ -964,8 +967,9 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                             </span>
                           )}
                           <span
-                            className={`font-medium ${showOriginalPrice ? "text-red-600" : ""
-                              }`}
+                            className={`font-medium ${
+                              showOriginalPrice ? "text-red-600" : ""
+                            }`}
                           >
                             {money.format(item.unitPrice)}
                           </span>
@@ -979,8 +983,9 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                             </span>
                           )}
                           <span
-                            className={`font-medium ${showOriginalPrice ? "text-red-600" : ""
-                              }`}
+                            className={`font-medium ${
+                              showOriginalPrice ? "text-red-600" : ""
+                            }`}
                           >
                             {money.format(item.subtotal)}
                           </span>
@@ -997,7 +1002,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           {invoiceData.specialNotes !== undefined &&
             invoiceData.specialNotes !== null &&
             String(invoiceData.specialNotes).trim() !== "" && (
-              <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <div className="mb-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                 <h3 className="font-medium text-sm mb-1 text-yellow-800">
                   Special Notes
                 </h3>
@@ -1008,7 +1013,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             )}
 
           {/* Summary */}
-          <div className="space-y-2 text-sm">
+          <div className="space-y-[6px] text-sm">
             <div className="flex justify-between">
               <span>Subtotal</span>
               <span>{money.format(Number(invoiceData.summary.subtotal))}</span>
@@ -1027,7 +1032,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                 </span>
               </div>
             )}
-            <div className="flex justify-between font-medium text-lg pt-2 border-t">
+            <div className="flex justify-between font-bold text-base md:text-lg">
               <span>Total</span>
               <span>{money.format(Number(invoiceData.summary.total))}</span>
             </div>
@@ -1120,7 +1125,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             </div>
           </div>
 
-          <p className="mt-6 text-center text-sm text-gray-500">
+          <p className="mt-3 bg-brand-primary/20 w-fit rounded-full px-3 py-[1px] font-semibold mx-auto text-center text-sm text-gray-500">
             Thank you for your business!
           </p>
 
@@ -1137,11 +1142,11 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           </div> */}
 
           {/* Business Details */}
-          <div className="mt-4 text-center text-xs text-gray-500">
+          <div className="mt-2 uppercase text-center text-xs text-gray-500 bg-brand-primary/20 rounded-lg p-4 py-2 mb-3">
             <p>Tax ID: {invoiceData.businessInfo.taxId}</p>
-            <p className="text-xs text-black font-medium">Glory POS</p>
+            <p className="text-xs font-semibold text-black">GLORY POS</p>
             <p className="mt-1">
-              Valid until: {getExpiryDate(invoiceData.date)}
+              VALID TILL: {getExpiryDate(invoiceData.date)}
             </p>
           </div>
         </div>
@@ -1666,14 +1671,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         </div>
 
         {/* Actions */}
-        <div className="border-t px-4 py-3 flex flex-wrap justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="px-3 py-1.5 text-xs font-medium border text-gray-700 hover:bg-gray-100 rounded-md"
-          >
-            Close
-          </button>
-
+        <div className="border-t py-3 grid grid-cols-2 sm:flex sm:flex-wrap justify-end gap-2">
           {user?.shopType === "restaurant" && (
             <>
               <button
@@ -1682,8 +1680,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                 className="px-3 py-1.5 text-xs font-medium text-orange-600 border border-orange-600 hover:bg-orange-50 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FaDownload className="w-3 h-3" />
-                <span className="hidden sm:inline">Download KOT</span>
-                <span className="sm:hidden">DL KOT</span>
+                <span className="inline">Download KOT</span>
               </button>
               <button
                 onClick={handleKOTPrint}
@@ -1693,31 +1690,28 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                 className="px-3 py-1.5 text-xs font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FaUtensils className="w-3 h-3" />
-                <span className="hidden sm:inline">
+                <span className="inline">
                   {printing ? "Printing..." : "Print KOT"}
                 </span>
-                <span className="sm:hidden">KOT</span>
               </button>
             </>
           )}
 
-          <button
+          {/* <button
             onClick={handleView}
             disabled={!invoiceData || invoiceData.items.length === 0}
             className="px-3 py-1.5 text-xs font-medium text-teal-600 border border-teal-600 hover:bg-teal-50 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaEye className="w-3 h-3" />
-            <span className="hidden sm:inline">View Invoice</span>
-            <span className="sm:hidden">View</span>
-          </button>
+            <span className="inline">View Invoice</span>
+          </button> */}
           <button
             onClick={handleInvoiceDownload}
             disabled={!invoiceData || invoiceData.items.length === 0}
             className="px-3 py-1.5 text-xs font-medium text-brand-primary border border-brand-primary hover:bg-brand-primary/10 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaDownload className="w-3 h-3" />
-            <span className="hidden sm:inline">Download Invoice</span>
-            <span className="sm:hidden">DL Invoice</span>
+            <span className="inline">Download Invoice</span>
           </button>
           <button
             onClick={handleInvoicePrint}
@@ -1727,14 +1721,19 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             className="px-3 py-1.5 text-xs font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaPrint className="w-3 h-3" />
-            <span className="hidden sm:inline">
+            <span className="inline">
               {printing ? "Printing..." : "Print Invoice"}
             </span>
-            <span className="sm:hidden">Invoice</span>
+          </button>
+          <button
+            onClick={onClose}
+            className="px-3 col-span-full bg-black/10 py-1.5 text-xs font-medium border text-gray-700 border-black/30 rounded-md"
+          >
+            Close
           </button>
 
           {error && (
-            <p className="text-xs text-red-500 w-full text-right mt-1">
+            <p className="text-xs text-red-500 w-full mt-1 col-span-full text-center">
               {error}
             </p>
           )}
