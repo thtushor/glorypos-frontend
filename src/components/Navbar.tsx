@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { FaBars, FaBell, FaUser, FaCog, FaSignOutAlt } from "react-icons/fa";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
 import AXIOS from "@/api/network/Axios";
+import { useNavigate } from "react-router-dom";
 import LogoSvg from "./icons/LogoSvg";
+import { NOTIFICATIONS_UNREAD_COUNT_URL, NOTIFICATIONS_URL } from "@/api/api";
+
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -31,6 +35,8 @@ interface StockAlertResponse {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, logout } = useAuth();
 
   // const hasAccessStaff = user?.child?.id ? true : false;
@@ -44,14 +50,55 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   // ]);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  const { data: stockAlerts } = useQuery<StockAlertResponse>({
-    queryKey: ["stock-alerts"],
-    refetchInterval: 1000 * 30,
+  /* New Notifications Logic */
+  const { data: unreadCountData } = useQuery({
+    queryKey: ["notification-count"],
+    refetchInterval: 30000,
     queryFn: async () => {
-      const response = await AXIOS.get("/notifications/stock-alerts");
-      return response.data;
+      const res: any = await AXIOS.get(NOTIFICATIONS_UNREAD_COUNT_URL);
+      return res;
+    }
+  });
+
+  const { data: notificationsData, isLoading: isLoadingNotifications } = useQuery({
+    queryKey: ["notifications-preview"],
+    refetchInterval: 30000,
+    queryFn: async () => {
+      const res: any = await AXIOS.get(NOTIFICATIONS_URL, {
+        params: { is_read: false, limit: 5 }
+      });
+      return res;
+    }
+  });
+
+  const markAsReadMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await AXIOS.patch(`${NOTIFICATIONS_URL}/${id}/read`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications-preview"] });
+      queryClient.invalidateQueries({ queryKey: ["notification-count"] });
     },
   });
+
+  const handleNotificationClick = (notif: any) => {
+    // Mark as read immediately
+    markAsReadMutation.mutate(notif.id);
+
+    // Close dropdown
+    setShowNotifications(false);
+
+    // Navigate
+    if (notif.link) {
+      navigate(notif.link);
+    } else {
+      navigate("/notifications");
+    }
+  };
+
+  // Handle potential variations in response structure
+  const unreadCount = (unreadCountData as any)?.count ?? (unreadCountData as any)?.data?.count ?? 0;
+  const notifications = (notificationsData as any)?.notifications || (notificationsData as any)?.data?.notifications || [];
 
   return (
     <nav className="bg-white shadow-sm h-16 flex items-center justify-between px-4">
@@ -86,69 +133,79 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
               className="p-2 rounded-full hover:bg-gray-100 relative"
             >
               <FaBell className="h-5 w-5 text-gray-500" />
-              {stockAlerts?.notifications &&
-                stockAlerts?.notifications?.length > 0 && (
-                  <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-                )}
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 h-4 w-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </button>
 
             {/* Notifications Dropdown */}
-            {showNotifications && stockAlerts && (
-              <div className="absolute right-0 mt-2 w-[250px] sm:w-80 bg-white rounded-lg shadow-lg py-2 z-50 border">
-                <div className="px-4 py-2 border-b">
-                  <h3 className="text-sm font-semibold">Stock Alerts</h3>
-                  <div className="flex gap-3 mt-2 text-xs">
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                      Out of Stock ({stockAlerts.summary.outOfStock})
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-                      Low Stock ({stockAlerts.summary.lowStock})
-                    </span>
-                  </div>
-                </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {stockAlerts.notifications.map((alert) => (
-                    <div
-                      key={`${alert.productId}-${alert.variantId}`}
-                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-[300px] sm:w-80 bg-white rounded-lg shadow-lg py-2 z-50 border max-h-[500px] flex flex-col">
+                <div className="px-4 py-2 border-b flex justify-between items-center bg-gray-50">
+                  <h3 className="text-sm font-semibold text-gray-700">Notifications</h3>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={() => navigate("/notifications")}
+                      className="text-xs text-brand-primary hover:underline"
                     >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${alert.status === "out_of_stock"
-                            ? "bg-red-500"
-                            : "bg-yellow-500"
-                            }`}
-                        />
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">
-                            {alert.name}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            SKU: {alert.sku}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span
-                              className={`text-xs px-2 py-0.5 rounded ${alert.status === "out_of_stock"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-yellow-100 text-yellow-700"
-                                }`}
-                            >
-                              {alert.currentStock} in stock
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              Alert at: {alert.alertQuantity}
+                      View All
+                    </button>
+                  )}
+                </div>
+
+                <div className="overflow-y-auto flex-1">
+                  {isLoadingNotifications ? (
+                    <div className="p-4 text-center text-gray-500 text-sm">Loading...</div>
+                  ) : notifications.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500 text-sm flex flex-col items-center">
+                      <FaBell className="text-gray-300 text-2xl mb-2" />
+                      No unread notifications
+                    </div>
+                  ) : (
+                    notifications.map((notif: any) => (
+                      <div
+                        key={notif.id}
+                        onClick={() => handleNotificationClick(notif)}
+                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${notif.type === "STOCK_OUT"
+                              ? "bg-red-500"
+                              : notif.type === "STOCK_LOW"
+                                ? "bg-yellow-500"
+                                : "bg-blue-500"
+                              }`}
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-800 line-clamp-1">
+                              {notif.title}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                              {notif.message}
+                            </p>
+                            <span className="text-[10px] text-gray-400 mt-1 block">
+                              {/* We can use date-fns here if imported, or just basic JS date */}
+                              {new Date(notif.createdAt).toLocaleDateString()}
                             </span>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
-                <div className="border-t px-4 py-2 text-center">
-                  <button className="text-sm text-brand-primary hover:text-brand-hover">
-                    View All Stock Alerts
+
+                <div className="border-t px-4 py-2 text-center bg-gray-50">
+                  <button
+                    onClick={() => {
+                      setShowNotifications(false);
+                      navigate("/notifications");
+                    }}
+                    className="text-sm text-brand-primary hover:text-brand-hover font-medium"
+                  >
+                    View All Notifications
                   </button>
                 </div>
               </div>

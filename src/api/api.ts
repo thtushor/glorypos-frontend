@@ -6,8 +6,8 @@ import {
   Product,
 } from "@/types/ProductType";
 
-export const BASE_URL = "https://glorypos.com/api/api";
-// export const BASE_URL = "http://localhost:3000/api";
+// export const BASE_URL = "https://glorypos.com/api/api";
+export const BASE_URL = "http://localhost:3000/api";
 
 export const REGISTER_URL = `${BASE_URL}/register`;
 export const LOGIN_URL = `${BASE_URL}/login`;
@@ -202,3 +202,8 @@ export const PAYROLL_ADVANCE_SALERY = `${BASE_URL}/payroll/advance-salary`;
 export const PAYROLL_ADVANCE_SALERY_STATUS = `${BASE_URL}/payroll/advance-salary/:id/status`;
 export const PAYROLL_ADVANCE_SALERY_DELETE = `${BASE_URL}/payroll/advance-salary`; // DELETE /:id
 export const PAYROLL_RELEASE_DELETE = `${BASE_URL}/payroll/payroll/release`; // DELETE /:id
+
+// Notifications API
+export const NOTIFICATIONS_URL = `${BASE_URL}/notifications`;
+export const NOTIFICATIONS_UNREAD_COUNT_URL = `${BASE_URL}/notifications/unread-count`;
+export const MARK_ALL_READ_URL = `${BASE_URL}/notifications/mark-all-read`;

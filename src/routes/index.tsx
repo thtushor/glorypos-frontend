@@ -45,7 +45,9 @@ import PayrollMain from "@/pages/payroll/PayrollMain";
 import ReleaseHistory from "@/pages/payroll/ReleaseHistory";
 import HolidayHistory from "@/pages/payroll/HolidayHistory";
 import AdvanceSalaryHistory from "@/pages/payroll/AdvanceSalaryHistory";
+import NotificationsPage from "@/pages/notifications/NotificationsPage";
 import money, { CurrencyPresets } from "@/utils/money";
+
 import { useEffect } from "react";
 import SalesReportPage from "@/pages/SalesReportPage";
 import PermissionRoute from "@/components/PermissionRoute";
@@ -251,7 +253,16 @@ const AppRoutes = () => {
               </PermissionRoute>
             }
           />
+          <Route
+            path="notifications"
+            element={
+              // <PermissionRoute requiredPermission={PERMISSIONS.NOTIFICATIONS.VIEW}>
+              <NotificationsPage />
+              // </PermissionRoute>
+            }
+          />
           <Route path="sales">
+
             <Route
               path="pos"
               element={

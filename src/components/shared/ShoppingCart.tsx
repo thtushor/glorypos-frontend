@@ -238,10 +238,10 @@ function ShoppingCart({
         adjustments.discountAdjustments[item.id] ||
         (item.discountType && Number(item.discountAmount || 0) > 0
           ? {
-              type:
-                (item.discountType as "percentage" | "amount") || "percentage",
-              value: Number(item.discountAmount || 0),
-            }
+            type:
+              (item.discountType as "percentage" | "amount") || "percentage",
+            value: Number(item.discountAmount || 0),
+          }
           : null);
 
       if (discount && discount.value > 0) {
@@ -507,6 +507,9 @@ function ShoppingCart({
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stock-alerts"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["notification-count"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications-preview"] });
     },
     onError: (error: any) => {
       toast.error(error?.message || error?.error || "Failed to create order");
@@ -789,9 +792,8 @@ function ShoppingCart({
         className={`lg:sticky lg:top-0 lg:h-[calc(100vh-6rem)] ${maxWidth} overflow-y-auto pb-10`}
       >
         <div
-          className={` bg-white  rounded-lg shadow flex flex-col xl:flex ${
-            showMobileCart ? "flex" : "hidden"
-          }`}
+          className={` bg-white  rounded-lg shadow flex flex-col xl:flex ${showMobileCart ? "flex" : "hidden"
+            }`}
         >
           {/* Mobile Cart Header */}
           <div className="xl:hidden flex items-center justify-between p-4 border-b">
@@ -884,15 +886,15 @@ function ShoppingCart({
                             {item?.selectedVariant?.Category?.name
                               ? item?.selectedVariant?.Category?.name
                               : item?.Category?.name && (
-                                  <span className="flex items-center gap-1">
-                                    <span className="font-medium text-gray-600">
-                                      Category:
-                                    </span>
-                                    {item?.selectedVariant?.Category?.name
-                                      ? item?.selectedVariant?.Category?.name
-                                      : item?.Category?.name}
+                                <span className="flex items-center gap-1">
+                                  <span className="font-medium text-gray-600">
+                                    Category:
                                   </span>
-                                )}
+                                  {item?.selectedVariant?.Category?.name
+                                    ? item?.selectedVariant?.Category?.name
+                                    : item?.Category?.name}
+                                </span>
+                              )}
 
                             {/* Brand */}
                             {item?.Brand?.name && (
@@ -908,24 +910,24 @@ function ShoppingCart({
                             {item?.selectedVariant?.Color?.name
                               ? item?.selectedVariant?.Color?.name
                               : item?.Color?.name && (
-                                  <span className="flex items-center gap-1">
-                                    <span className="font-medium text-gray-600">
-                                      Color:
-                                    </span>
-                                    <span
-                                      className="w-3 h-3 rounded-full border"
-                                      style={{
-                                        backgroundColor: item?.selectedVariant
-                                          ?.Color?.code
-                                          ? item?.selectedVariant?.Color?.code
-                                          : item?.Color?.code,
-                                      }}
-                                    />
-                                    {item?.selectedVariant?.Color?.name
-                                      ? item?.selectedVariant?.Color?.name
-                                      : item?.Color?.name}
+                                <span className="flex items-center gap-1">
+                                  <span className="font-medium text-gray-600">
+                                    Color:
                                   </span>
-                                )}
+                                  <span
+                                    className="w-3 h-3 rounded-full border"
+                                    style={{
+                                      backgroundColor: item?.selectedVariant
+                                        ?.Color?.code
+                                        ? item?.selectedVariant?.Color?.code
+                                        : item?.Color?.code,
+                                    }}
+                                  />
+                                  {item?.selectedVariant?.Color?.name
+                                    ? item?.selectedVariant?.Color?.name
+                                    : item?.Color?.name}
+                                </span>
+                              )}
                           </div>
                         </div>
 
@@ -1133,9 +1135,9 @@ function ShoppingCart({
                             : undefined;
                         const finalValue =
                           maxValue &&
-                          parsed !== undefined &&
-                          parsed &&
-                          parsed > maxValue
+                            parsed !== undefined &&
+                            parsed &&
+                            parsed > maxValue
                             ? maxValue
                             : parsed;
                         updateTax(finalValue);
@@ -1200,9 +1202,9 @@ function ShoppingCart({
                             : undefined;
                         const finalValue =
                           maxValue &&
-                          parsed !== undefined &&
-                          parsed &&
-                          parsed > maxValue
+                            parsed !== undefined &&
+                            parsed &&
+                            parsed > maxValue
                             ? maxValue
                             : parsed;
                         updateDiscount(finalValue);
@@ -1397,11 +1399,10 @@ function ShoppingCart({
           {/* Self Sell Option - Prominent */}
           <button
             onClick={() => handleStaffSelect("self-sell")}
-            className={`w-full text-left p-4 border-2 rounded-lg transition-all hover:shadow-md ${
-              selectedStaffId === "self-sell"
+            className={`w-full text-left p-4 border-2 rounded-lg transition-all hover:shadow-md ${selectedStaffId === "self-sell"
                 ? "border-brand-primary bg-brand-primary/5 shadow-sm"
                 : "border-gray-200 hover:border-gray-300 bg-white"
-            }`}
+              }`}
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
@@ -1525,11 +1526,10 @@ function ShoppingCart({
                 <button
                   key={staff.id}
                   onClick={() => handleStaffSelect(staff.id)}
-                  className={`relative text-left p-3 border-2 rounded-lg transition-all hover:shadow-md hover:scale-[1.02] ${
-                    selectedStaffId === staff.id
+                  className={`relative text-left p-3 border-2 rounded-lg transition-all hover:shadow-md hover:scale-[1.02] ${selectedStaffId === staff.id
                       ? "border-brand-primary bg-brand-primary/10 shadow-md ring-2 ring-brand-primary/20"
                       : "border-gray-200 hover:border-gray-300 bg-white"
-                  }`}
+                    }`}
                 >
                   {selectedStaffId === staff.id && (
                     <div className="absolute top-1.5 right-1.5">
