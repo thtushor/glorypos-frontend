@@ -14,7 +14,7 @@ import {
 } from "@/types/ProductType";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { FaChevronDown, FaChevronUp, FaFilter, FaSearch, FaSortAmountDown, FaSortAmountUp } from "react-icons/fa";
+import { FaChevronDown, FaChevronUp, FaFilter, FaSearch, FaSortAmountDown, FaSortAmountUp, FaInfoCircle } from "react-icons/fa";
 import Spinner from "../Spinner";
 import money from "@/utils/money";
 import { formatCurrency, successToast } from "@/utils/utils";
@@ -27,6 +27,7 @@ import { CartItem } from "@/types/cartItemType";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
 import { useShopFilterOptions } from "@/hooks/useShopFilterOptions";
+import Tooltip from "./Tooltip";
 
 function CartProductSection({
   showMobileCart,
@@ -649,12 +650,18 @@ function CartProductSection({
 
                     {/* Product Card Content */}
                     <div className="p-4">
-                      <h3
-                        className="font-medium text-gray-900 line-clamp-1 text-ellipsis cursor-pointer"
-                        title={product.name}
-                      >
-                        {product.name}
-                      </h3>
+                      <div className="flex items-start gap-1 min-w-0 relative group/tooltip mb-1">
+                        <h3
+                          className="font-medium text-gray-900 line-clamp-1 text-ellipsis cursor-pointer break-words"
+                        >
+                          {product.name}
+                        </h3>
+                        <Tooltip content={product.name}>
+                          <div className="group/icon cursor-help shrink-0 mt-0.5">
+                            <FaInfoCircle className="text-gray-400 hover:text-brand-primary w-3.5 h-3.5" />
+                          </div>
+                        </Tooltip>
+                      </div>
 
                       {/* Price Section with Discount Info */}
                       <div className="mt-2 space-y-1">
@@ -763,7 +770,7 @@ function CartProductSection({
                       <button
                         type="button"
                         onClick={() => handleAddToCart(product)}
-                        disabled={getTotalStock(product)<=0 || !canCreateOrder}
+                        disabled={getTotalStock(product) <= 0 || !canCreateOrder}
                         className="mt-4 w-full md:font-medium text-[14px] px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
                       >
                         Add to Cart

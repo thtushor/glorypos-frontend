@@ -101,7 +101,9 @@ AXIOS.interceptors.response.use(
     // Handle network errors
     if (!error.response) {
       console.error("[Network Error]:", error.message);
-      toast.error("Network error. Please check your connection.");
+      toast.error("Network error. Please check your connection.", {
+        toastId: "network_error",
+      });
       return Promise.reject({
         message: "Network error. Please check your connection.",
         error: error.message,

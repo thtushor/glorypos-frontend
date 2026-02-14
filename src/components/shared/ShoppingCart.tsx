@@ -29,6 +29,7 @@ import {
   FaUser,
   // FaUtensils,
   // FaWallet,
+  FaInfoCircle,
 } from "react-icons/fa";
 import Modal from "../Modal";
 import AXIOS from "@/api/network/Axios";
@@ -46,6 +47,7 @@ import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
 import PaymentModal, { PartialPayment } from "./PaymentModal";
 import { useNavigate } from "react-router-dom";
+import Tooltip from "./Tooltip";
 
 export interface CartAdjustments {
   tax: {
@@ -877,9 +879,16 @@ function ShoppingCart({
 
                         {/* Product Title + Meta Info */}
                         <div className="space-y-1">
-                          <h4 className="font-semibold text-sm text-gray-900 leading-tight">
-                            {item?.name}
-                          </h4>
+                          <div className="flex items-start gap-1 min-w-0 relative group/tooltip mb-1">
+                            <h4 className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2 break-words">
+                              {item?.name}
+                            </h4>
+                            <Tooltip content={item?.name}>
+                              <div className="group/icon cursor-help shrink-0 mt-0.5">
+                                <FaInfoCircle className="text-gray-400 hover:text-brand-primary w-3.5 h-3.5" />
+                              </div>
+                            </Tooltip>
+                          </div>
 
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-500">
                             {/* Category */}
@@ -1400,8 +1409,8 @@ function ShoppingCart({
           <button
             onClick={() => handleStaffSelect("self-sell")}
             className={`w-full text-left p-4 border-2 rounded-lg transition-all hover:shadow-md ${selectedStaffId === "self-sell"
-                ? "border-brand-primary bg-brand-primary/5 shadow-sm"
-                : "border-gray-200 hover:border-gray-300 bg-white"
+              ? "border-brand-primary bg-brand-primary/5 shadow-sm"
+              : "border-gray-200 hover:border-gray-300 bg-white"
               }`}
           >
             <div className="flex items-center justify-between gap-4">
@@ -1527,8 +1536,8 @@ function ShoppingCart({
                   key={staff.id}
                   onClick={() => handleStaffSelect(staff.id)}
                   className={`relative text-left p-3 border-2 rounded-lg transition-all hover:shadow-md hover:scale-[1.02] ${selectedStaffId === staff.id
-                      ? "border-brand-primary bg-brand-primary/10 shadow-md ring-2 ring-brand-primary/20"
-                      : "border-gray-200 hover:border-gray-300 bg-white"
+                    ? "border-brand-primary bg-brand-primary/10 shadow-md ring-2 ring-brand-primary/20"
+                    : "border-gray-200 hover:border-gray-300 bg-white"
                     }`}
                 >
                   {selectedStaffId === staff.id && (
