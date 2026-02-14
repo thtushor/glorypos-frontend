@@ -17,6 +17,8 @@ export const PERMISSIONS = {
         VIEW_STAFF_COMMISSIONS: 'view_staff_commissions',
         VIEW_SALES_REPORT: 'view_sales_report',
         VIEW_COST_PROFIT: 'view_cost_profit',
+        PRINT_INVOICE: 'print_invoice',
+        PRINT_KOT: 'print_kot',
     },
 
     // Inventory Module
@@ -116,6 +118,8 @@ export const PERMISSION_GROUPS = [
             { key: PERMISSIONS.SALES.VIEW_STAFF_COMMISSIONS, label: 'View Staff Commissions', description: 'View commission reports' },
             { key: PERMISSIONS.SALES.VIEW_SALES_REPORT, label: 'View Sales Report', description: 'Access sales reports' },
             { key: PERMISSIONS.SALES.VIEW_COST_PROFIT, label: 'View Cost & Profit', description: 'View cost, profit, and loss information' },
+            { key: PERMISSIONS.SALES.PRINT_INVOICE, label: 'Print Invoice', description: 'Print invoices for customers' },
+            { key: PERMISSIONS.SALES.PRINT_KOT, label: 'Print KOT', description: 'Print Kitchen Order Tickets' },
         ],
     },
     {
@@ -248,6 +252,8 @@ export const PERMISSION_TEMPLATES = {
         PERMISSIONS.SALES.VIEW_STAFF_COMMISSIONS,
         PERMISSIONS.SALES.VIEW_SALES_REPORT,
         PERMISSIONS.SALES.VIEW_COST_PROFIT,
+        PERMISSIONS.SALES.PRINT_INVOICE,
+        PERMISSIONS.SALES.PRINT_KOT,
         PERMISSIONS.INVENTORY.VIEW_INVENTORY,
         PERMISSIONS.INVENTORY.VIEW_PRODUCTS,
         PERMISSIONS.INVENTORY.CREATE_PRODUCT,
@@ -285,6 +291,7 @@ export const PERMISSION_TEMPLATES = {
         PERMISSIONS.SALES.VIEW_ORDERS,
         PERMISSIONS.SALES.EDIT_ORDER,
         PERMISSIONS.SALES.VIEW_PRODUCT_STATEMENT,
+        PERMISSIONS.SALES.PRINT_KOT,
         PERMISSIONS.INVENTORY.VIEW_INVENTORY,
         PERMISSIONS.INVENTORY.VIEW_PRODUCTS,
         PERMISSIONS.STAFF_PROFILE.VIEW_OWN_PROFILE,
@@ -295,6 +302,7 @@ export const PERMISSION_TEMPLATES = {
         PERMISSIONS.SALES.CREATE_ORDER,
         PERMISSIONS.SALES.VIEW_ORDERS,
         PERMISSIONS.INVENTORY.VIEW_PRODUCTS,
+        PERMISSIONS.SALES.PRINT_KOT,
         PERMISSIONS.STAFF_PROFILE.VIEW_OWN_PROFILE,
     ],
     INVENTORY_MANAGER: [

@@ -27,6 +27,8 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
 import { useWebViewPrint } from "@/hooks/useWebViewPrint";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 const WIDTH = 32;
 
@@ -134,6 +136,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   });
 
   const { user } = useAuth();
+  const { hasPermission } = usePermission();
   const { isWebView, sendPrintSignal } = useWebViewPrint();
 
   const { data: invoiceData, isLoading } = useQuery<InvoiceData>({
@@ -500,8 +503,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         for (let i = 1; i < wrappedNames.length; i++) {
           receipt = receipt.line(
             "-" +
-              " ".repeat(QTY_WIDTH - 1) +
-              wrappedNames[i].padEnd(ITEM_WIDTH_KOT),
+            " ".repeat(QTY_WIDTH - 1) +
+            wrappedNames[i].padEnd(ITEM_WIDTH_KOT),
           );
         }
 
@@ -630,9 +633,9 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
         .bold(true)
         .text(
           "QTY ".padEnd(QTY_WIDTH) +
-            "ITEM".padEnd(ITEM_WIDTH) +
-            "TOTAL".padStart(TOTAL_WIDTH) +
-            "\n",
+          "ITEM".padEnd(ITEM_WIDTH) +
+          "TOTAL".padStart(TOTAL_WIDTH) +
+          "\n",
         )
         .bold(false);
 
@@ -966,9 +969,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                             </span>
                           )}
                           <span
-                            className={`font-medium ${
-                              showOriginalPrice ? "text-red-600" : ""
-                            }`}
+                            className={`font-medium ${showOriginalPrice ? "text-red-600" : ""
+                              }`}
                           >
                             {money.format(item.unitPrice)}
                           </span>
@@ -982,9 +984,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                             </span>
                           )}
                           <span
-                            className={`font-medium ${
-                              showOriginalPrice ? "text-red-600" : ""
-                            }`}
+                            className={`font-medium ${showOriginalPrice ? "text-red-600" : ""
+                              }`}
                           >
                             {money.format(item.subtotal)}
                           </span>
@@ -1680,19 +1681,22 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
               >
                 <FaDownload className="w-3 h-3" />
                 <span className="inline">Download KOT</span>
+                <span className="inline">Download KOT</span>
               </button>
-              <button
-                onClick={handleKOTPrint}
-                disabled={
-                  !invoiceData || invoiceData.items.length === 0 || printing
-                }
-                className="px-3 py-1.5 text-xs font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <FaUtensils className="w-3 h-3" />
-                <span className="inline">
-                  {printing ? "Printing..." : "Print KOT"}
-                </span>
-              </button>
+              {hasPermission(PERMISSIONS.SALES.PRINT_KOT) && (
+                <button
+                  onClick={handleKOTPrint}
+                  disabled={
+                    !invoiceData || invoiceData.items.length === 0 || printing
+                  }
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FaUtensils className="w-3 h-3" />
+                  <span className="inline">
+                    {printing ? "Printing..." : "Print KOT"}
+                  </span>
+                </button>
+              )}
             </>
           )}
 
@@ -1712,18 +1716,20 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
             <FaDownload className="w-3 h-3" />
             <span className="inline">Download Invoice</span>
           </button>
-          <button
-            onClick={handleInvoicePrint}
-            disabled={
-              !invoiceData || invoiceData.items.length === 0 || printing
-            }
-            className="px-3 py-1.5 text-xs font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <FaPrint className="w-3 h-3" />
-            <span className="inline">
-              {printing ? "Printing..." : "Print Invoice"}
-            </span>
-          </button>
+          {hasPermission(PERMISSIONS.SALES.PRINT_INVOICE) && (
+            <button
+              onClick={handleInvoicePrint}
+              disabled={
+                !invoiceData || invoiceData.items.length === 0 || printing
+              }
+              className="px-3 py-1.5 text-xs font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FaPrint className="w-3 h-3" />
+              <span className="inline">
+                {printing ? "Printing..." : "Print Invoice"}
+              </span>
+            </button>
+          )}
           <button
             onClick={onClose}
             className="px-3 col-span-full bg-black/10 py-1.5 text-xs font-medium border text-gray-700 border-black/30 rounded-md"

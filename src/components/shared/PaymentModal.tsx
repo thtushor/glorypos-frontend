@@ -17,6 +17,8 @@ import {
   parseCurrencyInput,
 } from "@/utils/utils";
 import { useAuth } from "@/context/AuthContext";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
 
 export interface PartialPayment {
   cashAmount: number;
@@ -61,6 +63,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   // hasAdjustment = false,
 }) => {
   const { user } = useAuth();
+  const { hasPermission } = usePermission();
 
   console.log("hasNewProduct", hasNewProduct);
 
@@ -113,7 +116,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
           // Print KOT if restaurant OR if hasNewProduct is true (mixed order with new items)
           if (isRestaurant) {
-            if (onProcessPrintKOT && hasNewProduct) {
+            if (onProcessPrintKOT && hasNewProduct && hasPermission(PERMISSIONS.SALES.PRINT_KOT)) {
               onProcessPrintKOT();
             } else {
               // Fallback to payment if KOT handler not available
@@ -861,7 +864,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           >
             Cancel
           </button>
-          {user?.shopType === "restaurant" && onProcessPrintKOT && (
+          {user?.shopType === "restaurant" && onProcessPrintKOT && hasPermission(PERMISSIONS.SALES.PRINT_KOT) && (
             <button
               type="button"
               onClick={onProcessPrintKOT}
