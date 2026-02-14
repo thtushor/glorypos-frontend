@@ -1680,7 +1680,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
                 className="px-3 py-1.5 text-xs font-medium text-orange-600 border border-orange-600 hover:bg-orange-50 rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FaDownload className="w-3 h-3" />
-                <span className="inline">Download KOT</span>
+                {/* <span className="inline">Download KOT</span> */}
                 <span className="inline">Download KOT</span>
               </button>
               {hasPermission(PERMISSIONS.SALES.PRINT_KOT) && (
