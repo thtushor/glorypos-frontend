@@ -3,8 +3,17 @@ import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { BASE_URL } from '../api/api';
 
-// Derive SOCKET_URL from BASE_URL (remove /api suffix)
-const SOCKET_URL = BASE_URL.replace('/api', '');
+// Derive SOCKET_URL from BASE_URL
+// If BASE_URL is "https://glorypos.com/api/api", we want "https://glorypos.com"
+// If BASE_URL is "http://localhost:3000/api", we want "http://localhost:3000"
+let SOCKET_URL = '';
+try {
+    const url = new URL(BASE_URL);
+    SOCKET_URL = url.origin;
+} catch (e) {
+    // Fallback if BASE_URL is relative or invalid
+    SOCKET_URL = BASE_URL.split('/api')[0];
+}
 
 interface SocketContextType {
     socket: Socket | null;
@@ -23,12 +32,23 @@ export const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     useEffect(() => {
         // Initialize socket connection
+        // We use path: '/api/socket.io' because usually Nginx proxies /api to backend
+        // So we want socket requests to go through /api as well if possible, 
+        // OR we rely on the dedicated /socket.io location block in Nginx.
+        // Given the user's Nginx config request, they might just want standard /socket.io
+        // But if they are failing with 404 (index.html), it means /socket.io isn't handled.
+
+        // STANDARD APPROACH for Nginx + Node apps:
+        // Client connects to root domain
+        // Nginx location /socket.io/ proxies to backend port
+
         const newSocket = io(SOCKET_URL, {
-            reconnectionAttempts: Infinity, // Never give up
+            path: '/api/socket.io/', // Use api path so it goes through existing Nginx /api proxy
+            reconnectionAttempts: Infinity,
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000,
             timeout: 20000,
-            transports: ['websocket', 'polling'], // Prefer websocket
+            transports: ['websocket', 'polling'],
             autoConnect: true,
         });
 
