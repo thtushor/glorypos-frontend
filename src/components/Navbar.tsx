@@ -7,6 +7,8 @@ import AXIOS from "@/api/network/Axios";
 import { useNavigate } from "react-router-dom";
 import LogoSvg from "./icons/LogoSvg";
 import { NOTIFICATIONS_UNREAD_COUNT_URL, NOTIFICATIONS_URL } from "@/api/api";
+import Modal from "./Modal";
+import Invoice from "./Invoice";
 
 
 interface NavbarProps {
@@ -42,6 +44,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   // const hasAccessStaff = user?.child?.id ? true : false;
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
   // const [notifications] = useState([
   //   { id: 1, text: "New order received", time: "2 min ago" },
@@ -87,6 +90,18 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
 
     // Close dropdown
     setShowNotifications(false);
+
+    // Open Invoice for order related notifications
+    if (notif.reference_type === 'order' && notif.reference_id) {
+      setSelectedOrderId(Number(notif.reference_id));
+      return;
+    }
+
+    // Redirect to products for stock alerts
+    if (notif.type === 'STOCK_LOW' || notif.type === 'STOCK_OUT' || notif.reference_type === 'product') {
+      navigate("/inventory/products");
+      return;
+    }
 
     // Navigate
     if (notif.link) {
@@ -245,6 +260,21 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
           )}
         </div>
       </div>
+      {/* Invoice Modal */}
+      <Modal
+        isOpen={!!selectedOrderId}
+        onClose={() => setSelectedOrderId(null)}
+        title="View Invoice"
+        className="lg:!max-w-[800px] !max-w-[95vw]"
+      >
+        {selectedOrderId && (
+          <Invoice
+            orderId={selectedOrderId}
+            onClose={() => setSelectedOrderId(null)}
+            onPrint={() => { }}
+          />
+        )}
+      </Modal>
     </nav>
   );
 };
