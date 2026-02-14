@@ -17,26 +17,26 @@ interface NavbarProps {
   toggleSidebar: () => void;
 }
 
-interface StockAlert {
-  type: "variant";
-  productId: number;
-  variantId: number;
-  name: string;
-  sku: string;
-  currentStock: number;
-  alertQuantity: number;
-  status: "low_stock" | "out_of_stock";
-  message: string;
-}
+// interface StockAlert {
+//   type: "variant";
+//   productId: number;
+//   variantId: number;
+//   name: string;
+//   sku: string;
+//   currentStock: number;
+//   alertQuantity: number;
+//   status: "low_stock" | "out_of_stock";
+//   message: string;
+// }
 
-interface StockAlertResponse {
-  summary: {
-    totalAlerts: number;
-    outOfStock: number;
-    lowStock: number;
-  };
-  notifications: StockAlert[];
-}
+// interface StockAlertResponse {
+//   summary: {
+//     totalAlerts: number;
+//     outOfStock: number;
+//     lowStock: number;
+//   };
+//   notifications: StockAlert[];
+// }
 
 const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const navigate = useNavigate();
