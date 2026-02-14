@@ -58,14 +58,34 @@ const Tooltip: React.FC<TooltipProps> = ({
         setIsVisible(false);
     };
 
+    const handleClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent closing immediately due to global listener
+        if (isVisible) {
+            setIsVisible(false);
+        } else {
+            updatePosition();
+            setIsVisible(true);
+        }
+    };
+
     // Update position on scroll or resize when visible
     useEffect(() => {
         if (isVisible) {
             window.addEventListener("scroll", updatePosition);
             window.addEventListener("resize", updatePosition);
+
+            // Handle clicking outside to close
+            const handleClickOutside = (event: MouseEvent) => {
+                if (triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
+                    setIsVisible(false);
+                }
+            };
+            document.addEventListener("click", handleClickOutside);
+
             return () => {
                 window.removeEventListener("scroll", updatePosition);
                 window.removeEventListener("resize", updatePosition);
+                document.removeEventListener("click", handleClickOutside);
             };
         }
     }, [isVisible]);
@@ -76,6 +96,7 @@ const Tooltip: React.FC<TooltipProps> = ({
                 ref={triggerRef}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
+                onClick={handleClick}
                 className="inline-block"
             >
                 {children}
@@ -87,7 +108,7 @@ const Tooltip: React.FC<TooltipProps> = ({
                         top: coords.top,
                         left: coords.left,
                         transform: `translate(${position === "left" ? "-100%" :
-                                position === "right" ? "0" : "-50%"
+                            position === "right" ? "0" : "-50%"
                             }, ${position === "top" ? "-100%" :
                                 position === "bottom" ? "0" : "-50%"
                             })`
@@ -97,9 +118,9 @@ const Tooltip: React.FC<TooltipProps> = ({
                     {/* Arrow */}
                     <div
                         className={`absolute w-2 h-2 bg-gray-900 transform rotate-45 ${position === "top" ? "top-[100%] left-1/2 -mt-1 -translate-x-1/2" :
-                                position === "bottom" ? "bottom-[100%] left-1/2 -mb-1 -translate-x-1/2" :
-                                    position === "left" ? "left-[100%] top-1/2 -ml-1 -translate-y-1/2" :
-                                        "right-[100%] top-1/2 -mr-1 -translate-y-1/2"
+                            position === "bottom" ? "bottom-[100%] left-1/2 -mb-1 -translate-x-1/2" :
+                                position === "left" ? "left-[100%] top-1/2 -ml-1 -translate-y-1/2" :
+                                    "right-[100%] top-1/2 -mr-1 -translate-y-1/2"
                             }`}
                     />
                 </div>,

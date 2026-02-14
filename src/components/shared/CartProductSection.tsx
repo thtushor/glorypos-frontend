@@ -625,7 +625,7 @@ function CartProductSection({
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4 gap-3 md:gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                 {products.map((product) => (
                   <div
                     key={product.id}
@@ -651,7 +651,7 @@ function CartProductSection({
                     {/* Product Card Content */}
                     <div className="p-2.5">
                       <div className="flex items-start gap-1 min-w-0 relative group/tooltip mb-0.5">
-                        <h3 className="font-medium text-gray-900 text-sm line-clamp-1 text-ellipsis cursor-pointer break-words">
+                        <h3 className="font-medium text-gray-900 text-sm line-clamp-2 text-ellipsis cursor-pointer break-words">
                           {product.name}
                         </h3>
                         <Tooltip content={product.name}>
@@ -703,9 +703,9 @@ function CartProductSection({
                                   <div
                                     key={index}
                                     className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${selectedVariants[product.id] ===
-                                        variant.id
-                                        ? "z-10 ring-2 rounded-full ring-brand-primary"
-                                        : ""
+                                      variant.id
+                                      ? "z-10 ring-2 rounded-full ring-brand-primary"
+                                      : ""
                                       }`}
                                   >
                                     <img
@@ -761,10 +761,10 @@ function CartProductSection({
                       <div className="mt-1.5 flex items-center gap-1.5">
                         <span
                           className={`w-1.5 h-1.5 rounded-full ${getTotalStock(product) > 10
-                              ? "bg-green-500"
-                              : getTotalStock(product) > 5
-                                ? "bg-yellow-500"
-                                : "bg-red-500"
+                            ? "bg-green-500"
+                            : getTotalStock(product) > 5
+                              ? "bg-yellow-500"
+                              : "bg-red-500"
                             }`}
                         />
                         <span className="text-[10px] text-gray-500">
@@ -777,7 +777,7 @@ function CartProductSection({
                         type="button"
                         onClick={() => handleAddToCart(product)}
                         disabled={getTotalStock(product) <= 0 || !canCreateOrder}
-                        className="mt-3 w-full md:font-medium text-xs px-3 py-1.5 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
+                        className="mt-2 w-full md:font-medium text-[10px] px-2 py-1 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
                       >
                         Add to Cart
                       </button>
