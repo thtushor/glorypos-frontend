@@ -625,7 +625,7 @@ function CartProductSection({
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4 gap-3 md:gap-4">
                 {products.map((product) => (
                   <div
                     key={product.id}
@@ -649,33 +649,31 @@ function CartProductSection({
                     </div>
 
                     {/* Product Card Content */}
-                    <div className="p-4">
-                      <div className="flex items-start gap-1 min-w-0 relative group/tooltip mb-1">
-                        <h3
-                          className="font-medium text-gray-900 line-clamp-1 text-ellipsis cursor-pointer break-words"
-                        >
+                    <div className="p-2.5">
+                      <div className="flex items-start gap-1 min-w-0 relative group/tooltip mb-0.5">
+                        <h3 className="font-medium text-gray-900 text-sm line-clamp-1 text-ellipsis cursor-pointer break-words">
                           {product.name}
                         </h3>
                         <Tooltip content={product.name}>
                           <div className="group/icon cursor-help shrink-0 mt-0.5">
-                            <FaInfoCircle className="text-gray-400 hover:text-brand-primary w-3.5 h-3.5" />
+                            <FaInfoCircle className="text-gray-400 hover:text-brand-primary w-3 h-3" />
                           </div>
                         </Tooltip>
                       </div>
 
                       {/* Price Section with Discount Info */}
-                      <div className="mt-2 space-y-1">
+                      <div className="mt-1 space-y-0.5">
                         {product.discountType &&
                           Number(product.discountAmount || 0) > 0 &&
                           Number(product.salesPrice || 0) >
                           Number(product.price || 0) ? (
-                          <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             {/* Sales Price with Strikethrough */}
-                            <span className="text-xs text-gray-400 line-through">
+                            <span className="text-[10px] text-gray-400 line-through">
                               {money.format(Number(product.salesPrice || 0))}
                             </span>
                             {/* Discount Badge */}
-                            <span className="px-1.5 py-0.5 text-[10px] font-bold text-white bg-red-500 rounded">
+                            <span className="px-1 py-0.5 text-[9px] font-bold text-white bg-red-500 rounded">
                               {product.discountType === "percentage"
                                 ? `-${product.discountAmount}%`
                                 : `-${money.format(
@@ -686,7 +684,7 @@ function CartProductSection({
                         ) : null}
                         {/* Final Price - Prominently Displayed */}
                         <div className="flex items-baseline gap-1">
-                          <span className="text-lg font-bold text-brand-primary">
+                          <span className="text-base font-bold text-brand-primary">
                             {money.format(Number(product.price || 0))}
                           </span>
                         </div>
@@ -694,9 +692,9 @@ function CartProductSection({
 
                       {/* Improved Variant Preview */}
                       {product.ProductVariants?.length > 0 && (
-                        <div className="mt-3">
-                          <div className="flex flex-col items-start gap-1.5">
-                            <span className="text-xs text-gray-500">
+                        <div className="mt-2">
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="text-[10px] text-gray-500">
                               Available variants:
                             </span>
                             <div className="flex items-center">
@@ -705,9 +703,9 @@ function CartProductSection({
                                   <div
                                     key={index}
                                     className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${selectedVariants[product.id] ===
-                                      variant.id
-                                      ? "z-10 ring-2 rounded-full ring-brand-primary"
-                                      : ""
+                                        variant.id
+                                        ? "z-10 ring-2 rounded-full ring-brand-primary"
+                                        : ""
                                       }`}
                                   >
                                     <img
@@ -718,17 +716,17 @@ function CartProductSection({
                                           [product.id]: variant.id,
                                         })
                                       }
-                                      className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm"
+                                      className="w-6 h-6 rounded-full border-2 border-white object-cover shadow-sm"
                                     />
                                     {/* Tooltip */}
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap">
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 bg-gray-900 text-white text-[10px] rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50">
                                       {variant.Color?.name} -{" "}
                                       {variant.Size?.name}
                                     </div>
                                     {/* Stock Badge */}
                                     {variant.quantity < 5 && (
                                       <span
-                                        className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border border-white rounded-full"
+                                        className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 border border-white rounded-full"
                                         title={`Only ${variant.quantity} left`}
                                       />
                                     )}
@@ -737,14 +735,22 @@ function CartProductSection({
                               )}
                               {product.ProductVariants.length > 4 && (
                                 <div className="relative -ml-1 group cursor-pointer">
-                                  <div className="w-7 h-7 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-xs font-medium text-gray-600 shadow-sm hover:bg-gray-100">
+                                  <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-[9px] font-medium text-gray-600 shadow-sm hover:bg-gray-100">
                                     +{product.ProductVariants.length - 4}
                                   </div>
                                   {/* Tooltip */}
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 bg-gray-900 text-white text-[10px] rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                                     {product.ProductVariants.length - 4} more
-                                    variants
                                   </div>
+                                  {/* Stock Badge */}
+                                  {product.ProductVariants.slice(4).some(
+                                    (v) => v.quantity < 5
+                                  ) && (
+                                      <span
+                                        className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 border border-white rounded-full"
+                                        title="Some variants low stock"
+                                      />
+                                    )}
                                 </div>
                               )}
                             </div>
@@ -752,16 +758,16 @@ function CartProductSection({
                         </div>
                       )}
 
-                      <div className="mt-2 flex items-center gap-2">
+                      <div className="mt-1.5 flex items-center gap-1.5">
                         <span
-                          className={`w-2 h-2 rounded-full ${getTotalStock(product) > 10
-                            ? "bg-green-500"
-                            : getTotalStock(product) > 5
-                              ? "bg-yellow-500"
-                              : "bg-red-500"
+                          className={`w-1.5 h-1.5 rounded-full ${getTotalStock(product) > 10
+                              ? "bg-green-500"
+                              : getTotalStock(product) > 5
+                                ? "bg-yellow-500"
+                                : "bg-red-500"
                             }`}
                         />
-                        <span className="text-xs text-gray-500">
+                        <span className="text-[10px] text-gray-500">
                           {getTotalStock(product)} in stock
                         </span>
                       </div>
@@ -771,7 +777,7 @@ function CartProductSection({
                         type="button"
                         onClick={() => handleAddToCart(product)}
                         disabled={getTotalStock(product) <= 0 || !canCreateOrder}
-                        className="mt-4 w-full md:font-medium text-[14px] px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
+                        className="mt-3 w-full md:font-medium text-xs px-3 py-1.5 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
                       >
                         Add to Cart
                       </button>
