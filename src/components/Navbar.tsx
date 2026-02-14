@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { FaBars, FaBell, FaUser, FaCog, FaSignOutAlt } from "react-icons/fa";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +9,8 @@ import LogoSvg from "./icons/LogoSvg";
 import { NOTIFICATIONS_UNREAD_COUNT_URL, NOTIFICATIONS_URL } from "@/api/api";
 import Modal from "./Modal";
 import Invoice from "./Invoice";
+import { useSocket } from "@/context/SocketContext";
+import { toast } from "react-toastify";
 
 
 interface NavbarProps {
@@ -40,6 +42,26 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, logout } = useAuth();
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewNotification = (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["notification-count"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications-preview"] });
+
+      if (data?.title) {
+        toast.info(data.title, { position: "bottom-right", autoClose: 3000 });
+      }
+    };
+
+    socket.on('new-notification', handleNewNotification);
+
+    return () => {
+      socket.off('new-notification', handleNewNotification);
+    };
+  }, [socket, queryClient]);
 
   // const hasAccessStaff = user?.child?.id ? true : false;
 

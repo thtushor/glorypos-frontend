@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FaSearch, FaEye, FaFilter, FaRegEdit } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
@@ -13,6 +13,7 @@ import Spinner from "@/components/Spinner";
 import money from "@/utils/money";
 import DashBoardProduct from "../DashBoardProduct";
 import { useAuth } from "@/context/AuthContext";
+import { useSocket } from "@/context/SocketContext";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
 import { useShopFilterOptions } from "@/hooks/useShopFilterOptions";
@@ -148,6 +149,24 @@ const Orders: React.FC = () => {
 
   const queryClient = useQueryClient();
 
+  // Socket IO Integration
+  const { socket } = useSocket();
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewOrder = (data: any) => {
+      // Play notification sound if needed
+      toast.info(`New order received: ${data.orderNumber || 'Unknown'}`);
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    };
+
+    socket.on('new-order', handleNewOrder);
+
+    return () => {
+      socket.off('new-order', handleNewOrder);
+    };
+  }, [socket, queryClient]);
+
   // Delete Mutation
   const deleteMutation = useMutation({
     mutationFn: async (payload: any) => {
@@ -164,7 +183,7 @@ const Orders: React.FC = () => {
       } else {
         toast.error(
           (data as unknown as { message: string }).message ||
-            "Failed to delete orders",
+          "Failed to delete orders",
         );
       }
     },
@@ -624,8 +643,8 @@ const Orders: React.FC = () => {
                       {/* Seller Info */}
                       <td className="px-4 py-2 whitespace-nowrap">
                         {order.commissions?.[0]?.staff?.fullName ||
-                        order.commissions?.[0]?.staff?.role ||
-                        order?.commissions?.[0]?.staff?.parent?.businessName ? (
+                          order.commissions?.[0]?.staff?.role ||
+                          order?.commissions?.[0]?.staff?.parent?.businessName ? (
                           <div className="flex flex-col gap-0.5">
                             {order.commissions?.[0]?.staff?.fullName && (
                               <span className="text-sm font-medium text-gray-800">
@@ -641,11 +660,11 @@ const Orders: React.FC = () => {
                             )}
                             {order?.commissions?.[0]?.staff?.parent
                               ?.businessName && (
-                              <strong className="text-xs text-gray-500">
-                                shop:{" "}
-                                {order.commissions[0].staff.parent.businessName}
-                              </strong>
-                            )}
+                                <strong className="text-xs text-gray-500">
+                                  shop:{" "}
+                                  {order.commissions[0].staff.parent.businessName}
+                                </strong>
+                              )}
                           </div>
                         ) : (
                           <span className="text-gray-400">---</span>
@@ -708,7 +727,7 @@ const Orders: React.FC = () => {
                                 <span className="font-semibold text-green-600">
                                   {money.format(
                                     totals.totalProfit -
-                                      Number(totals.totalCommission || 0),
+                                    Number(totals.totalCommission || 0),
                                   )}
                                 </span>
                               ) : (
@@ -716,7 +735,7 @@ const Orders: React.FC = () => {
                                   -
                                   {money.format(
                                     totals.totalLoss +
-                                      Number(totals.totalCommission || 0),
+                                    Number(totals.totalCommission || 0),
                                   )}
                                 </span>
                               )
@@ -809,7 +828,7 @@ const Orders: React.FC = () => {
         }}
         className="!max-w-[95vw]"
         titleContainerClassName="!mb-0"
-        // useInnerModal={true}
+      // useInnerModal={true}
       >
         <DashBoardProduct orderId={selectedOrder?.id} />
       </Modal>

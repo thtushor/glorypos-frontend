@@ -7,12 +7,16 @@ import "slick-carousel/slick/slick-theme.css";
 
 const queryClient = new QueryClient();
 
+import { SocketProvider } from "./context/SocketContext";
+
 function App() {
   return (
     <Router>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <AppRoutes />
+          <SocketProvider>
+            <AppRoutes />
+          </SocketProvider>
         </AuthProvider>
       </QueryClientProvider>
     </Router>
