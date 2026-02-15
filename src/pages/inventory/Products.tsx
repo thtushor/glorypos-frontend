@@ -513,7 +513,7 @@ const Products: React.FC = () => {
       </div>
 
       {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
         {isLoadingProducts ? (
           <div className="col-span-full flex justify-center py-8">
             <Spinner color="#32cd32" size="40px" />
@@ -526,10 +526,10 @@ const Products: React.FC = () => {
           products.map((product) => (
             <div
               key={product.id}
-              className="bg-white border rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden group"
+              className="bg-white border rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden group flex flex-col"
             >
               {/* Product Image Section */}
-              <div className="relative aspect-square overflow-hidden">
+              <div className="relative aspect-square overflow-hidden bg-gray-100">
                 <ProductImageSlider
                   images={
                     product?.images && product.images.length > 0
@@ -547,63 +547,63 @@ const Products: React.FC = () => {
                   draggable={true}
                   fade={true}
                   className="w-full h-full"
-                  imageClassName="group-hover:scale-105 transition-transform duration-300"
+                  imageClassName="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                 />
 
                 {/* Action Buttons Overlay */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 sm:gap-3 p-2">
                   <button
                     onClick={() => setViewProduct(product)}
-                    className="p-2 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
+                    className="p-1.5 sm:p-2 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
                     title="View Details"
                   >
-                    <FaEye className="w-5 h-5" />
+                    <FaEye className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                   {canEditProduct && (
                     <button
                       onClick={() => handleEdit(product)}
-                      className="p-2 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
+                      className="p-1.5 sm:p-2 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
                       title="Edit Product"
                     >
-                      <FaEdit className="w-5 h-5" />
+                      <FaEdit className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   )}
                   {canDeleteProduct && (
                     <button
                       onClick={() => handleDelete(product.id)}
-                      className="p-2 bg-white rounded-full hover:bg-red-500 hover:text-white transition-colors"
+                      className="p-1.5 sm:p-2 bg-white rounded-full hover:bg-red-500 hover:text-white transition-colors"
                       title="Delete Product"
                     >
-                      <FaTrash className="w-5 h-5" />
+                      <FaTrash className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   )}
                   {canCreateProduct && (
                     <button
                       onClick={() => handleTransfer(product)}
-                      className="p-2 bg-white rounded-full hover:bg-blue-500 hover:text-white transition-colors"
+                      className="p-1.5 sm:p-2 bg-white rounded-full hover:bg-blue-500 hover:text-white transition-colors"
                       title="Transfer to Another Shop"
                     >
-                      <FaExchangeAlt className="w-5 h-5" />
+                      <FaExchangeAlt className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   )}
                 </div>
               </div>
 
               {/* Product Details */}
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-start gap-2 flex-1 mr-2 min-w-0 relative group/tooltip">
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 break-words">
+              <div className="p-3 sm:p-4 flex-1 flex flex-col">
+                <div className="flex justify-between items-start mb-2 gap-2">
+                  <div className="flex items-start gap-1 sm:gap-2 flex-1 min-w-0 relative group/tooltip">
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 line-clamp-2 break-words leading-tight">
                       {product.name}
                     </h3>
                     <Tooltip content={product.name}>
-                      <div className="group/icon cursor-help shrink-0 mt-1">
-                        <FaInfoCircle className="text-gray-400 hover:text-brand-primary w-4 h-4" />
+                      <div className="group/icon cursor-help shrink-0 mt-0.5 sm:mt-1">
+                        <FaInfoCircle className="text-gray-400 hover:text-brand-primary w-3 h-3 sm:w-4 sm:h-4" />
                       </div>
                     </Tooltip>
                   </div>
                   <span
-                    className={`shrink-0 px-2 py-1 rounded-full text-xs font-medium ${product.status === "active"
+                    className={`shrink-0 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${product.status === "active"
                       ? "bg-green-100 text-green-800"
                       : "bg-red-100 text-red-800"
                       }`}
@@ -612,11 +612,11 @@ const Products: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600">
+                <div className="space-y-1 sm:space-y-2 mt-auto">
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">
                     Category: {product.Category?.name}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs sm:text-sm text-gray-600">
                     Stock:{" "}
                     <span className="font-semibold text-gray-800">
                       {product.ProductVariants?.reduce(
@@ -625,34 +625,27 @@ const Products: React.FC = () => {
                       ) || product.stock || 0}
                     </span>
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">
                     Brand: {product.Brand?.name}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Shop:{" "}
-                    {product.User?.businessName ||
-                      product.User?.fullName ||
-                      "N/A"}{" "}
-                    (ID: {product.User?.id || product.UserId || "N/A"})
                   </p>
 
                   {/* Detailed Pricing Section */}
-                  <div className="mt-3 pt-3 border-t border-gray-200 space-y-1.5">
+                  <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100 sm:border-gray-200 space-y-1 sm:space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">
+                      <span className="text-[10px] sm:text-xs text-gray-500">
                         Sales Price:
                       </span>
-                      <span className="text-xs font-medium text-gray-700">
+                      <span className="text-[10px] sm:text-xs font-medium text-gray-700">
                         {money.format(Number(product.salesPrice || 0))}
                       </span>
                     </div>
                     {product.discountType &&
                       Number(product.discountAmount || 0) > 0 && (
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">
+                          <span className="text-[10px] sm:text-xs text-gray-500">
                             Discount:
                           </span>
-                          <span className="text-xs font-medium text-red-600">
+                          <span className="text-[10px] sm:text-xs font-medium text-red-600">
                             {product.discountType === "percentage"
                               ? `${product.discountAmount}%`
                               : money.format(
@@ -661,19 +654,11 @@ const Products: React.FC = () => {
                           </span>
                         </div>
                       )}
-                    {Number(product.vat || 0) > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">VAT:</span>
-                        <span className="text-xs font-medium text-gray-700">
-                          {money.format(Number(product.vat || 0))}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between pt-1 border-t border-gray-200">
-                      <span className="text-sm font-semibold text-gray-900">
-                        Final Price:
+                    <div className="flex items-center justify-between pt-1 border-t border-gray-100 sm:border-gray-200">
+                      <span className="text-xs sm:text-sm font-semibold text-gray-900">
+                        Final:
                       </span>
-                      <span className="text-sm font-bold text-brand-primary">
+                      <span className="text-sm sm:text-base font-bold text-brand-primary">
                         {money.format(Number(product.price || 0))}
                       </span>
                     </div>
@@ -682,7 +667,7 @@ const Products: React.FC = () => {
 
                 {/* Variant Preview */}
                 {product.ProductVariants?.length > 0 && (
-                  <div className="mt-3 flex -space-x-2">
+                  <div className="mt-2 sm:mt-3 flex -space-x-1.5 sm:-space-x-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
                     {product.ProductVariants.slice(0, 3).map((variant) => (
                       <img
                         key={variant.id}
@@ -693,14 +678,14 @@ const Products: React.FC = () => {
                             [product.id]: variant.id,
                           })
                         }
-                        className={`w-8 h-8 rounded-full border-2 border-white object-cover ${selectedVariants[product.id] === variant.id
+                        className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white object-cover cursor-pointer flex-shrink-0 ${selectedVariants[product.id] === variant.id
                           ? "border-brand-primary"
                           : ""
                           }`}
                       />
                     ))}
                     {product.ProductVariants.length > 3 && (
-                      <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs text-gray-600">
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[10px] sm:text-xs text-gray-600 flex-shrink-0">
                         +{product.ProductVariants.length - 3}
                       </div>
                     )}
