@@ -179,7 +179,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
 
             {/* Notifications Dropdown */}
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-[300px] sm:w-80 bg-white rounded-lg shadow-lg py-2 z-50 border max-h-[500px] flex flex-col">
+              <div className="fixed inset-x-4 top-[4.5rem] sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80 bg-white rounded-lg shadow-lg py-2 z-50 border max-h-[75vh] flex flex-col">
                 <div className="px-4 py-2 border-b flex justify-between items-center bg-gray-50">
                   <h3 className="text-sm font-semibold text-gray-700">Notifications</h3>
                   {unreadCount > 0 && (

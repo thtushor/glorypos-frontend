@@ -92,10 +92,10 @@ const NotificationsPage = () => {
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-0 sm:p-6 max-w-7xl mx-auto">
             <div className="bg-white rounded-lg shadow p-6">
                 {/* Header */}
-                <div className="flex sm:flex-row flex-col sm:justify-between gap-2 sm:items-center mb-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-3 sm:items-center mb-4 sm:mb-6">
                     <div>
                         <h1 className="text-2xl font-semibold text-gray-800">Notifications</h1>
                         <p className="text-sm text-gray-600">View and manage all your notifications</p>
@@ -104,7 +104,7 @@ const NotificationsPage = () => {
                         <button
                             onClick={() => markAllReadMutation.mutate()}
                             disabled={markAllReadMutation.isPending}
-                            className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors flex items-center gap-2 text-sm font-medium"
+                            className="w-full sm:w-auto px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover transition-colors flex justify-center items-center gap-2 text-sm font-medium"
                         >
                             {markAllReadMutation.isPending ? <FaSpinner className="animate-spin" /> : <FaCheckDouble />}
                             Mark All as Read
@@ -113,9 +113,9 @@ const NotificationsPage = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex border-b mb-6">
+                <div className="flex border-b mb-4 sm:mb-6 overflow-x-auto scrollbar-hide">
                     <button
-                        className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === "unread"
+                        className={`px-3 sm:px-6 py-2 sm:py-3 font-medium text-xs sm:text-sm transition-colors relative whitespace-nowrap flex-1 sm:flex-none text-center ${activeTab === "unread"
                             ? "text-brand-primary border-b-2 border-brand-primary"
                             : "text-gray-500 hover:text-gray-700"
                             }`}
@@ -124,7 +124,7 @@ const NotificationsPage = () => {
                         Unread
                     </button>
                     <button
-                        className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === "read"
+                        className={`px-3 sm:px-6 py-2 sm:py-3 font-medium text-xs sm:text-sm transition-colors relative whitespace-nowrap flex-1 sm:flex-none text-center ${activeTab === "read"
                             ? "text-brand-primary border-b-2 border-brand-primary"
                             : "text-gray-500 hover:text-gray-700"
                             }`}
@@ -154,10 +154,10 @@ const NotificationsPage = () => {
                             {notifications.map((notif: any) => (
                                 <div
                                     key={notif.id}
-                                    className={`p-4 border rounded-lg hover:shadow-md transition-shadow flex gap-4 cursor-pointer group ${!notif.is_read ? 'bg-blue-50/50 border-blue-100' : 'bg-white border-gray-100'}`}
+                                    className={`p-2 sm:p-4 border rounded-lg hover:shadow-md transition-shadow flex flex-wrap sm:flex-nowrap gap-2 sm:gap-4 cursor-pointer group ${!notif.is_read ? 'bg-blue-50/50 border-blue-100' : 'bg-white border-gray-100'}`}
                                     onClick={() => handleNotificationClick(notif)}
                                 >
-                                    <div className="mt-1">
+                                    <div className="mt-1 shrink-0">
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${notif.type === 'STOCK_OUT' ? 'bg-red-100 text-red-600' :
                                             notif.type === 'STOCK_LOW' ? 'bg-yellow-100 text-yellow-600' :
                                                 'bg-brand-primary/10 text-brand-primary'
@@ -165,18 +165,18 @@ const NotificationsPage = () => {
                                             <FaBell />
                                         </div>
                                     </div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-start">
-                                            <h3 className={`text-sm font-semibold ${!notif.is_read ? 'text-gray-900' : 'text-gray-700'}`}>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <h3 className={`text-sm font-semibold truncate pr-2 ${!notif.is_read ? 'text-gray-900' : 'text-gray-700'}`}>
                                                 {notif.title}
                                             </h3>
-                                            <span className="text-xs text-gray-400 whitespace-nowrap ml-2">
-                                                {format(new Date(notif.createdAt), 'MMM dd, yyyy HH:mm')}
+                                            <span className="text-xs text-gray-400 whitespace-nowrap shrink-0">
+                                                {format(new Date(notif.createdAt), 'MMM dd, HH:mm')}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{notif.message}</p>
+                                        <p className="text-sm text-gray-600 mt-1 line-clamp-2 break-words">{notif.message}</p>
                                     </div>
-                                    <div className="flex flex-col gap-2 justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="w-full sm:w-auto flex flex-row sm:flex-col justify-end sm:justify-center gap-2 mt-2 sm:mt-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-100 sm:border-none">
                                         {!notif.is_read && (
                                             <button
                                                 title="Mark as read"

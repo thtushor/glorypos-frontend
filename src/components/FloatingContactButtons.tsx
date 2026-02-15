@@ -87,7 +87,7 @@ const FloatingContactButtons = () => {
   ];
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-[55px] right-6 z-50">
       <div className="relative">
         <AnimatePresence>
           {isExpanded && (
@@ -147,10 +147,9 @@ const FloatingContactButtons = () => {
             p-4 rounded-full
             transition-all duration-300
             bg-gradient-to-r
-            ${
-              isExpanded
-                ? "from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
-                : "from-brand-primary to-brand-hover hover:from-brand-hover hover:to-brand-primary"
+            ${isExpanded
+              ? "from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+              : "from-brand-primary to-brand-hover hover:from-brand-hover hover:to-brand-primary"
             }
             shadow-lg hover:shadow-xl
             relative

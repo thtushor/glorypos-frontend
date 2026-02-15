@@ -230,7 +230,7 @@ function DashBoardProduct({
       {/* Mobile Floating Cart Button */}
       <button
         onClick={() => setActiveTab("cart")}
-        className="fixed bottom-4 right-4 bg-blue-600 text-white px-5 py-3 rounded-full shadow-lg md:hidden"
+        className="fixed bottom-[55px]  right-4 bg-blue-600 text-white px-5 py-3 rounded-full shadow-lg md:hidden"
       >
         Cart ({cartItemsCount})
       </button>
