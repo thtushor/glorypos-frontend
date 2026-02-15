@@ -13,44 +13,123 @@ const Tooltip: React.FC<TooltipProps> = ({
     position = "top"
 }) => {
     const [isVisible, setIsVisible] = useState(false);
-    const [coords, setCoords] = useState({ top: 0, left: 0 });
+    const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
+    const [arrowStyle, setArrowStyle] = useState<React.CSSProperties>({});
     const triggerRef = useRef<HTMLDivElement>(null);
+    const tooltipRef = useRef<HTMLDivElement>(null);
 
     const updatePosition = () => {
-        if (triggerRef.current) {
-            const rect = triggerRef.current.getBoundingClientRect();
-            let top = 0;
-            let left = 0;
+        if (!triggerRef.current || !tooltipRef.current) return;
 
-            // Add scroll offset
-            const scrollY = window.scrollY;
-            const scrollX = window.scrollX;
+        const triggerRect = triggerRef.current.getBoundingClientRect();
+        const tooltipRect = tooltipRef.current.getBoundingClientRect();
 
-            switch (position) {
-                case "top":
-                    top = rect.top + scrollY - 10; // 10px spacing
-                    left = rect.left + scrollX + rect.width / 2;
-                    break;
-                case "bottom":
-                    top = rect.bottom + scrollY + 10;
-                    left = rect.left + scrollX + rect.width / 2;
-                    break;
-                case "left":
-                    top = rect.top + scrollY + rect.height / 2;
-                    left = rect.left + scrollX - 10;
-                    break;
-                case "right":
-                    top = rect.top + scrollY + rect.height / 2;
-                    left = rect.right + scrollX + 10;
-                    break;
-            }
+        const spacing = 10; // spacing between trigger and tooltip
+        const padding = 10; // minimum distance from screen edge
 
-            setCoords({ top, left });
+        let top = 0;
+        let left = 0;
+        let arrowTop: string | number = "";
+        let arrowLeft: string | number = "";
+        let arrowTransform = "rotate(45deg)";
+
+        // Calculate initial position
+        switch (position) {
+            case "top":
+                top = triggerRect.top - tooltipRect.height - spacing;
+                left = triggerRect.left + (triggerRect.width / 2) - (tooltipRect.width / 2);
+                arrowTop = "100%";
+                arrowLeft = "50%";
+                arrowTransform = "rotate(45deg) translateX(-50%)"; // Center horizontally
+                break;
+            case "bottom":
+                top = triggerRect.bottom + spacing;
+                left = triggerRect.left + (triggerRect.width / 2) - (tooltipRect.width / 2);
+                arrowTop = -4; // Half of arrow size (8px)
+                arrowLeft = "50%";
+                arrowTransform = "rotate(45deg) translateX(-50%)";
+                break;
+            case "left":
+                top = triggerRect.top + (triggerRect.height / 2) - (tooltipRect.height / 2);
+                left = triggerRect.left - tooltipRect.width - spacing;
+                arrowTop = "50%";
+                arrowLeft = "100%";
+                arrowTransform = "rotate(45deg) translateY(-50%)";
+                break;
+            case "right":
+                top = triggerRect.top + (triggerRect.height / 2) - (tooltipRect.height / 2);
+                left = triggerRect.right + spacing;
+                arrowTop = "50%";
+                arrowLeft = -4;
+                arrowTransform = "rotate(45deg) translateY(-50%)";
+                break;
         }
+
+        // Horizontal clamping (for top/bottom positions primarily, but safety for all)
+        if (left < padding) {
+            left = padding;
+        } else if (left + tooltipRect.width > window.innerWidth - padding) {
+            left = window.innerWidth - padding - tooltipRect.width;
+        }
+
+        // Vertical clamping
+        if (top < padding) {
+            top = padding;
+        } else if (top + tooltipRect.height > window.innerHeight - padding) {
+            top = window.innerHeight - padding - tooltipRect.height;
+        }
+
+        // Recalculate arrow position if tooltip shifted horizontally (for top/bottom)
+        if (position === "top" || position === "bottom") {
+            const triggerCenter = triggerRect.left + (triggerRect.width / 2);
+            const tooltipLeft = left;
+            const relativeArrowLeft = triggerCenter - tooltipLeft;
+
+            // Clamp arrow to be within tooltip border radius
+            const arrowPadding = 12; // approximate padding + border radius
+            const minArrowLeft = arrowPadding;
+            const maxArrowLeft = tooltipRect.width - arrowPadding;
+
+            let finalArrowLeft = Math.max(minArrowLeft, Math.min(maxArrowLeft, relativeArrowLeft));
+
+            arrowLeft = finalArrowLeft;
+            arrowTransform = "rotate(45deg) translateX(-50%)"; // Standard rotation
+        }
+
+        // Recalculate arrow position if tooltip shifted vertically (for left/right)
+        if (position === "left" || position === "right") {
+            const triggerCenter = triggerRect.top + (triggerRect.height / 2);
+            const tooltipTop = top;
+            const relativeArrowTop = triggerCenter - tooltipTop;
+
+            const arrowPadding = 12;
+            const minArrowTop = arrowPadding;
+            const maxArrowTop = tooltipRect.height - arrowPadding;
+
+            let finalArrowTop = Math.max(minArrowTop, Math.min(maxArrowTop, relativeArrowTop));
+
+            arrowTop = finalArrowTop;
+            arrowTransform = "rotate(45deg) translateY(-50%)";
+        }
+
+
+        setTooltipStyle({
+            top: top,
+            left: left,
+            transform: "none" // We are manually positioning
+        });
+
+        setArrowStyle({
+            top: arrowTop,
+            left: arrowLeft,
+            right: "auto",
+            bottom: "auto",
+            transform: arrowTransform,
+            position: "absolute"
+        });
     };
 
     const handleMouseEnter = () => {
-        updatePosition();
         setIsVisible(true);
     };
 
@@ -59,22 +138,17 @@ const Tooltip: React.FC<TooltipProps> = ({
     };
 
     const handleClick = (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent closing immediately due to global listener
-        if (isVisible) {
-            setIsVisible(false);
-        } else {
-            updatePosition();
-            setIsVisible(true);
-        }
+        e.stopPropagation();
+        setIsVisible((prev) => !prev);
     };
 
     // Update position on scroll or resize when visible
     useEffect(() => {
         if (isVisible) {
+            updatePosition();
             window.addEventListener("scroll", updatePosition);
             window.addEventListener("resize", updatePosition);
 
-            // Handle clicking outside to close
             const handleClickOutside = (event: MouseEvent) => {
                 if (triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
                     setIsVisible(false);
@@ -90,6 +164,13 @@ const Tooltip: React.FC<TooltipProps> = ({
         }
     }, [isVisible]);
 
+    // Use layout effect to position before paint if possible, or right after render
+    React.useLayoutEffect(() => {
+        if (isVisible) {
+            updatePosition();
+        }
+    }, [isVisible, content]);
+
     return (
         <>
             <div
@@ -103,25 +184,15 @@ const Tooltip: React.FC<TooltipProps> = ({
             </div>
             {isVisible && createPortal(
                 <div
-                    className="fixed z-[9999] px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg pointer-events-none max-w-xs break-words"
-                    style={{
-                        top: coords.top,
-                        left: coords.left,
-                        transform: `translate(${position === "left" ? "-100%" :
-                            position === "right" ? "0" : "-50%"
-                            }, ${position === "top" ? "-100%" :
-                                position === "bottom" ? "0" : "-50%"
-                            })`
-                    }}
+                    ref={tooltipRef}
+                    className="fixed z-[9999] px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg pointer-events-none max-w-xs break-words transition-opacity duration-200"
+                    style={tooltipStyle}
                 >
                     {content}
                     {/* Arrow */}
                     <div
-                        className={`absolute w-2 h-2 bg-gray-900 transform rotate-45 ${position === "top" ? "top-[100%] left-1/2 -mt-1 -translate-x-1/2" :
-                            position === "bottom" ? "bottom-[100%] left-1/2 -mb-1 -translate-x-1/2" :
-                                position === "left" ? "left-[100%] top-1/2 -ml-1 -translate-y-1/2" :
-                                    "right-[100%] top-1/2 -mr-1 -translate-y-1/2"
-                            }`}
+                        className="w-2 h-2 bg-gray-900"
+                        style={arrowStyle}
                     />
                 </div>,
                 document.body
