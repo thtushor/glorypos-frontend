@@ -63,8 +63,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
   // Initialize cameras (Original web scanner logic)
   useEffect(() => {
-    const isReactNative = !!(window as any).ReactNativeWebView;
-    if (isReactNative) return; // Skip if in native app
+    // const isReactNative = !!(window as any).ReactNativeWebView;
+    // if (isReactNative) return; // Skip if in native app - DISABLED to allow webview scanning
 
     if (isOpen) {
       isUnmountingRef.current = false;
@@ -551,8 +551,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
   // Auto-start scanning when camera is selected and modal is open
   useEffect(() => {
-    const isReactNative = !!(window as any).ReactNativeWebView;
-    if (isReactNative) return;
+    // const isReactNative = !!(window as any).ReactNativeWebView;
+    // if (isReactNative) return;
 
     if (
       isOpen &&
@@ -617,7 +617,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   return (
     <div className="space-y-4">
       {/* Camera Selection */}
-      {availableCameras.length > 0 && !((window as any).ReactNativeWebView) && (
+      {availableCameras.length > 0 && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -693,23 +693,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             : "min-h-[200px] flex items-center justify-center"
             }`}
         >
-          {!!((window as any).ReactNativeWebView) && (
-            <div className="text-center text-white p-8">
-              <FaCamera className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p className="text-sm opacity-75">Native scanner active</p>
-              <button
-                onClick={() => {
-                  (window as any).ReactNativeWebView.postMessage(JSON.stringify({
-                    type: 'SCAN_BARCODE'
-                  }));
-                }}
-                className="mt-4 px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-100 transition-colors"
-              >
-                Scan with Camera
-              </button>
-            </div>
-          )}
-          {!isScanning && !error && !isSwitchingCameraRef.current && !((window as any).ReactNativeWebView) && (
+          {/* Native scanner block removed to favor HTML5 scanner in WebView */}
+          {!isScanning && !error && !isSwitchingCameraRef.current && (
             <div className="text-center text-white p-8">
               <FaCamera className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p className="text-sm opacity-75">Camera scanner ready</p>
@@ -758,12 +743,23 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                       const isReactNative = !!(window as any).ReactNativeWebView;
 
                       if (isReactNative) {
-                        // Request permission from React Native
-                        (window as any).ReactNativeWebView?.postMessage(
-                          JSON.stringify({
-                            type: 'REQUEST_CAMERA_PERMISSION',
-                          })
-                        );
+                        // Try standard getUserMedia first, even in RN, as we now support it in WebView
+                        try {
+                          const stream = await navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: 'environment' },
+                          });
+                          stream.getTracks().forEach(track => track.stop());
+                          window.location.reload();
+                          return;
+                        } catch (e) {
+                          console.log("Standard getUserMedia failed in WebView, falling back to message", e);
+                          // If that fails, fallback to message (though native app ignores it currently)
+                          (window as any).ReactNativeWebView?.postMessage(
+                            JSON.stringify({
+                              type: 'REQUEST_CAMERA_PERMISSION',
+                            })
+                          );
+                        }
                       } else {
                         // Request camera access from browser
                         const stream = await navigator.mediaDevices.getUserMedia({
