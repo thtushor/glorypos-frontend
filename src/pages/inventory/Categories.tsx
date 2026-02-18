@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { FaPlus, FaEdit, FaTrash, FaTags } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaTags, FaBarcode } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import {
   CATEGORY_URL,
@@ -14,6 +14,7 @@ import InventoryFilters from "@/components/shared/InventoryFilters";
 import { usePermission } from "@/hooks/usePermission";
 import { PERMISSIONS } from "@/config/permissions";
 import { useAuth } from "@/context/AuthContext";
+import CategoryBarcodeModal from "@/components/CategoryBarcodeModal";
 
 interface User {
   id: number;
@@ -27,6 +28,7 @@ interface Category {
   name: string;
   description: string;
   status: "active" | "inactive";
+  barcode?: string;
   UserId: number;
   User?: User;
 }
@@ -36,6 +38,7 @@ interface CategoryFormData {
   name: string;
   description: string;
   status: "active" | "inactive";
+  barcode?: string;
 }
 
 const Categories = () => {
@@ -53,8 +56,12 @@ const Categories = () => {
     name: "",
     description: "",
     status: "active",
+    barcode: "",
   });
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Barcode Modal state
+  const [selectedCategoryForBarcode, setSelectedCategoryForBarcode] = useState<Category | null>(null);
 
   // Filter states
   const [searchKey, setSearchKey] = useState("");
@@ -138,6 +145,7 @@ const Categories = () => {
       name: category.name,
       description: category.description,
       status: category.status,
+      barcode: category.barcode,
     });
     setIsModalOpen(true);
   };
@@ -154,6 +162,7 @@ const Categories = () => {
       name: "",
       description: "",
       status: "active",
+      barcode: "",
     });
   };
 
@@ -166,13 +175,13 @@ const Categories = () => {
       if (e.key === "Enter" && !e.shiftKey) {
         const target = e.target as HTMLElement;
         const isTextarea = target.tagName === "TEXTAREA";
-        
+
         // If focused on textarea, allow normal Enter behavior for newlines
         if (isTextarea) return;
-        
+
         // Prevent default to avoid form submission conflicts
         e.preventDefault();
-        
+
         // Submit form if not currently processing
         if (!createMutation.isPending && !updateMutation.isPending) {
           // Get the form element and trigger validation
@@ -240,6 +249,9 @@ const Categories = () => {
                   Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Barcode
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Description
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -282,6 +294,11 @@ const Categories = () => {
                         </span>
                       </div>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-mono">
+                        {category.barcode || "N/A"}
+                      </span>
+                    </td>
                     <td className="px-6 py-4">
                       <p className="text-gray-600 truncate max-w-md">
                         {category.description || "N/A"}
@@ -290,8 +307,8 @@ const Categories = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${category.status === "active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
                           }`}
                       >
                         {category.status}
@@ -326,6 +343,13 @@ const Categories = () => {
                               title="Delete Category"
                             >
                               <FaTrash className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setSelectedCategoryForBarcode(category)}
+                              className="text-gray-600 hover:text-gray-800"
+                              title="View Barcode"
+                            >
+                              <FaBarcode className="w-4 h-4" />
                             </button>
                           </>
                         )}
@@ -407,6 +431,21 @@ const Categories = () => {
                 </select>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Barcode (Auto-generated if empty)
+                </label>
+                <input
+                  type="text"
+                  value={formData.barcode}
+                  onChange={(e) =>
+                    setFormData({ ...formData, barcode: e.target.value })
+                  }
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm"
+                  placeholder="Enter barcode or leave empty"
+                />
+              </div>
+
               <div className="flex justify-end gap-4 mt-6">
                 <button
                   type="button"
@@ -438,6 +477,16 @@ const Categories = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Barcode Modal */}
+      {selectedCategoryForBarcode && (
+        <CategoryBarcodeModal
+          barcode={selectedCategoryForBarcode.barcode || ""}
+          categoryName={selectedCategoryForBarcode.name}
+          shopName={selectedCategoryForBarcode.User?.businessName || user?.businessName || "Shop"}
+          onClose={() => setSelectedCategoryForBarcode(null)}
+        />
       )}
     </div>
   );
