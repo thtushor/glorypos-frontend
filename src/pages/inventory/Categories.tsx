@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { FaPlus, FaEdit, FaTrash, FaTags, FaBarcode } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaTags, FaBarcode, FaCopy } from "react-icons/fa";
+import JsBarcode from "jsbarcode";
 import AXIOS from "@/api/network/Axios";
 import {
   CATEGORY_URL,
@@ -40,6 +41,28 @@ interface CategoryFormData {
   status: "active" | "inactive";
   barcode?: string;
 }
+
+const BarcodeMini = ({ barcode }: { barcode: string }) => {
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (svgRef.current && barcode) {
+      try {
+        JsBarcode(svgRef.current, barcode, {
+          format: "CODE128",
+          width: 0.6,
+          height: 12,
+          displayValue: false,
+          margin: 0,
+        });
+      } catch (e) {
+        // Silently fail if barcode is invalid
+      }
+    }
+  }, [barcode]);
+
+  return <svg ref={svgRef} className="max-w-[60px] h-auto opacity-60" />;
+};
 
 const Categories = () => {
   const queryClient = useQueryClient();
@@ -295,9 +318,29 @@ const Categories = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-mono">
-                        {category.barcode || "N/A"}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <div
+                          className="group flex items-center gap-1.5 cursor-pointer"
+                          onClick={() => {
+                            if (category.barcode) {
+                              navigator.clipboard.writeText(category.barcode);
+                              toast.info(`Copied: ${category.barcode}`, {
+                                position: "bottom-right",
+                                autoClose: 1000,
+                                hideProgressBar: true,
+                              });
+                            }
+                          }}
+                        >
+                          <span className="px-2 py-0.5 bg-gray-50 text-gray-600 rounded text-[10px] font-mono font-bold border border-gray-100 w-fit group-hover:bg-brand-primary/5 group-hover:text-brand-primary group-hover:border-brand-primary/20 transition-all duration-200">
+                            {category.barcode || "N/A"}
+                          </span>
+                          {category.barcode && (
+                            <FaCopy className="w-2.5 h-2.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-all duration-200" />
+                          )}
+                        </div>
+                        {category.barcode && <BarcodeMini barcode={category.barcode} />}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-gray-600 truncate max-w-md">
