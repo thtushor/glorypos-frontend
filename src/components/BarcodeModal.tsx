@@ -4,6 +4,7 @@ import JsBarcode from "jsbarcode";
 // import { useReactToPrint } from "react-to-print";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
 import { toast } from "react-toastify";
+import { FaDownload } from "react-icons/fa";
 import { useWebViewPrint } from "../hooks/useWebViewPrint";
 
 interface LabelSize {
@@ -22,9 +23,9 @@ const LABEL_SIZES: LabelSize[] = [
   {
     id: "white",
     name: "White Label",
-    widthMm: 35,
+    widthMm: 38,
     heightMm: 18,
-    barcodeWidthMm: 31,
+    barcodeWidthMm: 34,
     barcodeHeight: 38,
     topFontSize: "5.8pt",
     shopFontSize: "6.8pt",
@@ -33,9 +34,9 @@ const LABEL_SIZES: LabelSize[] = [
   {
     id: "craft",
     name: "Craft (Brown)",
-    widthMm: 35,
+    widthMm: 38,
     heightMm: 18,
-    barcodeWidthMm: 31,
+    barcodeWidthMm: 34,
     barcodeHeight: 38,
     topFontSize: "5.8pt",
     shopFontSize: "6.8pt",
@@ -68,6 +69,68 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
   const [selectedSize, setSelectedSize] = useState<LabelSize>(LABEL_SIZES[0]);
   const [isPrinting, setIsPrinting] = useState(false);
   const { isWebView, sendPrintSignal } = useWebViewPrint();
+
+  const handleDownload = () => {
+    const scale = 10;
+    const width = size.widthMm * 3.78 * scale;
+    const height = size.heightMm * 3.78 * scale;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.fillStyle = size.background || "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#000000";
+    ctx.textBaseline = "top";
+
+    const topText = [brandName, categoryName, modelNo].filter(Boolean).join(" / ");
+
+    const fontSize1 = 8 * 1.33 * scale;
+    ctx.font = `500 ${fontSize1}px Inter, system-ui, sans-serif`;
+    ctx.fillText(topText.toUpperCase(), width / 2, 2 * 3.78 * scale);
+
+    const fontSize2 = 8 * 1.33 * scale;
+    ctx.font = `900 ${fontSize2}px Inter, system-ui, sans-serif`;
+    ctx.fillText(`SHOP: ${shopName?.toUpperCase() || ''}`, width / 2, 6 * 3.78 * scale);
+
+    const barcodeCanvas = document.createElement("canvas");
+    JsBarcode(barcodeCanvas, sku || "", {
+      format: "CODE128",
+      width: 2 * scale,
+      height: 38 * scale,
+      displayValue: true,
+      fontSize: 10 * scale,
+      margin: 0,
+      fontOptions: "bold",
+    });
+
+    const bWidth = barcodeCanvas.width;
+    const bHeight = barcodeCanvas.height;
+    const targetBWidth = width * 0.9;
+    const targetBHeight = height * 0.5;
+    const ratio = Math.min(targetBWidth / bWidth, targetBHeight / bHeight);
+
+    const finalBWidth = bWidth * ratio;
+    const finalBHeight = bHeight * ratio;
+
+    ctx.drawImage(
+      barcodeCanvas,
+      (width - finalBWidth) / 2,
+      height - finalBHeight - (2 * 3.78 * scale),
+      finalBWidth,
+      finalBHeight
+    );
+
+    const link = document.createElement("a");
+    link.download = `barcode_${sku}.png`;
+    link.href = canvas.toDataURL("image/png", 1.0);
+    link.click();
+  };
 
   const size = selectedSize;
 
@@ -173,7 +236,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
       const topText = [brandName, categoryName, modelNo].filter(Boolean).join(" / ");
       const encoder = new TextEncoder();
 
-      // TSPL Commands for 35x18mm Label
+      // TSPL Commands for 38x18mm Label
       let commands = `SIZE ${size.widthMm} mm, ${size.heightMm} mm\r\n`;
       commands += `GAP 2 mm, 0\r\n`;
       commands += `DIRECTION 1\r\n`;
@@ -318,9 +381,9 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
               }}
             >
               {/* Top: Product Name + Shop Name */}
-              <div className="text-center leading-tight mt-[-4px]">
+              <div className="text-center leading-none mt-1">
                 <div
-                  className="font-medium truncate uppercase text-[8px] text-black"
+                  className="font-medium truncate uppercase text-[8px] text-black mb-1"
                   title={name}
                 >
                   {[brandName, categoryName, modelNo]
@@ -328,7 +391,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
                     .join(" / ")}
                 </div>
                 <div
-                  className="font-black mt-[-1px] mb-[2px] uppercase tracking-wider truncate text-[8px]"
+                  className="font-black mb-1 uppercase tracking-wider truncate text-[8px]"
                   style={{ color: "#000" }}
                 >
                   SHOP: {shopName}
@@ -361,9 +424,9 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
               }}
             >
               {/* Top: Product Name + Shop Name - Synced with Preview styles */}
-              <div className="text-center leading-tight mt-[-4px]">
+              <div className="text-center leading-none mt-1">
                 <div
-                  className="font-medium truncate uppercase text-[8px] text-black"
+                  className="font-medium truncate uppercase text-[8px] text-black mb-1"
                   title={name}
                 >
                   {[brandName, categoryName, modelNo]
@@ -371,7 +434,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
                     .join(" / ")}
                 </div>
                 <div
-                  className="font-black mt-[-1px] mb-[2px] uppercase tracking-wider truncate text-[8px]"
+                  className="font-black mb-1 uppercase tracking-wider truncate text-[8px]"
                   style={{ color: "#000" }}
                 >
                   SHOP: {shopName}
@@ -403,6 +466,14 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
               className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold shadow-lg transition flex-1 md:flex-none"
             >
               Print (Thermal)
+            </button>
+            <button
+              onClick={handleDownload}
+              disabled={isPrinting}
+              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg transition flex items-center justify-center gap-2 flex-1 md:flex-none"
+            >
+              <FaDownload className="w-4 h-4" />
+              PNG
             </button>
             <button
               onClick={handleLabelPrinterPrint}

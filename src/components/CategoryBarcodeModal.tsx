@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
 import JsBarcode from "jsbarcode";
-import html2canvas from "html2canvas";
 import { FaDownload, FaTimes, FaPrint } from "react-icons/fa";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
 import { toast } from "react-toastify";
@@ -29,22 +28,82 @@ const CategoryBarcodeModal: React.FC<CategoryBarcodeModalProps> = ({
                 format: "CODE128",
                 lineColor: "#000",
                 width: 2,
-                height: 100,
+                height: 38,
                 displayValue: true,
-                fontSize: 16,
-                margin: 10,
+                fontSize: 10,
+                margin: 0,
+                fontOptions: "bold",
+                flat: true,
             });
         }
     }, [barcode]);
 
-    const handleDownload = async () => {
-        if (barcodeRef.current) {
-            const canvas = await html2canvas(barcodeRef.current);
-            const link = document.createElement("a");
-            link.download = `category_barcode_${barcode}.png`;
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-        }
+    const handleDownload = () => {
+        const scale = 10; // High resolution scale
+        const width = 38 * 3.78 * scale; // 38mm to px
+        const height = 18 * 3.78 * scale; // 18mm to px
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) return;
+
+        // 1. Background
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+
+        // 2. Text Styling
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#000000";
+        ctx.textBaseline = "top";
+
+        // 3. Draw Category Name
+        const fontSize1 = 8 * 1.33 * scale;
+        ctx.font = `500 ${fontSize1}px Inter, system-ui, sans-serif`;
+        ctx.fillText(categoryName.toUpperCase(), width / 2, 2 * 3.78 * scale);
+
+        // 4. Draw Shop Name
+        const fontSize2 = 8 * 1.33 * scale;
+        ctx.font = `900 ${fontSize2}px Inter, system-ui, sans-serif`;
+        ctx.fillText(`SHOP: ${shopName.toUpperCase()}`, width / 2, 6 * 3.78 * scale);
+
+        // 5. Build Barcode Area
+        const barcodeCanvas = document.createElement("canvas");
+        JsBarcode(barcodeCanvas, barcode, {
+            format: "CODE128",
+            width: 2 * scale,
+            height: 38 * scale,
+            displayValue: true,
+            fontSize: 10 * scale,
+            margin: 0,
+            fontOptions: "bold",
+        });
+
+        // 6. Draw Barcode onto main canvas
+        const bWidth = barcodeCanvas.width;
+        const bHeight = barcodeCanvas.height;
+        const targetBWidth = width * 0.9;
+        const targetBHeight = height * 0.5;
+        const ratio = Math.min(targetBWidth / bWidth, targetBHeight / bHeight);
+
+        const finalBWidth = bWidth * ratio;
+        const finalBHeight = bHeight * ratio;
+
+        ctx.drawImage(
+            barcodeCanvas,
+            (width - finalBWidth) / 2,
+            height - finalBHeight - (2 * 3.78 * scale),
+            finalBWidth,
+            finalBHeight
+        );
+
+        // 7. Trigger Download
+        const link = document.createElement("a");
+        link.download = `category_barcode_${barcode}.png`;
+        link.href = canvas.toDataURL("image/png", 1.0);
+        link.click();
     };
 
     const getPrinter = async () => {
@@ -126,21 +185,32 @@ const CategoryBarcodeModal: React.FC<CategoryBarcodeModalProps> = ({
                 </div>
 
                 <div className="flex flex-col items-center gap-6">
-                    <div
-                        ref={barcodeRef}
-                        className="bg-white p-6 border-2 border-dashed border-gray-200 rounded-xl"
-                        style={{ minWidth: "300px" }}
-                    >
-                        <div className="text-center mb-2">
-                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                                {shopName}
-                            </p>
-                            <h3 className="text-lg font-bold text-gray-900 truncate">
-                                {categoryName}
-                            </h3>
-                        </div>
-                        <div className="flex justify-center">
-                            <svg id="category-barcode-svg"></svg>
+                    <div className="bg-gray-50 rounded-xl p-5 border border-black/20 w-full flex justify-center">
+                        <div
+                            ref={barcodeRef}
+                            className="bg-white shadow-2xl overflow-hidden"
+                            style={{
+                                width: "38mm",
+                                height: "18mm",
+                                padding: "2mm",
+                                boxSizing: "border-box",
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "space-between",
+                            }}
+                        >
+                            <div className="text-center leading-none mt-1">
+                                <div className="font-medium truncate uppercase text-[8px] text-black mb-1">
+                                    {categoryName}
+                                </div>
+                                <div className="font-black mb-1 uppercase tracking-wider truncate text-[8px] text-black">
+                                    SHOP: {shopName}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-center bg-white px-1 pt-0">
+                                <svg id="category-barcode-svg" style={{ width: "100%", maxHeight: "42px" }}></svg>
+                            </div>
                         </div>
                     </div>
 
