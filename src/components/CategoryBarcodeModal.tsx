@@ -20,7 +20,7 @@ const CategoryBarcodeModal: React.FC<CategoryBarcodeModalProps> = ({
 }) => {
     const barcodeRef = useRef<HTMLDivElement>(null);
     const [isPrinting, setIsPrinting] = useState(false);
-    const { isWebView, sendPrintSignal } = useWebViewPrint();
+    const { isWebView, sendPrintSignal, sendDownloadSignal } = useWebViewPrint();
 
     useEffect(() => {
         if (barcode) {
@@ -99,10 +99,18 @@ const CategoryBarcodeModal: React.FC<CategoryBarcodeModalProps> = ({
             finalBHeight
         );
 
+        const dataUrl = canvas.toDataURL("image/png", 1.0);
+
+        if (isWebView) {
+            sendDownloadSignal(`category_barcode_${barcode}.png`, dataUrl);
+            toast.success("Download started on device...");
+            return;
+        }
+
         // 7. Trigger Download
         const link = document.createElement("a");
         link.download = `category_barcode_${barcode}.png`;
-        link.href = canvas.toDataURL("image/png", 1.0);
+        link.href = dataUrl;
         link.click();
     };
 

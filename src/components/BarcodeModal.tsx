@@ -68,7 +68,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
   const printRef = useRef<HTMLDivElement>(null);
   const [selectedSize, setSelectedSize] = useState<LabelSize>(LABEL_SIZES[0]);
   const [isPrinting, setIsPrinting] = useState(false);
-  const { isWebView, sendPrintSignal } = useWebViewPrint();
+  const { isWebView, sendPrintSignal, sendDownloadSignal } = useWebViewPrint();
 
   const handleDownload = () => {
     const scale = 10;
@@ -126,9 +126,17 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
       finalBHeight
     );
 
+    const dataUrl = canvas.toDataURL("image/png", 1.0);
+
+    if (isWebView) {
+      sendDownloadSignal(`barcode_${sku}.png`, dataUrl);
+      toast.success("Download started on device...");
+      return;
+    }
+
     const link = document.createElement("a");
     link.download = `barcode_${sku}.png`;
-    link.href = canvas.toDataURL("image/png", 1.0);
+    link.href = dataUrl;
     link.click();
   };
 
