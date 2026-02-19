@@ -28,7 +28,7 @@ const CategoryBarcodeModal: React.FC<CategoryBarcodeModalProps> = ({
                 format: "CODE128",
                 lineColor: "#000",
                 width: 2,
-                height: 38,
+                height: 30, // Reduced from 38 to fit preview
                 displayValue: true,
                 fontSize: 10,
                 margin: 0,
@@ -192,24 +192,25 @@ const CategoryBarcodeModal: React.FC<CategoryBarcodeModalProps> = ({
                             style={{
                                 width: "38mm",
                                 height: "18mm",
-                                padding: "2mm",
+                                padding: "1.5mm 2mm 1mm",
                                 boxSizing: "border-box",
                                 display: "flex",
                                 flexDirection: "column",
-                                justifyContent: "space-between",
+                                alignItems: "center",
+                                justifyContent: "space-between"
                             }}
                         >
-                            <div className="text-center leading-none mt-1">
-                                <div className="font-medium truncate uppercase text-[8px] text-black mb-1">
+                            <div className="text-center w-full leading-none">
+                                <div className="font-medium truncate uppercase text-[9px] text-black mb-1">
                                     {categoryName}
                                 </div>
-                                <div className="font-black mb-1 uppercase tracking-wider truncate text-[8px] text-black">
+                                <div className="font-black uppercase text-[12px] text-black leading-none">
                                     SHOP: {shopName}
                                 </div>
                             </div>
 
-                            <div className="flex justify-center bg-white px-1 pt-0">
-                                <svg id="category-barcode-svg" style={{ width: "100%", maxHeight: "42px" }}></svg>
+                            <div className="w-full flex-1 flex items-end justify-center bg-white overflow-hidden">
+                                <svg id="category-barcode-svg" style={{ width: "100%", height: "auto", maxHeight: "35px" }}></svg>
                             </div>
                         </div>
                     </div>
