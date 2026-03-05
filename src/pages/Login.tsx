@@ -9,8 +9,6 @@ import LoginContainer from "../components/LoginContainer";
 import Spinner from "@/components/Spinner";
 import AlertMsg from "@/components/shared/AlertMsg";
 import Logo from "@/components/Logo";
-import { FaAndroid } from "react-icons/fa";
-const apkFile = "/src/assets/android-apps/glory-pos.apk";
 // import PhygridTestButton from "@/components/PhygridTestButton";
 // import EscPosTestButton from "@/components/EscPosTestButton";
 // import WebUsbPrinterButton from "@/components/WebUsbPrinterButton";
