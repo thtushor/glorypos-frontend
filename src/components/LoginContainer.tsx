@@ -33,7 +33,7 @@ const LoginContainer: React.FC<LoginContainerProps> = ({ children }) => {
       <FloatingContactButtons />
 
       {/* APK Download Badge - Attractive floating position */}
-      <div className="fixed bottom-6 left-6 z-50 group hidden sm:block">
+      <div className="fixed bottom-6 left-6 z-50 group">
         <a
           href={apkFile}
           download="glorypos.apk"
