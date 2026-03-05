@@ -9,6 +9,8 @@ import LoginContainer from "../components/LoginContainer";
 import Spinner from "@/components/Spinner";
 import AlertMsg from "@/components/shared/AlertMsg";
 import Logo from "@/components/Logo";
+import { FaAndroid } from "react-icons/fa";
+const apkFile = "/src/assets/android-apps/glory-pos.apk";
 // import PhygridTestButton from "@/components/PhygridTestButton";
 // import EscPosTestButton from "@/components/EscPosTestButton";
 // import WebUsbPrinterButton from "@/components/WebUsbPrinterButton";
@@ -128,6 +130,27 @@ const Login: React.FC = () => {
             </Link>
           </div>
 
+          {/* APK Download Section */}
+          <div className="pt-6 border-t border-gray-100">
+            <div className="flex flex-col items-center space-y-3">
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-widest text-[10px]">
+                Try our mobile app for better experience
+              </span>
+              <a
+                href={apkFile}
+                download="glorypos.apk"
+                className="flex items-center gap-3 px-6 py-2.5 bg-[#1A1A1A] text-white rounded-xl hover:bg-black transition-all duration-300 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.5)] hover:-translate-y-0.5 active:scale-95 group border border-white/10"
+              >
+                <div className="p-1.5 bg-[#3DDC84]/20 rounded-lg group-hover:bg-[#3DDC84]/30 transition-colors">
+                  <FaAndroid className="text-xl text-[#3DDC84]" />
+                </div>
+                <div className="text-left leading-tight">
+                  <p className="text-[10px] opacity-60">AVAILABLE NOW</p>
+                  <p className="text-sm font-bold">Android APK</p>
+                </div>
+              </a>
+            </div>
+          </div>
         </form>
       </div>
 

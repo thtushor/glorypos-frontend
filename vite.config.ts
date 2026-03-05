@@ -10,6 +10,7 @@ export default defineConfig({
       include: "**/*.svg?react",
     }),
   ],
+  assetsInclude: ["**/*.apk"],
   resolve: {
     alias: {
       "@": "/src",
