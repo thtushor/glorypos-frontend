@@ -129,42 +129,10 @@ const Login: React.FC = () => {
               Register now for new account
             </Link>
           </div>
-
-          {/* APK Download Section */}
-          <div className="pt-6 border-t border-gray-100">
-            <div className="flex flex-col items-center space-y-3">
-              <span className="text-xs font-medium text-gray-400 uppercase tracking-widest text-[10px]">
-                Try our mobile app for better experience
-              </span>
-              <a
-                href={apkFile}
-                download="glorypos.apk"
-                className="flex items-center gap-3 px-6 py-2.5 bg-[#1A1A1A] text-white rounded-xl hover:bg-black transition-all duration-300 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.5)] hover:-translate-y-0.5 active:scale-95 group border border-white/10"
-              >
-                <div className="p-1.5 bg-[#3DDC84]/20 rounded-lg group-hover:bg-[#3DDC84]/30 transition-colors">
-                  <FaAndroid className="text-xl text-[#3DDC84]" />
-                </div>
-                <div className="text-left leading-tight">
-                  <p className="text-[10px] opacity-60">AVAILABLE NOW</p>
-                  <p className="text-sm font-bold">Android APK</p>
-                </div>
-              </a>
-            </div>
-          </div>
         </form>
       </div>
 
-      {/* Developer Printer Tools Widget */}
-      {/* <div className="fixed top-0 left-0 right-0 z-50 p-2 flex justify-center pointer-events-none">
-        <div className="bg-white/90 backdrop-blur shadow-md rounded-full px-4 py-2 flex gap-2 pointer-events-auto border border-gray-200">
-          <span className="text-xs font-semibold text-gray-400 flex items-center mr-2 uppercase tracking-wider">Printer Dev Tools:</span>
-          <WebUsbPrinterButton className="!py-1.5 !px-3 !text-[11px]" />
-          <LegacyEncoderButton className="!py-1.5 !px-3 !text-[11px]" />
-          <BrowserPrintButton className="!py-1.5 !px-3 !text-[11px]" />
-          <PhygridTestButton className="!py-1.5 !px-3 !text-[11px]" />
-          <EscPosTestButton className="!py-1.5 !px-3 !text-[11px]" />
-        </div>
-      </div> */}
+
     </LoginContainer>
   );
 };
