@@ -4,7 +4,7 @@ import FloatingContactButtons from "./FloatingContactButtons";
 import { FaAndroid } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useWebViewPrint } from "../hooks/useWebViewPrint";
-const apkFile = "/src/assets/android-apps/glory-pos.apk";
+const apkFile = "/android-apps/glory-pos.apk";
 
 interface LoginContainerProps {
   children: ReactNode;
