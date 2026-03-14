@@ -5,7 +5,7 @@ import { BASE_URL } from "../api";
 
 const AXIOS = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000, // 30 seconds timeout
+  timeout: 120000, // 120 seconds timeout
   headers: {
     "Content-Type": "application/json",
   },
