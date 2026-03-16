@@ -6,12 +6,13 @@ import {
   FaWallet,
   FaUtensils,
   FaDownload,
+  FaCheckCircle,
 } from "react-icons/fa";
 import Modal from "./Modal";
 import html2canvas from "html2canvas";
 // import LogoSvg from "./icons/LogoSvg";
 import { getExpiryDate } from "@/utils/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import AXIOS from "@/api/network/Axios";
 import { ORDERS_URL } from "@/api/api";
 import Spinner from "./Spinner";
@@ -138,6 +139,30 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const { user } = useAuth();
   const { hasPermission } = usePermission();
   const { isWebView, sendPrintSignal } = useWebViewPrint();
+  const queryClient = useQueryClient();
+
+  const completeOrderMutation = useMutation({
+    mutationFn: async () => {
+      const response = await AXIOS.post(`${ORDERS_URL}/${orderId}/complete`);
+      return response;
+    },
+    onSuccess: (data) => {
+      console.log("Order completed successfully", data);
+      if (data.status) {
+        toast.success("Order marked as completed");
+        queryClient.invalidateQueries({ queryKey: ["invoice", orderId] });
+      } else {
+        toast.error((data as any).message || "Failed to complete order");
+      }
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message ||
+        error?.message ||
+        "An error occurred while completing the order",
+      );
+    },
+  });
 
   const { data: invoiceData, isLoading } = useQuery<InvoiceData>({
     queryKey: ["invoice", orderId],
@@ -1730,6 +1755,36 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
               </span>
             </button>
           )}
+          {invoiceData?.orderStatus !== "completed" &&
+            invoiceData?.orderStatus !== "cancelled" &&
+            hasPermission(PERMISSIONS.SALES.EDIT_ORDER) && (
+              <button
+                onClick={() => completeOrderMutation.mutate()}
+                disabled={completeOrderMutation.isPending || !invoiceData}
+                style={{
+                  background:
+                    "linear-gradient(90deg, #059669 0%, #10b981 25%, #34d399 50%, #10b981 75%, #059669 100%)",
+                  backgroundSize: "200% 100%",
+                }}
+                className="px-3 py-1.5 text-xs font-medium text-white rounded-md flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed animate-shimmer"
+              >
+                <style>{`
+                  @keyframes shimmer {
+                    0% { background-position: 200% 0; }
+                    100% { background-position: -200% 0; }
+                  }
+                  .animate-shimmer {
+                    animation: shimmer 3s infinite linear;
+                  }
+                `}</style>
+                <FaCheckCircle className="w-3 h-3" />
+                <span className="inline">
+                  {completeOrderMutation.isPending
+                    ? "Completing..."
+                    : "Mark Complete"}
+                </span>
+              </button>
+            )}
           <button
             onClick={onClose}
             className="px-3 col-span-full bg-black/10 py-1.5 text-xs font-medium border text-gray-700 border-black/30 rounded-md"
