@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { FaBars, FaBell, FaUser, FaCog, FaSignOutAlt } from "react-icons/fa";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -67,13 +67,27 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
-
-  // const [notifications] = useState([
-  //   { id: 1, text: "New order received", time: "2 min ago" },
-  //   { id: 2, text: "Product stock low", time: "1 hour ago" },
-  //   { id: 3, text: "Daily report ready", time: "3 hours ago" },
-  // ]);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  const notificationWrapperRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        showNotifications &&
+        notificationWrapperRef.current &&
+        !notificationWrapperRef.current.contains(event.target as Node)
+      ) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showNotifications]);
 
   /* New Notifications Logic */
   const { data: unreadCountData } = useQuery({
@@ -164,7 +178,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
       <div className="flex items-center gap-2">
         {/* Notifications */}
         {user?.accountType === "shop" && (
-          <div className="relative">
+          <div ref={notificationWrapperRef} className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="p-2 rounded-full hover:bg-gray-100 relative"
@@ -224,7 +238,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                               {notif.message}
                             </p>
                             <span className="text-[10px] text-gray-400 mt-1 block">
-                              {/* We can use date-fns here if imported, or just basic JS date */}
                               {new Date(notif.createdAt).toLocaleDateString()}
                             </span>
                           </div>
@@ -282,6 +295,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
           )}
         </div>
       </div>
+
       {/* Invoice Modal */}
       <Modal
         isOpen={!!selectedOrderId}
