@@ -624,9 +624,13 @@ const Orders: React.FC = () => {
                       </td>
                       {user?.shopType === "restaurant" && (
                         <>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {order?.tableNumber || ""}
-                          </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+  {order?.tableNumber && (
+    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-brand-primary text-white shadow-sm hover:bg-brand-hover transition">
+      Table {order.tableNumber}
+    </span>
+  )}
+</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {order?.guestNumber || ""}
                           </td>
